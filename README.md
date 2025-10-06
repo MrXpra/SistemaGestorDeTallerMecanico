@@ -149,36 +149,47 @@ cd ..
 El archivo `.env` ya está configurado en la raíz del proyecto:
 
 ```env
-# Conexión a MongoDB Atlas
-MONGODB_URI=mongodb+srv://Edgar:C5OQOquuiKdkNFyy@cluster0.fmycxxx.mongodb.net/TiendaRepuestos?retryWrites=true&w=majority&appName=Cluster0
+# Conexión a MongoDB
+MONGODB_URI=mongodb://localhost:27017/tu-base-de-datos
+# O para MongoDB Atlas:
+# MONGODB_URI=mongodb+srv://usuario:password@cluster.mongodb.net/database?retryWrites=true&w=majority
 
-# Secreto para JWT
-JWT_SECRET=DbdXJjr7LqHPpOb0IH3chlAo33CxX0qedrTlwpwfk4KLoIqqGXRAvezmUNWziiT
+# Secreto para JWT (genera uno único y seguro)
+JWT_SECRET=tu_secreto_jwt_super_seguro_cambiame_por_uno_real
 
 # Puerto del servidor
 PORT=5000
 
 # Entorno
 NODE_ENV=development
-
-# Credenciales del admin por defecto
-ADMIN_EMAIL=admin@autoparts.com
-ADMIN_PASSWORD=Admin123!
-ADMIN_NAME=Administrador
 ```
 
-### 2. Poblar la Base de Datos (Seeding)
+> ⚠️ **IMPORTANTE**: Nunca subas tu archivo `.env` a GitHub. El archivo `.gitignore` ya está configurado para ignorarlo.
 
-Ejecuta el script de seeding para crear el usuario administrador, un cajero de prueba, la configuración inicial y productos de ejemplo:
+### 2. Inicializar la Base de Datos
+
+#### Opción A: Crear solo usuario administrador (Recomendado para producción)
+
+```bash
+npm run create-admin
+```
+
+Este comando creará:
+- ✅ Usuario administrador (admin@admin.com / 123456)
+- ✅ Configuración inicial del negocio
+
+**⚠️ IMPORTANTE:** Cambia la contraseña después del primer login.
+
+#### Opción B: Poblar con datos de ejemplo (Para desarrollo/pruebas)
 
 ```bash
 npm run seed
 ```
 
 Este comando creará:
-- ✅ Usuario administrador (admin@autoparts.com / Admin123!)
-- ✅ Usuario cajero (cajero@autoparts.com / Cajero123!)
+- ✅ Usuario administrador y cajero
 - ✅ Configuración inicial del negocio
+- ✅ Proveedores de ejemplo
 - ✅ 10 productos de ejemplo
 
 ---

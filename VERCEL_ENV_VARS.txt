@@ -1,0 +1,4 @@
+# Variables de Entorno para Vercel
+# Copia estas variables cuando despliegues en Vercel
+
+VITE_API_URL=https://sistemagestordetallermecanico-production.up.railway.app/api
