@@ -212,16 +212,18 @@ const Login = () => {
             </button>
           </form>
 
-          {/* Demo Credentials Info */}
-          <div className="mt-6 p-4 bg-primary-50 dark:bg-white/10 rounded-lg border-2 border-primary-200 dark:border-white/20">
-            <p className="text-xs text-primary-900 dark:text-white/80 mb-2 font-semibold">
-              Credenciales de prueba:
-            </p>
-            <div className="space-y-1 text-xs text-primary-700 dark:text-white/70 font-medium">
-              <p>Admin: admin@autoparts.com / Admin123!</p>
-              <p>Cajero: cajero@autoparts.com / Cajero123!</p>
+          {/* Demo Credentials Info - Solo en desarrollo */}
+          {import.meta.env.DEV && (
+            <div className="mt-6 p-4 bg-primary-50 dark:bg-white/10 rounded-lg border-2 border-primary-200 dark:border-white/20">
+              <p className="text-xs text-primary-900 dark:text-white/80 mb-2 font-semibold">
+                Credenciales de prueba:
+              </p>
+              <div className="space-y-1 text-xs text-primary-700 dark:text-white/70 font-medium">
+                <p>Admin: admin@autoparts.com / Admin123!</p>
+                <p>Cajero: cajero@autoparts.com / Cajero123!</p>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Footer */}
