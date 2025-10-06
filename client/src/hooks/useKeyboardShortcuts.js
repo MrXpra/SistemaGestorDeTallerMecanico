@@ -32,27 +32,27 @@ export const useKeyboardShortcuts = () => {
         switch (event.key.toLowerCase()) {
           case 'b':
             event.preventDefault();
-            navigate('/billing');
+            navigate('/facturacion');
             break;
           case 'i':
             event.preventDefault();
-            navigate('/inventory');
+            navigate('/inventario');
             break;
           case 'h':
             event.preventDefault();
-            navigate('/sales-history');
+            navigate('/historial-ventas');
             break;
           case 'c':
             event.preventDefault();
-            navigate('/customers');
+            navigate('/clientes');
             break;
           case 'r':
             event.preventDefault();
-            navigate('/reports');
+            navigate('/reportes');
             break;
           case ',':
             event.preventDefault();
-            navigate('/settings');
+            navigate('/configuracion/negocio');
             break;
           case 'k':
             event.preventDefault();
