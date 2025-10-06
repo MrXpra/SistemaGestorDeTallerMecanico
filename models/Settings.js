@@ -50,6 +50,50 @@ const settingsSchema = new mongoose.Schema({
     default: ''
   },
   
+  // ===== CONFIGURACIÓN DE EMAIL/SMTP =====
+  // Configuración del servidor SMTP para envío de emails
+  smtp: {
+    // Host del servidor SMTP (ej: smtp.gmail.com)
+    host: {
+      type: String,
+      default: 'smtp.gmail.com',
+      trim: true
+    },
+    // Puerto SMTP (587 para TLS, 465 para SSL)
+    port: {
+      type: Number,
+      default: 587
+    },
+    // Usar SSL (true para puerto 465, false para 587)
+    secure: {
+      type: Boolean,
+      default: false
+    },
+    // Usuario/email de la cuenta SMTP
+    user: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    // Contraseña de la cuenta SMTP (no se retorna en queries por defecto)
+    password: {
+      type: String,
+      select: false, // No incluir en queries por seguridad
+      default: ''
+    },
+    // Nombre del remitente que aparecerá en los emails
+    fromName: {
+      type: String,
+      default: 'AutoParts Manager'
+    },
+    // Email del remitente (por defecto usa businessEmail)
+    fromEmail: {
+      type: String,
+      trim: true,
+      default: ''
+    }
+  },
+  
   // ===== CONFIGURACIÓN FISCAL =====
   // Tasa de impuesto (ITBIS en RD = 18%)
   taxRate: {

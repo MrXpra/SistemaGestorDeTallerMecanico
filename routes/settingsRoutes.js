@@ -17,7 +17,12 @@
  */
 
 import express from 'express';
-import { getSettings, updateSettings } from '../controllers/settingsController.js';
+import { 
+  getSettings, 
+  updateSettings,
+  updateSmtpSettings,
+  testSmtpConnection
+} from '../controllers/settingsController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
@@ -26,5 +31,9 @@ const router = express.Router();
 router.route('/')
   .get(getSettings)
   .put(protect, admin, updateSettings);
+
+// Rutas para configuración SMTP (solo admin)
+router.put('/smtp', protect, admin, updateSmtpSettings);
+router.post('/smtp/test', protect, admin, testSmtpConnection);
 
 export default router;

@@ -1,7 +1,6 @@
 import PurchaseOrder from '../models/PurchaseOrder.js';
 import Product from '../models/Product.js';
 import Supplier from '../models/Supplier.js';
-import Settings from '../models/Settings.js';
 import { sendPurchaseOrderEmail } from '../services/emailService.js';
 
 // Obtener todas las órdenes de compra
@@ -337,20 +336,13 @@ export const sendPurchaseOrder = async (req, res) => {
       });
     }
 
-    // Obtener configuración del negocio
-    const settings = await Settings.findOne();
-    if (!settings) {
-      return res.status(500).json({ 
-        message: 'Configuración del negocio no encontrada' 
-      });
-    }
-
     // Preparar datos para el email
     const orderData = {
       orderNumber: order.orderNumber,
       expectedDate: order.expectedDeliveryDate,
       totalAmount: order.total,
       notes: order.notes,
+      createdAt: order.createdAt,
       items: order.items.map(item => ({
         productName: item.product?.name || 'Producto',
         quantity: item.quantity,
@@ -359,8 +351,8 @@ export const sendPurchaseOrder = async (req, res) => {
       }))
     };
 
-    // Enviar email
-    await sendPurchaseOrderEmail(orderData, order.supplier, settings);
+    // Enviar email (la función lee settings desde la BD)
+    await sendPurchaseOrderEmail(orderData, order.supplier);
 
     // Actualizar estado de la orden
     order.emailSent = true;

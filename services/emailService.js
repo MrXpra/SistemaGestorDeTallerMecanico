@@ -1,51 +1,71 @@
 /**
  * EMAIL SERVICE - Servicio de envío de correos electrónicos
  * 
- * Usa nodemailer para enviar emails transaccionales como:
+ * Lee la configuración SMTP desde la base de datos (Settings)
+ * y la usa para enviar emails desde la cuenta de la empresa.
+ * 
+ * Funcionalidades:
  * - Órdenes de compra a proveedores
  * - Notificaciones a clientes
  * - Reportes automáticos
  */
 
 import nodemailer from 'nodemailer';
-import dotenv from 'dotenv';
-
-dotenv.config();
+import Settings from '../models/Settings.js';
 
 /**
- * Crear transportador de email
- * Configura la conexión SMTP usando variables de entorno
+ * Crear transportador de email dinámico
+ * Lee la configuración SMTP desde la base de datos
+ * 
+ * @returns {Promise<{transporter: Object, settings: Object}>}
+ * @throws {Error} Si no hay configuración SMTP
  */
-const createTransporter = () => {
-  return nodemailer.createTransporter({
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: parseInt(process.env.SMTP_PORT) || 587,
-    secure: false, // true para puerto 465, false para otros
+const createTransporter = async () => {
+  // Obtener configuración de la empresa (incluye password con select: false)
+  const settings = await Settings.findOne().select('+smtp.password');
+  
+  // Validar que existe configuración
+  if (!settings) {
+    throw new Error('Configuración del sistema no encontrada. Configure el negocio primero.');
+  }
+  
+  // Validar que existe configuración SMTP
+  if (!settings.smtp?.user || !settings.smtp?.password) {
+    throw new Error('Configuración SMTP no encontrada. Configure el email en Configuración > Email/SMTP.');
+  }
+  
+  // Crear transporter con configuración dinámica desde la BD
+  const transporter = nodemailer.createTransporter({
+    host: settings.smtp.host,
+    port: settings.smtp.port,
+    secure: settings.smtp.secure, // true para 465 (SSL), false para 587 (TLS)
     auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS
+      user: settings.smtp.user,
+      pass: settings.smtp.password
+    },
+    tls: {
+      rejectUnauthorized: false // Permitir certificados autofirmados
     }
   });
+  
+  return { transporter, settings };
 };
 
 /**
  * Enviar orden de compra por email al proveedor
  * @param {Object} purchaseOrder - Orden de compra con items
  * @param {Object} supplier - Datos del proveedor
- * @param {Object} settings - Configuración del negocio
+ * @returns {Promise<Object>} Resultado del envío
  */
-export const sendPurchaseOrderEmail = async (purchaseOrder, supplier, settings) => {
-  // Validar que el proveedor tenga email
-  if (!supplier.email) {
-    throw new Error('El proveedor no tiene email configurado');
-  }
+export const sendPurchaseOrderEmail = async (purchaseOrder, supplier) => {
+  try {
+    // Validar que el proveedor tenga email
+    if (!supplier.email) {
+      throw new Error('El proveedor no tiene email configurado');
+    }
 
-  // Validar configuración SMTP
-  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-    throw new Error('Configuración de email no encontrada. Configure SMTP_USER y SMTP_PASS en .env');
-  }
-
-  const transporter = createTransporter();
+    // Crear transporter con configuración dinámica de la BD
+    const { transporter, settings } = await createTransporter();
 
   // Generar tabla HTML de items
   const itemsRows = purchaseOrder.items
@@ -183,24 +203,56 @@ export const sendPurchaseOrderEmail = async (purchaseOrder, supplier, settings) 
     </html>
   `;
 
-  // Opciones del email
-  const mailOptions = {
-    from: `"${settings.businessName || 'AutoParts Manager'}" <${process.env.SMTP_USER}>`,
-    to: supplier.email,
-    subject: `Orden de Compra #${purchaseOrder.orderNumber} - ${settings.businessName || 'AutoParts Manager'}`,
-    html: htmlContent,
-  };
+    // Determinar email del remitente
+    const fromEmail = settings.smtp.fromEmail || settings.smtp.user;
+    const fromName = settings.smtp.fromName || settings.businessName;
 
-  // Enviar email
-  const info = await transporter.sendMail(mailOptions);
+    // Opciones del email
+    const mailOptions = {
+      from: `"${fromName}" <${fromEmail}>`,
+      to: supplier.email,
+      subject: `Orden de Compra #${purchaseOrder.orderNumber} - ${settings.businessName}`,
+      html: htmlContent,
+    };
 
-  return {
-    success: true,
-    messageId: info.messageId,
-    recipient: supplier.email
-  };
+    // Enviar email
+    const info = await transporter.sendMail(mailOptions);
+
+    return {
+      success: true,
+      messageId: info.messageId,
+      recipient: supplier.email
+    };
+    
+  } catch (error) {
+    console.error('❌ Error al enviar email:', error);
+    throw new Error(`Error al enviar email: ${error.message}`);
+  }
+};
+
+/**
+ * Verificar configuración SMTP
+ * Prueba la conexión con el servidor SMTP usando la configuración actual
+ * 
+ * @returns {Promise<Object>} Resultado de la verificación
+ */
+export const verifySmtpConfig = async () => {
+  try {
+    const { transporter } = await createTransporter();
+    await transporter.verify();
+    return { 
+      success: true, 
+      message: '✅ Configuración SMTP válida. Conexión exitosa.' 
+    };
+  } catch (error) {
+    return { 
+      success: false, 
+      message: `❌ Error de conexión: ${error.message}` 
+    };
+  }
 };
 
 export default {
-  sendPurchaseOrderEmail
+  sendPurchaseOrderEmail,
+  verifySmtpConfig
 };
