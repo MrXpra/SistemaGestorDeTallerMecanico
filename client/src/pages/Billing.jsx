@@ -1481,7 +1481,7 @@ const CustomerModal = ({ onSelect, onClose }) => {
                     setNewCustomer({ ...newCustomer, phone: formatPhone(e.target.value) })
                   }
                   className="input font-mono"
-                  placeholder="829-362-9732"
+                  placeholder="809-555-1234"
                 />
               </div>
 

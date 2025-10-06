@@ -413,7 +413,7 @@ const Settings = ({ section = 'all' }) => {
                   onChange={(e) => handleChange('businessPhone', formatPhone(e.target.value))}
                   disabled={user?.role !== 'admin'}
                   className="input pl-10"
-                  placeholder="829-362-9732"
+                  placeholder="809-555-1234"
                   maxLength={12}
                 />
               </div>

@@ -646,7 +646,7 @@ const CustomerModal = ({ customer, onSave, onClose }) => {
               value={formData.phone}
               onChange={handleChange}
               className={`input font-mono ${errors.phone ? 'border-red-500' : ''}`}
-              placeholder="829-362-9732"
+              placeholder="809-555-1234"
             />
             {errors.phone && <p className="text-xs text-red-600 mt-1">{errors.phone}</p>}
           </div>
