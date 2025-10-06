@@ -219,8 +219,7 @@ const Login = () => {
                 Credenciales de prueba:
               </p>
               <div className="space-y-1 text-xs text-primary-700 dark:text-white/70 font-medium">
-                <p>Admin: admin@autoparts.com / Admin123!</p>
-                <p>Cajero: cajero@autoparts.com / Cajero123!</p>
+                <p>Admin: admin@admin.com / 123456</p>
               </div>
             </div>
           )}
