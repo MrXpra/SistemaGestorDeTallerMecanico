@@ -1,0 +1,331 @@
+import PurchaseOrder from '../models/PurchaseOrder.js';
+import Product from '../models/Product.js';
+import Supplier from '../models/Supplier.js';
+
+// Obtener todas las órdenes de compra
+export const getPurchaseOrders = async (req, res) => {
+  try {
+    const orders = await PurchaseOrder.find()
+      .populate('supplier', 'name email phone')
+      .populate('items.product', 'sku name')
+      .populate('createdBy', 'name email')
+      .sort({ createdAt: -1 });
+    res.json(orders);
+  } catch (error) {
+    console.error('Error al obtener órdenes:', error);
+    res.status(500).json({ message: 'Error al obtener órdenes de compra' });
+  }
+};
+
+// Obtener una orden por ID
+export const getPurchaseOrderById = async (req, res) => {
+  try {
+    const order = await PurchaseOrder.findById(req.params.id)
+      .populate('supplier')
+      .populate('items.product')
+      .populate('createdBy', 'name email');
+    
+    if (!order) {
+      return res.status(404).json({ message: 'Orden no encontrada' });
+    }
+    res.json(order);
+  } catch (error) {
+    console.error('Error al obtener orden:', error);
+    res.status(500).json({ message: 'Error al obtener orden' });
+  }
+};
+
+// Crear orden de compra
+export const createPurchaseOrder = async (req, res) => {
+  try {
+    const { supplier, items, notes, expectedDeliveryDate } = req.body;
+
+    // Verificar que el proveedor existe
+    const supplierExists = await Supplier.findById(supplier);
+    if (!supplierExists) {
+      return res.status(404).json({ message: 'Proveedor no encontrado' });
+    }
+
+    // Calcular totales
+    let subtotal = 0;
+    const processedItems = [];
+
+    for (const item of items) {
+      const product = await Product.findById(item.product);
+      if (!product) {
+        return res.status(404).json({ message: `Producto ${item.product} no encontrado` });
+      }
+
+      const itemSubtotal = item.quantity * item.unitPrice;
+      subtotal += itemSubtotal;
+
+      processedItems.push({
+        product: item.product,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        subtotal: itemSubtotal,
+      });
+    }
+
+    // Calcular impuesto (18% ITBIS)
+    const tax = subtotal * 0.18;
+    const total = subtotal + tax;
+
+    const order = new PurchaseOrder({
+      supplier,
+      items: processedItems,
+      subtotal,
+      tax,
+      total,
+      notes,
+      expectedDeliveryDate,
+      createdBy: req.user.id,
+    });
+
+    await order.save();
+    
+    // Populate para retornar datos completos
+    await order.populate('supplier', 'name email phone');
+    await order.populate('items.product', 'sku name');
+    await order.populate('createdBy', 'name email');
+
+    res.status(201).json(order);
+  } catch (error) {
+    console.error('Error al crear orden:', error);
+    res.status(500).json({ message: 'Error al crear orden de compra' });
+  }
+};
+
+// Generar orden automática por productos con bajo stock
+export const generateAutoOrder = async (req, res) => {
+  try {
+    const { supplierId, productIds } = req.body;
+
+    let query = {};
+    
+    // Productos con stock menor o igual al threshold
+    const allProducts = await Product.find().populate('supplier');
+    let lowStockProducts = allProducts.filter(p => p.stock <= p.lowStockThreshold);
+    
+    if (supplierId) {
+      lowStockProducts = lowStockProducts.filter(p => 
+        p.supplier && p.supplier._id.toString() === supplierId
+      );
+    }
+    
+    if (productIds && productIds.length > 0) {
+      lowStockProducts = lowStockProducts.filter(p => 
+        productIds.includes(p._id.toString())
+      );
+    }
+
+    if (lowStockProducts.length === 0) {
+      return res.status(404).json({ message: 'No hay productos con stock bajo' });
+    }
+
+    // Filtrar productos que NO tengan proveedor
+    const productsWithSupplier = lowStockProducts.filter(p => p.supplier && p.supplier._id);
+    
+    if (productsWithSupplier.length === 0) {
+      return res.status(404).json({ 
+        message: 'No hay productos con stock bajo que tengan proveedor asignado' 
+      });
+    }
+
+    // Agrupar por proveedor
+    const ordersBySupplier = {};
+
+    for (const product of productsWithSupplier) {
+      const supplierId = product.supplier._id.toString();
+      
+      if (!ordersBySupplier[supplierId]) {
+        ordersBySupplier[supplierId] = {
+          supplier: product.supplier,
+          items: [],
+        };
+      }
+
+      // Cantidad sugerida: el doble del threshold menos el stock actual
+      const suggestedQuantity = Math.max((product.lowStockThreshold * 2) - product.stock, 1);
+
+      ordersBySupplier[supplierId].items.push({
+        product: product._id,
+        quantity: suggestedQuantity,
+        unitPrice: product.purchasePrice,
+        subtotal: suggestedQuantity * product.purchasePrice,
+      });
+    }
+
+    // Crear órdenes
+    const createdOrders = [];
+
+    for (const supplierId in ordersBySupplier) {
+      const orderData = ordersBySupplier[supplierId];
+      
+      let subtotal = 0;
+      orderData.items.forEach(item => {
+        subtotal += item.subtotal;
+      });
+
+      const tax = subtotal * 0.18;
+      const total = subtotal + tax;
+
+      const order = new PurchaseOrder({
+        supplier: supplierId,
+        items: orderData.items,
+        subtotal,
+        tax,
+        total,
+        notes: 'Orden generada automáticamente por stock bajo',
+        createdBy: req.user.id,
+      });
+
+      await order.save();
+      await order.populate('supplier', 'name email phone');
+      await order.populate('items.product', 'sku name');
+      
+      createdOrders.push(order);
+    }
+
+    res.status(201).json({
+      message: `${createdOrders.length} orden(es) creada(s) exitosamente`,
+      orders: createdOrders,
+    });
+  } catch (error) {
+    console.error('Error al generar órdenes automáticas:', error);
+    res.status(500).json({ message: 'Error al generar órdenes automáticas' });
+  }
+};
+
+// Actualizar orden completa (editar)
+export const updatePurchaseOrder = async (req, res) => {
+  try {
+    const { supplier, items, notes, expectedDeliveryDate } = req.body;
+
+    // Validar proveedor
+    if (supplier) {
+      const supplierExists = await Supplier.findById(supplier);
+      if (!supplierExists) {
+        return res.status(404).json({ message: 'Proveedor no encontrado' });
+      }
+    }
+
+    // Validar y calcular items
+    let processedItems = [];
+    let subtotal = 0;
+
+    if (items && items.length > 0) {
+      for (const item of items) {
+        const product = await Product.findById(item.product);
+        if (!product) {
+          return res.status(404).json({ message: `Producto ${item.product} no encontrado` });
+        }
+
+        const itemSubtotal = item.quantity * item.unitPrice;
+        subtotal += itemSubtotal;
+
+        processedItems.push({
+          product: item.product,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          subtotal: itemSubtotal,
+        });
+      }
+    }
+
+    // Calcular impuesto y total
+    const tax = subtotal * 0.18;
+    const total = subtotal + tax;
+
+    const updateData = {
+      ...(supplier && { supplier }),
+      ...(items && items.length > 0 && { items: processedItems, subtotal, tax, total }),
+      ...(notes !== undefined && { notes }),
+      ...(expectedDeliveryDate && { expectedDeliveryDate }),
+    };
+
+    const order = await PurchaseOrder.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      { new: true, runValidators: true }
+    )
+      .populate('supplier', 'name email phone')
+      .populate('items.product', 'sku name')
+      .populate('createdBy', 'name email');
+
+    if (!order) {
+      return res.status(404).json({ message: 'Orden no encontrada' });
+    }
+
+    res.json(order);
+  } catch (error) {
+    console.error('Error al actualizar orden:', error);
+    res.status(500).json({ message: 'Error al actualizar orden de compra' });
+  }
+};
+
+// Actualizar estado de orden
+export const updateOrderStatus = async (req, res) => {
+  try {
+    const { status, receivedDate, receivedQuantities, receiveNotes } = req.body;
+    
+    const updateData = { status };
+    if (status === 'Recibida' && receivedDate) {
+      updateData.receivedDate = receivedDate;
+    }
+    if (receiveNotes) {
+      updateData.receiveNotes = receiveNotes;
+    }
+
+    const order = await PurchaseOrder.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      { new: true }
+    )
+      .populate('supplier', 'name email phone')
+      .populate('items.product', 'sku name');
+
+    if (!order) {
+      return res.status(404).json({ message: 'Orden no encontrada' });
+    }
+
+    // Si la orden fue recibida, actualizar el stock de los productos
+    if (status === 'Recibida') {
+      for (const item of order.items) {
+        // Obtener el ID del producto (puede ser ObjectId o objeto poblado)
+        const productId = item.product?._id || item.product;
+        
+        // Usar la cantidad recibida si está disponible, de lo contrario usar la cantidad original
+        let quantityToAdd = item.quantity;
+        if (receivedQuantities && receivedQuantities[item._id]) {
+          quantityToAdd = receivedQuantities[item._id];
+        }
+        
+        // Actualizar stock con la cantidad recibida
+        await Product.findByIdAndUpdate(
+          productId,
+          { $inc: { stock: quantityToAdd } }
+        );
+      }
+    }
+
+    res.json(order);
+  } catch (error) {
+    console.error('Error al actualizar orden:', error);
+    res.status(500).json({ message: 'Error al actualizar orden' });
+  }
+};
+
+// Eliminar orden
+export const deletePurchaseOrder = async (req, res) => {
+  try {
+    const order = await PurchaseOrder.findByIdAndDelete(req.params.id);
+    if (!order) {
+      return res.status(404).json({ message: 'Orden no encontrada' });
+    }
+    res.json({ message: 'Orden eliminada correctamente' });
+  } catch (error) {
+    console.error('Error al eliminar orden:', error);
+    res.status(500).json({ message: 'Error al eliminar orden' });
+  }
+};
