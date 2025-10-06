@@ -305,6 +305,20 @@ export const closeCashRegister = async (req, res) => {
       status: { $ne: 'Cancelada' }
     });
 
+    // Obtener retiros de caja del día actual
+    const CashWithdrawal = mongoose.model('CashWithdrawal');
+    const withdrawals = await CashWithdrawal.find({
+      withdrawnBy: cashierId,
+      createdAt: {
+        $gte: startOfDay,
+        $lte: now
+      },
+      status: 'Aprobado'
+    });
+
+    // Calcular total de retiros
+    const totalWithdrawals = withdrawals.reduce((sum, w) => sum + w.amount, 0);
+
     // Calcular totales del sistema
     const systemTotals = {
       totalSales: sales.length,
@@ -326,6 +340,9 @@ export const closeCashRegister = async (req, res) => {
       }
     });
 
+    // Restar retiros del efectivo esperado
+    systemTotals.cash -= totalWithdrawals;
+
     // Calcular diferencias
     const differences = {
       cash: countedTotals.cash - systemTotals.cash,
@@ -343,7 +360,9 @@ export const closeCashRegister = async (req, res) => {
       countedTotals,
       differences,
       notes: notes || '',
-      sales: sales.map(s => s._id)
+      sales: sales.map(s => s._id),
+      totalWithdrawals,
+      withdrawals: withdrawals.map(w => w._id)
     });
 
     // Poblar datos del cajero para la respuesta

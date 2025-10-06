@@ -30,6 +30,7 @@ import {
   generateAutoOrder,
   updatePurchaseOrder,
   updateOrderStatus,
+  sendPurchaseOrder,
   deletePurchaseOrder,
 } from '../controllers/purchaseOrderController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
@@ -42,6 +43,7 @@ router.get('/', getPurchaseOrders);
 router.get('/:id', getPurchaseOrderById);
 router.post('/', createPurchaseOrder);
 router.post('/generate-auto', admin, generateAutoOrder);
+router.post('/:id/send', sendPurchaseOrder); // Nueva ruta para enviar por email
 router.put('/:id', admin, updatePurchaseOrder);
 router.put('/:id/status', admin, updateOrderStatus);
 router.delete('/:id', admin, deletePurchaseOrder);

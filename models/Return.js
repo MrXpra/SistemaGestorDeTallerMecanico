@@ -61,6 +61,11 @@ const returnSchema = new mongoose.Schema({
       type: Number,
       required: true,
     },
+    // Flag para productos defectuosos (no vuelven al stock normal)
+    isDefective: {
+      type: Boolean,
+      default: false,
+    },
   }],
   
   // Razón de la devolución

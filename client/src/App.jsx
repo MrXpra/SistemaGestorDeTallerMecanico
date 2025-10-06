@@ -44,6 +44,10 @@ import CashWithdrawals from './pages/CashWithdrawals';
 // Layout
 import Layout from './components/Layout/Layout';
 
+// Keyboard Shortcuts
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import KeyboardShortcutsHelp from './components/KeyboardShortcutsHelp';
+
 // Protected Route Component
 const ProtectedRoute = ({ children, adminOnly = false }) => {
   const { user, isAuthenticated } = useAuthStore();
@@ -63,9 +67,13 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
 export const AppRoutes = () => {
   const { isDarkMode } = useThemeStore();
   const { settings } = useSettingsStore();
+  
+  // Enable keyboard shortcuts
+  useKeyboardShortcuts();
 
   return (
     <div className={isDarkMode ? 'dark' : ''}>
+      <KeyboardShortcutsHelp />
       <Routes>
         <Route path="/login" element={<Login />} />
         

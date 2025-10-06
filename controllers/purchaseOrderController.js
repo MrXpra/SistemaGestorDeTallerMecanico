@@ -1,6 +1,8 @@
 import PurchaseOrder from '../models/PurchaseOrder.js';
 import Product from '../models/Product.js';
 import Supplier from '../models/Supplier.js';
+import Settings from '../models/Settings.js';
+import { sendPurchaseOrderEmail } from '../services/emailService.js';
 
 // Obtener todas las órdenes de compra
 export const getPurchaseOrders = async (req, res) => {
@@ -313,6 +315,68 @@ export const updateOrderStatus = async (req, res) => {
   } catch (error) {
     console.error('Error al actualizar orden:', error);
     res.status(500).json({ message: 'Error al actualizar orden' });
+  }
+};
+
+// Enviar orden de compra por email al proveedor
+export const sendPurchaseOrder = async (req, res) => {
+  try {
+    const order = await PurchaseOrder.findById(req.params.id)
+      .populate('supplier')
+      .populate('items.product', 'name sku')
+      .populate('createdBy', 'name email');
+
+    if (!order) {
+      return res.status(404).json({ message: 'Orden no encontrada' });
+    }
+
+    // Verificar que el proveedor tenga email
+    if (!order.supplier.email) {
+      return res.status(400).json({ 
+        message: 'El proveedor no tiene email configurado. Por favor actualiza sus datos.' 
+      });
+    }
+
+    // Obtener configuración del negocio
+    const settings = await Settings.findOne();
+    if (!settings) {
+      return res.status(500).json({ 
+        message: 'Configuración del negocio no encontrada' 
+      });
+    }
+
+    // Preparar datos para el email
+    const orderData = {
+      orderNumber: order.orderNumber,
+      expectedDate: order.expectedDeliveryDate,
+      totalAmount: order.total,
+      notes: order.notes,
+      items: order.items.map(item => ({
+        productName: item.product?.name || 'Producto',
+        quantity: item.quantity,
+        unitCost: item.unitPrice,
+        total: item.subtotal
+      }))
+    };
+
+    // Enviar email
+    await sendPurchaseOrderEmail(orderData, order.supplier, settings);
+
+    // Actualizar estado de la orden
+    order.emailSent = true;
+    order.emailSentDate = new Date();
+    await order.save();
+
+    res.json({ 
+      message: `Orden enviada exitosamente a ${order.supplier.email}`,
+      order 
+    });
+  } catch (error) {
+    console.error('Error al enviar orden:', error);
+    res.status(500).json({ 
+      message: 'Error al enviar orden de compra', 
+      error: error.message 
+    });
   }
 };
 

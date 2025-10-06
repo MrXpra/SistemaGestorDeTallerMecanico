@@ -118,21 +118,35 @@ export const createReturn = async (req, res) => {
       // Calcular monto de devolución (precio unitario * cantidad devuelta)
       const returnAmount = saleItem.priceAtSale * item.quantity;
 
+      // Determinar si el producto es defectuoso
+      const isDefective = reason.toLowerCase() === 'defectuoso';
+
       returnItems.push({
         product: item.productId,
         quantity: item.quantity,
         originalPrice: saleItem.priceAtSale,
         returnAmount: returnAmount,
+        isDefective: isDefective,
       });
 
       totalAmount += returnAmount;
 
       // Devolver productos al inventario
-      await Product.findByIdAndUpdate(
-        item.productId,
-        { $inc: { stock: item.quantity } },
-        { session }
-      );
+      if (isDefective) {
+        // Si es defectuoso, va a stock defectuoso
+        await Product.findByIdAndUpdate(
+          item.productId,
+          { $inc: { defectiveStock: item.quantity } },
+          { session }
+        );
+      } else {
+        // Si no es defectuoso, va a stock normal
+        await Product.findByIdAndUpdate(
+          item.productId,
+          { $inc: { stock: item.quantity } },
+          { session }
+        );
+      }
     }
 
     // Crear la devolución

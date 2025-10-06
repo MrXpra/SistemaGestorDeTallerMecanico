@@ -68,6 +68,13 @@ const productSchema = new mongoose.Schema({
     min: 0 // No puede ser negativo
   },
   
+  // Cantidad de productos defectuosos (no disponibles para venta)
+  defectiveStock: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  
   // Umbral de stock bajo (para alertas)
   lowStockThreshold: {
     type: Number,

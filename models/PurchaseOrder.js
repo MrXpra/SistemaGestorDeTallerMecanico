@@ -111,6 +111,17 @@ const purchaseOrderSchema = new mongoose.Schema({
     type: String,
   },
   
+  // Flag para saber si se envió por email
+  emailSent: {
+    type: Boolean,
+    default: false,
+  },
+  
+  // Fecha en que se envió el email
+  emailSentDate: {
+    type: Date,
+  },
+  
   // Usuario que creó la orden
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,

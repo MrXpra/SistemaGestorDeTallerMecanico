@@ -80,6 +80,18 @@ const cashierSessionSchema = new mongoose.Schema({
   sales: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Sale'
+  }],
+  
+  // Total de retiros de efectivo realizados durante la sesión
+  totalWithdrawals: {
+    type: Number,
+    default: 0
+  },
+  
+  // Referencias a los retiros incluidos en este cierre
+  withdrawals: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'CashWithdrawal'
   }]
 }, {
   timestamps: true // Agrega createdAt y updatedAt
