@@ -29,13 +29,11 @@ const createAdmin = async () => {
     console.log('✅ Base de datos limpiada');
     
     // Crear usuario administrador
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash('123456', salt);
-    
+    // Nota: NO hasheamos manualmente, el middleware pre('save') del modelo lo hace automáticamente
     const admin = await User.create({
       name: 'Administrador',
       email: 'admin@admin.com',
-      password: hashedPassword,
+      password: '123456', // Contraseña en texto plano, será hasheada por el middleware
       role: 'admin',
       isActive: true
     });
