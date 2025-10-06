@@ -53,9 +53,30 @@ const app = express();
 // ========== MIDDLEWARE GLOBAL ==========
 // CORS: Configurado para desarrollo local y producción
 const corsOptions = {
-  origin: process.env.NODE_ENV === 'production' 
-    ? process.env.FRONTEND_URL || 'https://autoparts-manager.vercel.app'
-    : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5173'],
+  origin: function (origin, callback) {
+    // Permitir requests sin origin (mobile apps, curl, etc)
+    if (!origin) return callback(null, true);
+    
+    // Orígenes permitidos en desarrollo
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'http://localhost:5173',
+      'https://sistema-gestor-de-taller-mecanico.vercel.app'
+    ];
+    
+    // Verificar si el origin está en la lista permitida
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } 
+    // Permitir cualquier subdominio de Vercel del proyecto
+    else if (origin.includes('sistema-gestor-de-taller-mecanico') && origin.includes('.vercel.app')) {
+      callback(null, true);
+    } 
+    else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   optionsSuccessStatus: 200
 };
