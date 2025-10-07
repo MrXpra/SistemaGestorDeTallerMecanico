@@ -5,7 +5,8 @@
     "models/**/*.js",
     "routes/**/*.js",
     "middleware/**/*.js",
-    "config/**/*.js"
+    "config/**/*.js",
+    "services/**/*.js"
   ],
   "ignore": [
     "node_modules/**",

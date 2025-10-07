@@ -40,6 +40,9 @@ import PurchaseOrders from './pages/PurchaseOrders';
 import Returns from './pages/Returns';
 import SalesHistory from './pages/SalesHistory';
 import CashWithdrawals from './pages/CashWithdrawals';
+import Logs from './pages/Logs';
+import AuditLogs from './pages/AuditLogs';
+import Monitoring from './pages/Monitoring';
 
 // Layout
 import Layout from './components/Layout/Layout';
@@ -119,6 +122,9 @@ export const AppRoutes = () => {
           <Route path="configuracion/notificaciones" element={<ProtectedRoute adminOnly><Settings section="notifications" /></ProtectedRoute>} />
           <Route path="configuracion/facturacion" element={<ProtectedRoute adminOnly><Settings section="billing" /></ProtectedRoute>} />
           <Route path="configuracion/integraciones" element={<ProtectedRoute adminOnly><Settings section="integrations" /></ProtectedRoute>} />
+          <Route path="logs" element={<ProtectedRoute adminOnly><Logs /></ProtectedRoute>} />
+          <Route path="auditoria" element={<ProtectedRoute adminOnly><AuditLogs /></ProtectedRoute>} />
+          <Route path="monitoreo" element={<ProtectedRoute adminOnly><Monitoring /></ProtectedRoute>} />
         </Route>
       </Routes>
 
@@ -131,6 +137,7 @@ export const AppRoutes = () => {
             color: isDarkMode ? '#f3f4f6' : '#111827',
             borderRadius: '12px',
             boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+            zIndex: 200000,
           },
           success: {
             iconTheme: {

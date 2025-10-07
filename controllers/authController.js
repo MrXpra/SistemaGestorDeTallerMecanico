@@ -11,6 +11,8 @@
 
 import User from '../models/User.js';
 import { generateToken } from '../middleware/authMiddleware.js';
+import LogService from '../services/logService.js';
+import AuditLogService from '../services/auditLogService.js';
 
 /**
  * LOGIN - Autenticar usuario y obtener token JWT
@@ -55,11 +57,48 @@ export const login = async (req, res) => {
     const isMatch = await user.comparePassword(password);
 
     if (!isMatch) {
+      // Log técnico de intento fallido
+      await LogService.logAuth('login', { username: email }, req, false, {
+        reason: 'Contraseña incorrecta'
+      });
+      
+      // Log de auditoría de intento fallido
+      await AuditLogService.logAuth({
+        user: null,
+        action: 'Intento de Inicio de Sesión Fallido',
+        description: `Intento fallido de inicio de sesión con el email: ${email}`,
+        metadata: {
+          attemptedUsername: email,
+          reason: 'Contraseña incorrecta'
+        },
+        req,
+        result: 'failed'
+      });
+      
       return res.status(401).json({ message: 'Credenciales inválidas' });
     }
 
     // Generar token JWT válido por 30 días
     const token = generateToken(user._id);
+
+    // Log técnico de login exitoso
+    await LogService.logAuth('login', user, req, true, {
+      email: user.email,
+      role: user.role
+    });
+
+    // Log de auditoría de login exitoso
+    await AuditLogService.logAuth({
+      user,
+      action: 'Inicio de Sesión Exitoso',
+      description: `${user.name} (${user.email}) inició sesión exitosamente`,
+      metadata: {
+        email: user.email,
+        role: user.role
+      },
+      req,
+      result: 'success'
+    });
 
     // Devolver datos del usuario (sin password) y token
     res.json({
@@ -71,6 +110,16 @@ export const login = async (req, res) => {
     });
   } catch (error) {
     console.error('Error en login:', error);
+    
+    // Log de error en login
+    await LogService.logError({
+      module: 'auth',
+      action: 'login',
+      message: `Error en login: ${error.message}`,
+      error,
+      req
+    });
+    
     res.status(500).json({ message: 'Error en el servidor', error: error.message });
   }
 };

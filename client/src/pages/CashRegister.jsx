@@ -75,6 +75,7 @@ import {
   CheckCircle,
   AlertCircle,
 } from 'lucide-react';
+import { createPortal } from 'react-dom';
 
 const CashRegister = () => {
   const [sales, setSales] = useState([]);
@@ -645,9 +646,9 @@ const SaleDetailModal = ({ sale, onClose, formatCurrency, formatDate, formatTime
     return () => window.removeEventListener('keydown', handleEscape);
   }, [onClose]);
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="glass-strong rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+  return createPortal(
+    <div className="fixed inset-0 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" style={{ zIndex: 100000 }}>
+      <div className="glass-strong rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <div className="flex justify-between items-start mb-6">
           <div>
             <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -764,7 +765,8 @@ const SaleDetailModal = ({ sale, onClose, formatCurrency, formatDate, formatTime
           Cerrar
         </button>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
@@ -1052,9 +1054,9 @@ const CashClosingModal = ({ summary, onClose, onConfirm, formatCurrency }) => {
     return 'Sin diferencia';
   };
 
-  return (
-    <div className="fixed inset-0 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" style={{ zIndex: 9999 }}>
-      <div className="glass-strong rounded-2xl p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+  return createPortal(
+    <div className="fixed inset-0 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" style={{ zIndex: 100000 }}>
+      <div className="glass-strong rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
             <CheckCircle className="w-7 h-7 text-primary-600" />
@@ -1246,7 +1248,8 @@ const CashClosingModal = ({ summary, onClose, onConfirm, formatCurrency }) => {
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

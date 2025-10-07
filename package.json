@@ -13,7 +13,10 @@
     "reset-db": "node scripts/resetDatabase.js",
     "client": "npm start --prefix client",
     "server": "nodemon server.js",
-    "build": "npm install && npm install --prefix client && npm run build --prefix client"
+    "build": "npm install && npm install --prefix client && npm run build --prefix client",
+    "release:patch": "powershell -ExecutionPolicy Bypass -File ./scripts/release.ps1 -Type patch",
+    "release:minor": "powershell -ExecutionPolicy Bypass -File ./scripts/release.ps1 -Type minor",
+    "release:major": "powershell -ExecutionPolicy Bypass -File ./scripts/release.ps1 -Type major"
   },
   "keywords": [
     "pos",
@@ -31,7 +34,8 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.0.0",
     "node-fetch": "^3.3.2",
-    "nodemailer": "^7.0.7"
+    "nodemailer": "^7.0.7",
+    "pdfkit": "^0.17.2"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"

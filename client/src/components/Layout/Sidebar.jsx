@@ -52,6 +52,8 @@ import {
   Bell,
   CreditCard,
   Cloud,
+  Activity,
+  Shield,
 } from 'lucide-react';
 
 const Sidebar = () => {
@@ -78,6 +80,11 @@ const Sidebar = () => {
   const [cajaExpanded, setCajaExpanded] = useState(
     location.pathname.includes('/cierre-caja') || 
     location.pathname.includes('/retiros-caja')
+  );
+  const [sistemaExpanded, setSistemaExpanded] = useState(
+    location.pathname.includes('/logs') || 
+    location.pathname.includes('/auditoria') || 
+    location.pathname.includes('/monitoreo')
   );
 
   // Secciones principales sin subsecciones
@@ -108,6 +115,13 @@ const Sidebar = () => {
   const cajaSections = [
     { path: '/cierre-caja', icon: DollarSign, label: 'Cierre de Caja' },
     { path: '/retiros-caja', icon: Receipt, label: 'Retiros de Caja' },
+  ];
+
+  // Subsecciones de Sistema (Logs y Monitoreo)
+  const sistemaSections = [
+    { path: '/logs', icon: Activity, label: 'Logs Técnicos' },
+    { path: '/auditoria', icon: Shield, label: 'Auditoría de Usuario' },
+    { path: '/monitoreo', icon: Activity, label: 'Monitoreo en Tiempo Real' },
   ];
 
   // Secciones administrativas (solo para administradores)
@@ -398,8 +412,52 @@ const Sidebar = () => {
                   )}
                 </NavLink>
               ))}
-              
-              
+
+              {/* Sistema (Logs y Monitoreo) con subsecciones */}
+              <div>
+                <button
+                  onClick={() => setSistemaExpanded(!sistemaExpanded)}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                    location.pathname.includes('/logs') ||
+                    location.pathname.includes('/auditoria') ||
+                    location.pathname.includes('/monitoreo')
+                      ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/30'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  <Activity className="w-5 h-5" />
+                  <span className="font-medium flex-1 text-left">Sistema</span>
+                  {sistemaExpanded ? (
+                    <ChevronDown className="w-4 h-4" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4" />
+                  )}
+                </button>
+                
+                {/* Subsecciones de Sistema */}
+                {sistemaExpanded && (
+                  <div className="mt-1 ml-4 space-y-1 animate-fade-in">
+                    {sistemaSections.map((section) => (
+                      <NavLink
+                        key={section.path}
+                        to={section.path}
+                        className={({ isActive }) =>
+                          `flex items-center justify-between gap-3 px-4 py-2 rounded-lg transition-all duration-200 text-sm ${
+                            isActive
+                              ? 'bg-primary-500/20 text-primary-700 dark:text-primary-300 font-medium'
+                              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                          }`
+                        }
+                      >
+                        <div className="flex items-center gap-3">
+                          <section.icon className="w-4 h-4" />
+                          <span>{section.label}</span>
+                        </div>
+                      </NavLink>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               {/* Configuración con subsecciones */}
               <div>

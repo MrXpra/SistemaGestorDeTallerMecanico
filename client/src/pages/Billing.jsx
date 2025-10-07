@@ -61,6 +61,7 @@
  */
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useCartStore } from '../store/cartStore';
 import {
   getProducts,
@@ -1104,9 +1105,9 @@ const PaymentModal = ({
     setGlobalDiscountAmount((value / 100) * currentTotal);
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="glass-strong rounded-2xl p-6 w-full max-w-md animate-scale-in">
+  return createPortal(
+    <div className="fixed inset-0 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" style={{ zIndex: 100000 }}>
+      <div className="glass-strong rounded-2xl p-6 w-full max-w-md animate-scale-in" onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-xl font-bold text-gray-900 dark:text-white">
             Completar Venta
@@ -1274,7 +1275,8 @@ const PaymentModal = ({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
@@ -1372,9 +1374,9 @@ const CustomerModal = ({ onSelect, onClose }) => {
     return () => clearTimeout(delayDebounce);
   }, [searchTerm]);
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="glass-strong rounded-2xl p-6 w-full max-w-2xl max-h-[80vh] flex flex-col animate-scale-in">
+  return createPortal(
+    <div className="fixed inset-0 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" style={{ zIndex: 100000 }}>
+      <div className="glass-strong rounded-2xl p-6 w-full max-w-2xl max-h-[80vh] flex flex-col animate-scale-in" onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-xl font-bold text-gray-900 dark:text-white">
             {showNewCustomer ? 'Nuevo Cliente' : 'Seleccionar Cliente'}
@@ -1534,7 +1536,8 @@ const CustomerModal = ({ onSelect, onClose }) => {
           </>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
@@ -1547,9 +1550,9 @@ const PrintConfirmationModal = ({ sale, onPrint, onClose }) => {
     }).format(value);
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="glass-strong rounded-2xl p-6 w-full max-w-md animate-scale-in">
+  return createPortal(
+    <div className="fixed inset-0 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" style={{ zIndex: 100000 }}>
+      <div className="glass-strong rounded-2xl p-6 w-full max-w-md animate-scale-in" onClick={(e) => e.stopPropagation()}>
         <div className="text-center mb-6">
           <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
             <Check className="w-8 h-8 text-green-600 dark:text-green-400" />
@@ -1598,7 +1601,8 @@ const PrintConfirmationModal = ({ sale, onPrint, onClose }) => {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

@@ -44,6 +44,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { getSuppliers, createSupplier, updateSupplier, deleteSupplier } from '../services/api';
 import toast from 'react-hot-toast';
 import { TableSkeleton } from '../components/SkeletonLoader';
@@ -351,10 +352,11 @@ const Suppliers = () => {
       )}
 
       {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="glass-strong rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col my-4">
-            <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center flex-shrink-0">
+      {showModal && createPortal(
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" style={{ zIndex: 100000 }}>
+          <div className="glass-strong rounded-2xl max-w-2xl w-full max-h-[90vh] min-h-[400px] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center flex-shrink-0">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                 {editingSupplier ? 'Editar Proveedor' : 'Nuevo Proveedor'}
               </h2>
@@ -366,7 +368,8 @@ const Suppliers = () => {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1">
+            {/* Scrollable Content */}
+            <div className="p-6 pb-4 space-y-4 overflow-y-auto flex-1">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -487,23 +490,28 @@ const Suppliers = () => {
                   />
                 </div>
               </div>
+            </div>
 
-              <div className="flex gap-3 pt-4 sticky bottom-0 bg-white dark:bg-gray-800 pb-2">
-                <button type="submit" className="btn btn-primary flex-1 flex items-center justify-center gap-2">
-                  <Save className="w-5 h-5" />
-                  {editingSupplier ? 'Actualizar' : 'Guardar'}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleCloseModal}
-                  className="btn btn-secondary flex-1"
-                >
-                  Cancelar
-                </button>
-              </div>
-            </form>
+            {/* Footer with Actions */}
+            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex gap-3 flex-shrink-0 shadow-lg">
+              <button 
+                onClick={handleSubmit}
+                className="btn btn-primary flex-1 flex items-center justify-center gap-2"
+              >
+                <Save className="w-5 h-5" />
+                {editingSupplier ? 'Actualizar' : 'Guardar'}
+              </button>
+              <button
+                type="button"
+                onClick={handleCloseModal}
+                className="btn btn-secondary flex-1"
+              >
+                Cancelar
+              </button>
+            </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

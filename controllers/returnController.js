@@ -71,7 +71,7 @@ export const createReturn = async (req, res) => {
   session.startTransaction();
 
   try {
-    const { saleId, items, reason, notes, refundMethod } = req.body;
+    const { saleId, items, reason, notes, refundMethod, exchangeItems, priceDifference } = req.body;
 
     // Validar que la venta existe
     const sale = await Sale.findById(saleId).populate('items.product').session(session);
@@ -94,7 +94,15 @@ export const createReturn = async (req, res) => {
       // Buscar el producto en la venta original
       const saleItem = sale.items.find(
         si => {
-          const productId = si.product?._id || si.product;
+          // Manejar caso donde product puede ser null, undefined, o un objeto
+          if (!si.product) return false;
+          
+          const productId = typeof si.product === 'object' 
+            ? si.product._id 
+            : si.product;
+          
+          if (!productId) return false;
+          
           return productId.toString() === item.productId.toString();
         }
       );
@@ -102,7 +110,7 @@ export const createReturn = async (req, res) => {
       if (!saleItem) {
         await session.abortTransaction();
         return res.status(400).json({ 
-          message: `El producto ${item.productId} no está en la venta original` 
+          message: `El producto ${item.productId} no está en la venta original o ha sido eliminado del sistema` 
         });
       }
 
@@ -131,22 +139,69 @@ export const createReturn = async (req, res) => {
 
       totalAmount += returnAmount;
 
-      // Devolver productos al inventario
-      if (isDefective) {
-        // Si es defectuoso, va a stock defectuoso
-        await Product.findByIdAndUpdate(
-          item.productId,
-          { $inc: { defectiveStock: item.quantity } },
-          { session }
-        );
+      // Devolver productos al inventario (solo si el producto existe)
+      const productExists = await Product.findById(item.productId).session(session);
+      
+      if (productExists) {
+        if (isDefective) {
+          // Si es defectuoso, va a stock defectuoso
+          await Product.findByIdAndUpdate(
+            item.productId,
+            { $inc: { defectiveStock: item.quantity } },
+            { session }
+          );
+        } else {
+          // Si no es defectuoso, va a stock normal
+          await Product.findByIdAndUpdate(
+            item.productId,
+            { $inc: { stock: item.quantity } },
+            { session }
+          );
+        }
       } else {
-        // Si no es defectuoso, va a stock normal
+        console.warn(`⚠️ Producto ${item.productId} no existe en la base de datos. No se puede devolver al inventario.`);
+      }
+    }
+
+    // Procesar cambio si la razón es "Cambio"
+    let exchangeData = null;
+    if (reason === 'Cambio' && exchangeItems && exchangeItems.length > 0) {
+      // Validar que los productos de cambio tengan stock
+      for (const exchangeItem of exchangeItems) {
+        const product = await Product.findById(exchangeItem.productId).session(session);
+        if (!product) {
+          await session.abortTransaction();
+          return res.status(400).json({ 
+            message: `Producto de cambio ${exchangeItem.productId} no encontrado` 
+          });
+        }
+        if (product.stock < exchangeItem.quantity) {
+          await session.abortTransaction();
+          return res.status(400).json({ 
+            message: `No hay suficiente stock de ${product.name}. Disponible: ${product.stock}` 
+          });
+        }
+
+        // Reducir el stock del producto de cambio
         await Product.findByIdAndUpdate(
-          item.productId,
-          { $inc: { stock: item.quantity } },
+          exchangeItem.productId,
+          { $inc: { stock: -exchangeItem.quantity } },
           { session }
         );
       }
+
+      // Guardar información del cambio
+      exchangeData = {
+        items: exchangeItems.map(item => ({
+          product: item.productId,
+          quantity: item.quantity,
+          price: item.price,
+        })),
+        priceDifference: priceDifference || 0,
+      };
+
+      // Si hay diferencia de precio positiva (cliente debe pagar), ajustar el refundMethod
+      // Si hay diferencia negativa (se devuelve al cliente), mantener el refundMethod
     }
 
     // Crear la devolución
@@ -157,9 +212,11 @@ export const createReturn = async (req, res) => {
       reason,
       notes,
       totalAmount,
-      refundMethod,
+      refundMethod: reason === 'Cambio' ? 'Cambio' : refundMethod,
       processedBy: req.user._id,
       status: 'Completada', // Auto-aprobar o cambiar según reglas de negocio
+      exchangeItems: exchangeData ? exchangeData.items : undefined,
+      priceDifference: exchangeData ? exchangeData.priceDifference : undefined,
     });
 
     await newReturn.save({ session });
@@ -168,7 +225,7 @@ export const createReturn = async (req, res) => {
     const totalSaleItems = sale.items.reduce((sum, item) => sum + item.quantity, 0);
     const totalReturnItems = returnItems.reduce((sum, item) => sum + item.quantity, 0);
 
-    if (totalSaleItems === totalReturnItems) {
+    if (totalSaleItems === totalReturnItems && reason !== 'Cambio') {
       sale.status = 'Devuelta';
       await sale.save({ session });
     }

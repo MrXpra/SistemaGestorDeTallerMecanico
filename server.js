@@ -32,9 +32,15 @@ import purchaseOrderRoutes from './routes/purchaseOrderRoutes.js'; // Órdenes d
 import proxyRoutes from './routes/proxyRoutes.js'; // Proxy para APIs externas (clima, etc)
 import returnRoutes from './routes/returnRoutes.js'; // Devoluciones de productos
 import cashWithdrawalRoutes from './routes/cashWithdrawalRoutes.js'; // Retiros de caja
+import logRoutes from './routes/logRoutes.js'; // Sistema de logs técnicos
+import auditLogRoutes from './routes/auditLogRoutes.js'; // Sistema de auditoría de usuario
 
 // Importar middleware de manejo de errores global
 import { errorHandler } from './middleware/errorMiddleware.js';
+// Importar middleware de logging
+import { requestLogger, errorLogger } from './middleware/logMiddleware.js';
+// Importar middleware de monitoreo de rendimiento
+import { performanceMonitor } from './middleware/performanceMiddleware.js';
 
 // ========== CONFIGURACIÓN INICIAL ==========
 // Configurar __dirname para ES modules (necesario porque usamos "type": "module")
@@ -88,6 +94,13 @@ app.use(express.json());
 // Parser de URL-encoded: Para formularios HTML tradicionales
 app.use(express.urlencoded({ extended: true }));
 
+// ========== MIDDLEWARE DE LOGGING Y MONITOREO ==========
+// Monitoreo de rendimiento (debe ir primero para medir todo)
+app.use(performanceMonitor);
+
+// Registrar todas las peticiones HTTP
+app.use(requestLogger);
+
 // ========== REGISTRO DE RUTAS API ==========
 // Cada ruta tiene su prefijo y se delega a su archivo de rutas correspondiente
 app.use('/api/auth', authRoutes); // /api/auth/login, /api/auth/register, etc
@@ -102,6 +115,8 @@ app.use('/api/purchase-orders', purchaseOrderRoutes); // /api/purchase-orders
 app.use('/api/proxy', proxyRoutes); // /api/proxy/weather (proxy APIs externas)
 app.use('/api/returns', returnRoutes); // /api/returns (devoluciones)
 app.use('/api/cash-withdrawals', cashWithdrawalRoutes); // /api/cash-withdrawals
+app.use('/api/logs', logRoutes); // /api/logs (logs técnicos del sistema)
+app.use('/api/audit-logs', auditLogRoutes); // /api/audit-logs (auditoría de usuario)
 
 // ========== SERVIR FRONTEND EN PRODUCCIÓN ==========
 // En producción, Express sirve los archivos estáticos del build de React
@@ -120,6 +135,9 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 // ========== MIDDLEWARE DE ERRORES ==========
+// Logger de errores (debe ir ANTES del errorHandler)
+app.use(errorLogger);
+
 // Este middleware captura cualquier error que ocurra en las rutas
 // Debe estar DESPUÉS de todas las rutas para que pueda interceptar sus errores
 app.use(errorHandler);
@@ -131,3 +149,4 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
 });
+

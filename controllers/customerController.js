@@ -6,9 +6,14 @@ import Sale from '../models/Sale.js';
 // @access  Private
 export const getCustomers = async (req, res) => {
   try {
-    const { search } = req.query;
+    const { search, includeArchived } = req.query;
     
     let query = {};
+
+    // Excluir archivados por defecto
+    if (includeArchived !== 'true') {
+      query.isArchived = { $ne: true };
+    }
 
     // Búsqueda por nombre, cédula, teléfono o email
     if (search) {
@@ -157,18 +162,35 @@ export const deleteCustomer = async (req, res) => {
       return res.status(404).json({ message: 'Cliente no encontrado' });
     }
 
-    // Verificar si el cliente tiene ventas asociadas
-    const salesCount = await Sale.countDocuments({ customer: customer._id });
+    // Verificar si el cliente tiene ventas asociadas (excluyendo canceladas)
+    const activeSalesCount = await Sale.countDocuments({ 
+      customer: customer._id,
+      status: { $ne: 'Cancelada' }
+    });
 
-    if (salesCount > 0) {
-      return res.status(400).json({ 
-        message: 'No se puede eliminar el cliente porque tiene ventas asociadas' 
+    if (activeSalesCount > 0) {
+      // Soft delete: archivar el cliente si tiene ventas activas
+      customer.isArchived = true;
+      await customer.save();
+      
+      console.log(`Cliente ${customer._id} archivado (tiene ${activeSalesCount} ventas activas)`);
+      
+      return res.json({ 
+        message: `Cliente archivado correctamente. Mantiene ${activeSalesCount} ventas asociadas.`,
+        archived: true,
+        referencesCount: activeSalesCount
       });
     }
 
+    // Hard delete: eliminar permanentemente si no tiene ventas activas
     await Customer.findByIdAndDelete(req.params.id);
+    
+    console.log(`Cliente ${customer._id} eliminado permanentemente (sin ventas activas)`);
 
-    res.json({ message: 'Cliente eliminado exitosamente' });
+    res.json({ 
+      message: 'Cliente eliminado exitosamente',
+      archived: false
+    });
   } catch (error) {
     console.error('Error al eliminar cliente:', error);
     res.status(500).json({ message: 'Error al eliminar cliente', error: error.message });

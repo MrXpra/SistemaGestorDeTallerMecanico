@@ -8,9 +8,24 @@ export const getSettings = async (req, res) => {
   try {
     const settings = await Settings.getInstance();
     
-    // No enviar la contraseña SMTP en la respuesta
+    // Convertir a objeto y asegurar que smtp existe
     const settingsObj = settings.toObject();
-    if (settingsObj.smtp && settingsObj.smtp.password) {
+    
+    // Asegurar que smtp existe con estructura completa
+    if (!settingsObj.smtp) {
+      settingsObj.smtp = {
+        host: 'smtp.gmail.com',
+        port: 587,
+        secure: false,
+        user: '',
+        password: '',
+        fromName: 'AutoParts Manager',
+        fromEmail: ''
+      };
+    }
+    
+    // No enviar la contraseña SMTP en la respuesta (por seguridad)
+    if (settingsObj.smtp.password) {
       settingsObj.smtp.password = ''; // Ocultar password
     }
     
@@ -28,10 +43,26 @@ export const updateSettings = async (req, res) => {
   try {
     let settings = await Settings.getInstance();
 
-    // Actualizar campos (excepto smtp que tiene su propia ruta)
+    // Actualizar campos
     Object.keys(req.body).forEach(key => {
-      if (req.body[key] !== undefined && key !== 'smtp') {
-        settings[key] = req.body[key];
+      if (req.body[key] !== undefined) {
+        // Para smtp, hacer merge de objetos en lugar de reemplazar
+        if (key === 'smtp' && typeof req.body[key] === 'object') {
+          if (!settings.smtp) {
+            settings.smtp = {};
+          }
+          // Solo actualizar campos SMTP que no estén vacíos
+          Object.keys(req.body[key]).forEach(smtpKey => {
+            const value = req.body[key][smtpKey];
+            // No sobrescribir password si viene vacío (es por seguridad del frontend)
+            if (smtpKey === 'password' && value === '') {
+              return;
+            }
+            settings.smtp[smtpKey] = value;
+          });
+        } else {
+          settings[key] = req.body[key];
+        }
       }
     });
 

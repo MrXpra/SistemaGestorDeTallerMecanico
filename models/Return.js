@@ -90,7 +90,7 @@ const returnSchema = new mongoose.Schema({
   refundMethod: {
     type: String,
     required: true,
-    enum: ['Efectivo', 'Tarjeta', 'Crédito en Tienda'],
+    enum: ['Efectivo', 'Tarjeta', 'Crédito en Tienda', 'Cambio'],
   },
   
   // Estado de la devolución
@@ -111,6 +111,27 @@ const returnSchema = new mongoose.Schema({
   approvedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
+  },
+
+  // Productos de cambio (solo si reason === 'Cambio')
+  exchangeItems: [{
+    product: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Product',
+    },
+    quantity: {
+      type: Number,
+      min: 1,
+    },
+    price: {
+      type: Number,
+    },
+  }],
+
+  // Diferencia de precio en el cambio (positivo = cliente paga, negativo = se devuelve)
+  priceDifference: {
+    type: Number,
+    default: 0,
   },
 }, {
   timestamps: true, // Agrega createdAt y updatedAt

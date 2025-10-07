@@ -165,6 +165,7 @@ export const createPurchaseOrder = (data) => API.post('/purchase-orders', data);
 export const generateAutoPurchaseOrder = (data) => API.post('/purchase-orders/generate-auto', data); // Generar orden automática por stock bajo
 export const updatePurchaseOrder = (id, data) => API.put(`/purchase-orders/${id}`, data); // Actualizar orden
 export const updateOrderStatus = (id, data) => API.put(`/purchase-orders/${id}/status`, data); // Cambiar status (pendiente/recibida/cancelada)
+export const sendPurchaseOrderEmail = (id) => API.post(`/purchase-orders/${id}/send`); // Enviar orden por email al proveedor
 export const deletePurchaseOrder = (id) => API.delete(`/purchase-orders/${id}`); // Eliminar orden
 
 // ===== RETURNS - Devoluciones de productos =====

@@ -71,6 +71,13 @@ const supplierSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
+  
+  // Indica si el proveedor está archivado (soft delete)
+  // Diferente de isActive: isActive = deshabilitado temporalmente, isArchived = eliminado lógicamente
+  isArchived: {
+    type: Boolean,
+    default: false,
+  },
 }, {
   timestamps: true, // Agrega createdAt y updatedAt automáticamente
 });

@@ -44,6 +44,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { getProducts, createProduct, updateProduct, deleteProduct, getSuppliers } from '../services/api';
 import { useSettingsStore } from '../store/settingsStore';
@@ -773,9 +774,9 @@ const ProductModal = ({ product, onSave, onClose, categories, brands, allProduct
 
   const { profit, profitMargin } = calculateProfit();
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="glass-strong rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+  return createPortal(
+    <div className="fixed inset-0 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" style={{ zIndex: 100000 }}>
+      <div className="glass-strong rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-3">
             <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -1100,7 +1101,8 @@ const ProductModal = ({ product, onSave, onClose, categories, brands, allProduct
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

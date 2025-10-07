@@ -115,6 +115,12 @@ const productSchema = new mongoose.Schema({
     default: '/placeholder-product.png' // Imagen por defecto
   },
   
+  // Indica si el producto está archivado (soft delete)
+  isArchived: {
+    type: Boolean,
+    default: false
+  },
+  
   // Fecha de creación
   createdAt: {
     type: Date,

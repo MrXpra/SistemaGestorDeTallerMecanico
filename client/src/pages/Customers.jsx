@@ -69,6 +69,7 @@ import {
   DollarSign,
   Info,
 } from 'lucide-react';
+import { createPortal } from 'react-dom';
 
 const Customers = () => {
   const [customers, setCustomers] = useState([]);
@@ -589,9 +590,9 @@ const CustomerModal = ({ customer, onSave, onClose }) => {
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="glass-strong rounded-2xl p-6 w-full max-w-md">
+  return createPortal(
+    <div className="fixed inset-0 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" style={{ zIndex: 100000 }}>
+      <div className="glass-strong rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
             {customer ? 'Editar Cliente' : 'Nuevo Cliente'}
@@ -700,15 +701,16 @@ const CustomerModal = ({ customer, onSave, onClose }) => {
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
 // Customer Detail Modal Component
 const CustomerDetailModal = ({ customer, sales, onClose, onEdit, formatCurrency, formatDate }) => {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm overflow-y-auto">
-      <div className="glass-strong rounded-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto my-8">
+  return createPortal(
+    <div className="fixed inset-0 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm overflow-y-auto" style={{ zIndex: 100000 }}>
+      <div className="glass-strong rounded-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto my-8" onClick={e => e.stopPropagation()}>
         <div className="flex justify-between items-start mb-6">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
@@ -869,7 +871,8 @@ const CustomerDetailModal = ({ customer, sales, onClose, onEdit, formatCurrency,
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

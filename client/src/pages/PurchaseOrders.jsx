@@ -52,6 +52,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useLocation } from 'react-router-dom';
 import {
   getPurchaseOrders,
@@ -59,6 +60,7 @@ import {
   generateAutoPurchaseOrder,
   updatePurchaseOrder,
   updateOrderStatus,
+  sendPurchaseOrderEmail,
   deletePurchaseOrder,
   getSuppliers,
   getProducts,
@@ -86,6 +88,7 @@ import {
   Trash2,
   AlertTriangle,
   Send,
+  Mail,
 } from 'lucide-react';
 
 const PurchaseOrders = () => {
@@ -106,6 +109,12 @@ const PurchaseOrders = () => {
   const [editingOrder, setEditingOrder] = useState(null);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [receivingOrder, setReceivingOrder] = useState(null);
+  
+  // Estados para modales de confirmación
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [orderToDelete, setOrderToDelete] = useState(null);
+  const [orderToEmail, setOrderToEmail] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -134,6 +143,14 @@ const PurchaseOrders = () => {
         if (showReceiveModal) {
           setShowReceiveModal(false);
           setReceivingOrder(null);
+        }
+        if (showDeleteModal) {
+          setShowDeleteModal(false);
+          setOrderToDelete(null);
+        }
+        if (showEmailModal) {
+          setShowEmailModal(false);
+          setOrderToEmail(null);
         }
         if (selectedOrder) setSelectedOrder(null);
       }
@@ -297,18 +314,53 @@ const PurchaseOrders = () => {
     setShowEditModal(true);
   };
 
-  const handleDeleteOrder = async (orderId) => {
-    if (!window.confirm('¿Está seguro de eliminar esta orden de compra? Esta acción no se puede deshacer.')) {
-      return;
-    }
+  const handleDeleteOrder = (order) => {
+    setOrderToDelete(order);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!orderToDelete) return;
 
     try {
-      await deletePurchaseOrder(orderId);
+      await deletePurchaseOrder(orderToDelete._id);
       toast.success('Orden eliminada correctamente');
+      setShowDeleteModal(false);
+      setOrderToDelete(null);
       fetchData();
     } catch (error) {
       console.error('Error al eliminar orden:', error);
       toast.error(error.response?.data?.message || 'Error al eliminar orden');
+    }
+  };
+
+  const handleSendEmail = (order) => {
+    // Validar que el proveedor tenga email
+    if (!order.supplier?.email) {
+      toast.error('El proveedor no tiene email configurado. Por favor, actualiza los datos del proveedor.');
+      return;
+    }
+
+    setOrderToEmail(order);
+    setShowEmailModal(true);
+  };
+
+  const confirmSendEmail = async () => {
+    if (!orderToEmail) return;
+
+    try {
+      setShowEmailModal(false);
+      toast.loading('Enviando email con PDF adjunto...', { id: 'sending-email' });
+      const response = await sendPurchaseOrderEmail(orderToEmail._id);
+      toast.dismiss('sending-email');
+      toast.success(response.data.message || `Email enviado a ${orderToEmail.supplier.email}`);
+      setOrderToEmail(null);
+      fetchData(); // Recargar para actualizar el campo emailSent
+    } catch (error) {
+      console.error('Error al enviar email:', error);
+      toast.dismiss('sending-email');
+      toast.error(error.response?.data?.message || 'Error al enviar email');
+      setOrderToEmail(null);
     }
   };
 
@@ -645,6 +697,15 @@ const PurchaseOrders = () => {
                     <Printer className="w-4 h-4" />
                   </button>
                   <button
+                    onClick={() => handleSendEmail(order)}
+                    className={`btn btn-sm ${order.emailSent ? 'btn-success' : 'btn-primary'} flex items-center gap-1.5`}
+                    title={order.emailSent ? `Email enviado el ${new Date(order.emailSentDate).toLocaleDateString()}` : 'Enviar orden por email al proveedor'}
+                    disabled={!order.supplier?.email}
+                  >
+                    <Mail className="w-4 h-4" />
+                    {order.emailSent ? 'Reenviar' : 'Enviar Email'}
+                  </button>
+                  <button
                     onClick={() => setSelectedOrder(order)}
                     className="btn btn-sm btn-secondary"
                     title="Ver detalles"
@@ -661,7 +722,7 @@ const PurchaseOrders = () => {
                         <Edit className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => handleDeleteOrder(order._id)}
+                        onClick={() => handleDeleteOrder(order)}
                         className="btn btn-sm bg-red-600 hover:bg-red-700 text-white"
                         title="Eliminar orden"
                       >
@@ -845,6 +906,167 @@ const PurchaseOrders = () => {
           onConfirm={handleConfirmReceive}
         />
       )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && orderToDelete && createPortal(
+        <div 
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" 
+          style={{ zIndex: 100000 }}
+          onClick={() => {
+            setShowDeleteModal(false);
+            setOrderToDelete(null);
+          }}
+        >
+          <div 
+            className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6 animate-scale-in" 
+            style={{ backgroundColor: 'white', color: '#111827' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Icon */}
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                <AlertTriangle className="w-8 h-8 text-red-600 dark:text-red-400" />
+              </div>
+            </div>
+
+            {/* Title */}
+            <h3 className="text-xl font-bold text-center mb-2" style={{ color: '#111827' }}>
+              ¿Eliminar Orden de Compra?
+            </h3>
+
+            {/* Message */}
+            <div className="space-y-3 mb-6">
+              <p className="text-center" style={{ color: '#4B5563' }}>
+                Estás a punto de eliminar la orden de compra:
+              </p>
+              <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                <p className="font-semibold text-center" style={{ color: '#111827' }}>
+                  #{orderToDelete.orderNumber}
+                </p>
+                <p className="text-sm text-center mt-1" style={{ color: '#6B7280' }}>
+                  Proveedor: {orderToDelete.supplier?.name}
+                </p>
+                <p className="text-sm text-center" style={{ color: '#6B7280' }}>
+                  Total: ${orderToDelete.total?.toFixed(2)}
+                </p>
+              </div>
+              <p className="text-sm text-center font-medium" style={{ color: '#DC2626' }}>
+                ⚠️ Esta acción no se puede deshacer
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setOrderToDelete(null);
+                }}
+                className="btn btn-secondary flex-1"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="btn bg-red-600 hover:bg-red-700 text-white flex-1 flex items-center justify-center gap-2"
+              >
+                <Trash2 className="w-4 h-4" />
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Email Confirmation Modal */}
+      {showEmailModal && orderToEmail && createPortal(
+        <div 
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" 
+          style={{ zIndex: 100000 }}
+          onClick={() => {
+            setShowEmailModal(false);
+            setOrderToEmail(null);
+          }}
+        >
+          <div 
+            className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6 animate-scale-in" 
+            style={{ backgroundColor: 'white', color: '#111827' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Icon */}
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                <Mail className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+              </div>
+            </div>
+
+            {/* Title */}
+            <h3 className="text-xl font-bold text-center mb-2" style={{ color: '#111827' }}>
+              {orderToEmail.emailSent ? '¿Reenviar Orden por Email?' : '¿Enviar Orden por Email?'}
+            </h3>
+
+            {/* Message */}
+            <div className="space-y-3 mb-6">
+              <p className="text-center" style={{ color: '#4B5563' }}>
+                {orderToEmail.emailSent 
+                  ? 'Esta orden ya fue enviada anteriormente. ¿Deseas reenviarla?'
+                  : 'Se enviará la orden de compra al proveedor por email:'
+                }
+              </p>
+              <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                <p className="font-semibold text-center" style={{ color: '#111827' }}>
+                  #{orderToEmail.orderNumber}
+                </p>
+                <p className="text-sm text-center mt-2" style={{ color: '#6B7280' }}>
+                  <strong>Proveedor:</strong> {orderToEmail.supplier?.name}
+                </p>
+                <p className="text-sm text-center font-medium" style={{ color: '#2563EB' }}>
+                  📧 {orderToEmail.supplier?.email}
+                </p>
+                <p className="text-sm text-center mt-2" style={{ color: '#6B7280' }}>
+                  Total: ${orderToEmail.total?.toFixed(2)}
+                </p>
+              </div>
+              {orderToEmail.emailSent && orderToEmail.emailSentDate && (
+                <p className="text-xs text-center" style={{ color: '#9CA3AF' }}>
+                  Último envío: {new Date(orderToEmail.emailSentDate).toLocaleString('es-DO')}
+                </p>
+              )}
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                <p className="text-sm text-center" style={{ color: '#1E3A8A' }}>
+                  <strong>📎 Se incluirá:</strong>
+                </p>
+                <ul className="text-xs mt-2 space-y-1" style={{ color: '#1E40AF', listStyle: 'none' }}>
+                  <li className="text-center">✓ Email HTML con tabla de productos</li>
+                  <li className="text-center">✓ PDF adjunto con la orden completa</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowEmailModal(false);
+                  setOrderToEmail(null);
+                }}
+                className="btn btn-secondary flex-1"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmSendEmail}
+                className="btn btn-primary flex-1 flex items-center justify-center gap-2"
+              >
+                <Mail className="w-4 h-4" />
+                {orderToEmail.emailSent ? 'Reenviar' : 'Enviar Email'}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 };
@@ -882,9 +1104,9 @@ const AutoOrderModal = ({ suppliers, products, onClose, onGenerate }) => {
     onGenerate(config);
   };
 
-  return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" style={{ zIndex: 9999 }}>
-      <div className="glass-strong rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+  return createPortal(
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" style={{ zIndex: 100000 }}>
+      <div className="glass-strong rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
             <Zap className="w-6 h-6 text-yellow-500" />
@@ -987,7 +1209,8 @@ const AutoOrderModal = ({ suppliers, products, onClose, onGenerate }) => {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
@@ -1184,9 +1407,9 @@ const CreateOrderModal = ({ suppliers, products, editingOrder, onClose, onSave }
     }
   };
 
-  return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-2">
-      <div className="glass-strong rounded-2xl w-full max-w-[95vw] h-[85vh] flex flex-col my-auto">
+  return createPortal(
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-2" style={{ zIndex: 100000 }}>
+      <div className="glass-strong rounded-2xl w-full max-w-[95vw] h-[85vh] flex flex-col my-auto" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center flex-shrink-0">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
@@ -1477,14 +1700,15 @@ const CreateOrderModal = ({ suppliers, products, editingOrder, onClose, onSave }
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
 const OrderDetailsModal = ({ order, onClose }) => {
-  return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="glass-strong rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+  return createPortal(
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" style={{ zIndex: 100000 }}>
+      <div className="glass-strong rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
             Detalles de Orden {order.orderNumber}
@@ -1556,7 +1780,8 @@ const OrderDetailsModal = ({ order, onClose }) => {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
@@ -1642,9 +1867,9 @@ const ReceiveOrderModal = ({ order, onClose, onConfirm }) => {
 
   const checkedCount = Object.values(checkedItems).filter(Boolean).length;
 
-  return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="glass-strong rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+  return createPortal(
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" style={{ zIndex: 100000 }}>
+      <div className="glass-strong rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center sticky top-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm z-10">
           <div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
@@ -1863,7 +2088,8 @@ const ReceiveOrderModal = ({ order, onClose, onConfirm }) => {
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

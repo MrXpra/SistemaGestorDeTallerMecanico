@@ -6,7 +6,7 @@
  * - Ctrl/Cmd + B: Ir a Facturación
  * - Ctrl/Cmd + I: Ir a Inventario
  * - Ctrl/Cmd + H: Ir a Historial de Ventas
- * - Ctrl/Cmd + C: Ir a Clientes
+ * - Ctrl/Cmd + L: Ir a Clientes
  * - Ctrl/Cmd + R: Ir a Reportes
  * - Ctrl/Cmd + ,: Ir a Configuración
  * - Esc: Cerrar modal/diálogo
@@ -42,7 +42,7 @@ export const useKeyboardShortcuts = () => {
             event.preventDefault();
             navigate('/historial-ventas');
             break;
-          case 'c':
+          case 'l':
             event.preventDefault();
             navigate('/clientes');
             break;

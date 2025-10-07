@@ -67,6 +67,12 @@ const customerSchema = new mongoose.Schema({
     min: 0
   },
   
+  // Indica si el cliente está archivado (soft delete)
+  isArchived: {
+    type: Boolean,
+    default: false
+  },
+  
   // Fecha de registro del cliente
   createdAt: {
     type: Date,

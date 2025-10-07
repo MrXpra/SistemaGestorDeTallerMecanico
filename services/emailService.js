@@ -5,12 +5,13 @@
  * y la usa para enviar emails desde la cuenta de la empresa.
  * 
  * Funcionalidades:
- * - Órdenes de compra a proveedores
+ * - Órdenes de compra a proveedores con PDF adjunto
  * - Notificaciones a clientes
  * - Reportes automáticos
  */
 
-import nodemailer from 'nodemailer';
+import { createTransport } from 'nodemailer';
+import PDFDocument from 'pdfkit';
 import Settings from '../models/Settings.js';
 
 /**
@@ -20,22 +21,30 @@ import Settings from '../models/Settings.js';
  * @returns {Promise<{transporter: Object, settings: Object}>}
  * @throws {Error} Si no hay configuración SMTP
  */
-const createTransporter = async () => {
+const getEmailTransporter = async () => {
   // Obtener configuración de la empresa (incluye password con select: false)
   const settings = await Settings.findOne().select('+smtp.password');
   
   // Validar que existe configuración
   if (!settings) {
-    throw new Error('Configuración del sistema no encontrada. Configure el negocio primero.');
+    throw new Error('❌ Configuración del sistema no encontrada. Debe configurar los datos del negocio primero.');
   }
   
-  // Validar que existe configuración SMTP
-  if (!settings.smtp?.user || !settings.smtp?.password) {
-    throw new Error('Configuración SMTP no encontrada. Configure el email en Configuración > Email/SMTP.');
+  // Validar que existe configuración SMTP completa
+  if (!settings.smtp?.user) {
+    throw new Error('❌ No se ha configurado el correo electrónico SMTP. Vaya a Configuración > Negocio y configure el Email/SMTP.');
+  }
+  
+  if (!settings.smtp?.password) {
+    throw new Error('❌ No se ha configurado la contraseña del correo SMTP. Vaya a Configuración > Negocio y configure la contraseña de aplicación.');
+  }
+  
+  if (!settings.smtp?.host) {
+    throw new Error('❌ No se ha configurado el servidor SMTP. Vaya a Configuración > Negocio y configure el host SMTP (ej: smtp.gmail.com).');
   }
   
   // Crear transporter con configuración dinámica desde la BD
-  const transporter = nodemailer.createTransporter({
+  const transporter = createTransport({
     host: settings.smtp.host,
     port: settings.smtp.port,
     secure: settings.smtp.secure, // true para 465 (SSL), false para 587 (TLS)
@@ -52,7 +61,148 @@ const createTransporter = async () => {
 };
 
 /**
- * Enviar orden de compra por email al proveedor
+ * Generar PDF de orden de compra
+ * @param {Object} purchaseOrder - Orden de compra
+ * @param {Object} supplier - Datos del proveedor
+ * @param {Object} settings - Configuración del negocio
+ * @returns {Promise<Buffer>} Buffer del PDF generado
+ */
+const generatePurchaseOrderPDF = (purchaseOrder, supplier, settings) => {
+  return new Promise((resolve, reject) => {
+    try {
+      const doc = new PDFDocument({ margin: 50, size: 'LETTER' });
+      const chunks = [];
+
+      // Capturar el PDF en memoria
+      doc.on('data', chunk => chunks.push(chunk));
+      doc.on('end', () => resolve(Buffer.concat(chunks)));
+      doc.on('error', reject);
+
+      // Header con información del negocio
+      doc.fontSize(20).font('Helvetica-Bold').text(settings.businessName || 'AutoParts Manager', { align: 'center' });
+      doc.fontSize(10).font('Helvetica').moveDown(0.5);
+      
+      if (settings.businessAddress) {
+        doc.text(settings.businessAddress, { align: 'center' });
+      }
+      if (settings.businessPhone) {
+        doc.text(`Tel: ${settings.businessPhone}`, { align: 'center' });
+      }
+      if (settings.businessEmail) {
+        doc.text(`Email: ${settings.businessEmail}`, { align: 'center' });
+      }
+
+      doc.moveDown(1);
+      doc.fontSize(16).font('Helvetica-Bold').text('ORDEN DE COMPRA', { align: 'center' });
+      doc.fontSize(12).font('Helvetica').text(`#${purchaseOrder.orderNumber}`, { align: 'center' });
+      doc.moveDown(1);
+
+      // Línea separadora
+      doc.moveTo(50, doc.y).lineTo(562, doc.y).stroke();
+      doc.moveDown(1);
+
+      // Información del proveedor (columna izquierda) y fecha (columna derecha)
+      const startY = doc.y;
+      
+      // Proveedor
+      doc.fontSize(10).font('Helvetica-Bold').text('PROVEEDOR:', 50, startY);
+      doc.font('Helvetica').fontSize(10);
+      doc.text(supplier.name, 50, doc.y);
+      if (supplier.address) doc.text(supplier.address, 50, doc.y);
+      if (supplier.phone) doc.text(`Tel: ${supplier.phone}`, 50, doc.y);
+      if (supplier.email) doc.text(`Email: ${supplier.email}`, 50, doc.y);
+
+      // Fecha esperada (derecha)
+      const expectedDate = new Date(purchaseOrder.expectedDate).toLocaleDateString('es-DO', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      doc.fontSize(10).font('Helvetica-Bold').text('FECHA ESPERADA:', 350, startY);
+      doc.font('Helvetica').text(expectedDate, 350, doc.y);
+      
+      const createdDate = new Date(purchaseOrder.createdAt).toLocaleDateString('es-DO');
+      doc.font('Helvetica-Bold').text('FECHA EMISIÓN:', 350, doc.y + 10);
+      doc.font('Helvetica').text(createdDate, 350, doc.y);
+
+      doc.moveDown(2);
+
+      // Notas (si existen)
+      if (purchaseOrder.notes) {
+        doc.fontSize(9).font('Helvetica-Bold').text('NOTAS:', 50, doc.y);
+        doc.font('Helvetica').fontSize(9).text(purchaseOrder.notes, 50, doc.y, { width: 500 });
+        doc.moveDown(1);
+      }
+
+      // Tabla de productos
+      const tableTop = doc.y + 10;
+      const itemHeight = 25;
+
+      // Headers de la tabla
+      doc.fontSize(10).font('Helvetica-Bold');
+      doc.text('#', 50, tableTop);
+      doc.text('Producto', 80, tableTop);
+      doc.text('Cantidad', 320, tableTop, { width: 70, align: 'center' });
+      doc.text('Precio Unit.', 400, tableTop, { width: 80, align: 'right' });
+      doc.text('Total', 490, tableTop, { width: 72, align: 'right' });
+
+      // Línea debajo del header
+      doc.moveTo(50, tableTop + 15).lineTo(562, tableTop + 15).stroke();
+
+      // Items
+      doc.font('Helvetica').fontSize(9);
+      let currentY = tableTop + 20;
+
+      purchaseOrder.items.forEach((item, index) => {
+        // Si no cabe en la página, crear nueva página
+        if (currentY > 700) {
+          doc.addPage();
+          currentY = 50;
+        }
+
+        doc.text((index + 1).toString(), 50, currentY);
+        doc.text(item.productName || 'Producto', 80, currentY, { width: 230 });
+        doc.text(item.quantity.toString(), 320, currentY, { width: 70, align: 'center' });
+        doc.text(`$${item.unitCost.toFixed(2)}`, 400, currentY, { width: 80, align: 'right' });
+        doc.text(`$${item.total.toFixed(2)}`, 490, currentY, { width: 72, align: 'right' });
+
+        currentY += itemHeight;
+      });
+
+      // Línea antes del total
+      doc.moveTo(50, currentY + 5).lineTo(562, currentY + 5).stroke();
+      currentY += 15;
+
+      // Total
+      doc.fontSize(12).font('Helvetica-Bold');
+      doc.text('TOTAL:', 400, currentY, { width: 80, align: 'right' });
+      doc.text(`$${purchaseOrder.totalAmount.toFixed(2)}`, 490, currentY, { width: 72, align: 'right' });
+
+      // Footer
+      doc.fontSize(8).font('Helvetica').text(
+        'Por favor confirme la disponibilidad y fecha de entrega de los productos solicitados.',
+        50,
+        doc.page.height - 100,
+        { align: 'center', width: 512 }
+      );
+
+      doc.fontSize(7).text(
+        `Documento generado automáticamente por ${settings.businessName || 'AutoParts Manager'}`,
+        50,
+        doc.page.height - 50,
+        { align: 'center', width: 512 }
+      );
+
+      // Finalizar PDF
+      doc.end();
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+
+/**
+ * Enviar orden de compra por email al proveedor (con PDF adjunto)
  * @param {Object} purchaseOrder - Orden de compra con items
  * @param {Object} supplier - Datos del proveedor
  * @returns {Promise<Object>} Resultado del envío
@@ -65,7 +215,7 @@ export const sendPurchaseOrderEmail = async (purchaseOrder, supplier) => {
     }
 
     // Crear transporter con configuración dinámica de la BD
-    const { transporter, settings } = await createTransporter();
+    const { transporter, settings } = await getEmailTransporter();
 
   // Generar tabla HTML de items
   const itemsRows = purchaseOrder.items
@@ -133,7 +283,8 @@ export const sendPurchaseOrderEmail = async (purchaseOrder, supplier) => {
             <p style="margin: 0; color: #374151; line-height: 1.6;">
               Estimado/a proveedor <strong>${supplier.name}</strong>,<br><br>
               Por medio de la presente le enviamos la siguiente orden de compra. Por favor confirme la disponibilidad 
-              y fecha de entrega de los productos solicitados.
+              y fecha de entrega de los productos solicitados.<br><br>
+              <strong>📎 Adjuntamos el PDF de la orden completa para su referencia.</strong>
             </p>
           </div>
 
@@ -207,16 +358,37 @@ export const sendPurchaseOrderEmail = async (purchaseOrder, supplier) => {
     const fromEmail = settings.smtp.fromEmail || settings.smtp.user;
     const fromName = settings.smtp.fromName || settings.businessName;
 
-    // Opciones del email
+    // Generar PDF
+    console.log('📄 Generando PDF de la orden...');
+    const pdfBuffer = await generatePurchaseOrderPDF(purchaseOrder, supplier, settings);
+    console.log('✅ PDF generado exitosamente');
+
+    // Opciones del email con PDF adjunto
     const mailOptions = {
       from: `"${fromName}" <${fromEmail}>`,
       to: supplier.email,
       subject: `Orden de Compra #${purchaseOrder.orderNumber} - ${settings.businessName}`,
       html: htmlContent,
+      attachments: [
+        {
+          filename: `Orden_Compra_${purchaseOrder.orderNumber}.pdf`,
+          content: pdfBuffer,
+          contentType: 'application/pdf'
+        }
+      ]
     };
+
+    console.log('📧 Enviando email a:', supplier.email);
+    console.log('📧 Desde:', `"${fromName}" <${fromEmail}>`);
+    console.log('📧 Asunto:', mailOptions.subject);
+    console.log('📎 Adjunto: Orden_Compra_' + purchaseOrder.orderNumber + '.pdf');
 
     // Enviar email
     const info = await transporter.sendMail(mailOptions);
+
+    console.log('✅ Email enviado exitosamente!');
+    console.log('📧 Message ID:', info.messageId);
+    console.log('📧 Response:', info.response);
 
     return {
       success: true,
@@ -226,6 +398,7 @@ export const sendPurchaseOrderEmail = async (purchaseOrder, supplier) => {
     
   } catch (error) {
     console.error('❌ Error al enviar email:', error);
+    console.error('❌ Error completo:', error);
     throw new Error(`Error al enviar email: ${error.message}`);
   }
 };
@@ -238,7 +411,7 @@ export const sendPurchaseOrderEmail = async (purchaseOrder, supplier) => {
  */
 export const verifySmtpConfig = async () => {
   try {
-    const { transporter } = await createTransporter();
+    const { transporter } = await getEmailTransporter();
     await transporter.verify();
     return { 
       success: true, 

@@ -81,6 +81,7 @@ import { useAuthStore } from '../store/authStore';
 import { useSettingsStore } from '../store/settingsStore';
 import toast from 'react-hot-toast';
 import { SettingsSkeleton } from '../components/SkeletonLoader';
+import WeatherWidget from '../components/WeatherWidget';
 import {
   Save,
   Building2,
@@ -103,6 +104,7 @@ import {
   Globe,
   CreditCard,
   Cloud,
+  Send,
 } from 'lucide-react';
 
 const Settings = ({ section = 'all' }) => {
@@ -115,6 +117,8 @@ const Settings = ({ section = 'all' }) => {
   const [hasChanges, setHasChanges] = useState(false);
   const [showTooltip, setShowTooltip] = useState(null);
   const [showApiKey, setShowApiKey] = useState(false);
+  const [showSmtpPassword, setShowSmtpPassword] = useState(false);
+  const [testingEmail, setTestingEmail] = useState(false);
   
   const [formData, setFormData] = useState({
     businessName: '',
@@ -122,6 +126,15 @@ const Settings = ({ section = 'all' }) => {
     businessAddress: '',
     businessPhone: '',
     businessEmail: '',
+    smtp: {
+      host: 'smtp.gmail.com',
+      port: 587,
+      secure: false,
+      user: '',
+      password: '',
+      fromName: '',
+      fromEmail: ''
+    },
     taxRate: 0,
     currency: 'DOP',
     receiptFooter: '',
@@ -145,10 +158,25 @@ const Settings = ({ section = 'all' }) => {
     try {
       setIsLoading(true);
       const response = await getSettings();
-      setFormData(response.data);
-      setOriginalData(response.data);
+      
+      // Asegurar que smtp existe con valores por defecto si no viene del backend
+      const settingsData = {
+        ...response.data,
+        smtp: response.data.smtp || {
+          host: 'smtp.gmail.com',
+          port: 587,
+          secure: false,
+          user: '',
+          password: '',
+          fromName: '',
+          fromEmail: ''
+        }
+      };
+      
+      setFormData(settingsData);
+      setOriginalData(settingsData);
       // Actualizar store solo al cargar configuración
-      updateSettingsStore(response.data);
+      updateSettingsStore(settingsData);
     } catch (error) {
       console.error('Error fetching settings:', error);
       toast.error('Error al cargar la configuración');
@@ -221,6 +249,51 @@ const Settings = ({ section = 'all' }) => {
   const handleChange = (field, value) => {
     setFormData({ ...formData, [field]: value });
     setHasChanges(true);
+  };
+
+  const handleSmtpChange = (field, value) => {
+    setFormData({
+      ...formData,
+      smtp: { ...formData.smtp, [field]: value }
+    });
+    setHasChanges(true);
+  };
+
+  const handleTestEmail = async () => {
+    try {
+      setTestingEmail(true);
+      
+      // Primero guardar si hay cambios pendientes
+      if (hasChanges) {
+        toast.loading('Guardando configuración...', { id: 'saving-smtp' });
+        await updateSettings(formData);
+        setOriginalData(formData);
+        setHasChanges(false);
+        updateSettingsStore(formData);
+        toast.dismiss('saving-smtp');
+      }
+      
+      // Luego probar conexión
+      const response = await fetch('/api/settings/smtp/test', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+        toast.success('✅ Configuración SMTP correcta. El email se puede enviar.');
+      } else {
+        toast.error(`❌ ${data.message || 'Error al probar conexión'}`);
+      }
+    } catch (error) {
+      console.error('Error al probar conexión SMTP:', error);
+      toast.error('Error al probar conexión SMTP');
+    } finally {
+      setTestingEmail(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -452,6 +525,170 @@ const Settings = ({ section = 'all' }) => {
                   placeholder="Calle Principal #123, Santo Domingo, República Dominicana"
                   rows={3}
                 />
+              </div>
+            </div>
+          </div>
+        </div>
+        )}
+
+        {/* Email/SMTP Configuration */}
+        {shouldShowSection('business') && (
+        <div className="card-glass p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                <Mail className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  Configuración de Email (SMTP)
+                </h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Configura el servidor SMTP para enviar órdenes de compra
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={handleTestEmail}
+              disabled={testingEmail || user?.role !== 'admin'}
+              className="btn btn-secondary flex items-center gap-2"
+            >
+              {testingEmail ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                  Probando...
+                </>
+              ) : (
+                <>
+                  <Send className="w-4 h-4" />
+                  Probar Conexión
+                </>
+              )}
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* SMTP Host */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Servidor SMTP
+              </label>
+              <input
+                type="text"
+                value={formData.smtp?.host || ''}
+                onChange={(e) => handleSmtpChange('host', e.target.value)}
+                disabled={user?.role !== 'admin'}
+                className="input"
+                placeholder="smtp.gmail.com"
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Gmail: smtp.gmail.com | Outlook: smtp.office365.com
+              </p>
+            </div>
+
+            {/* SMTP Port */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Puerto SMTP
+              </label>
+              <input
+                type="number"
+                value={formData.smtp?.port || 587}
+                onChange={(e) => handleSmtpChange('port', parseInt(e.target.value))}
+                disabled={user?.role !== 'admin'}
+                className="input"
+                placeholder="587"
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                TLS: 587 | SSL: 465
+              </p>
+            </div>
+
+            {/* SMTP User */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Usuario / Email
+              </label>
+              <input
+                type="email"
+                value={formData.smtp?.user || ''}
+                onChange={(e) => handleSmtpChange('user', e.target.value)}
+                disabled={user?.role !== 'admin'}
+                className="input"
+                placeholder="tu-email@gmail.com"
+              />
+            </div>
+
+            {/* SMTP Password */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Contraseña de Aplicación
+              </label>
+              <div className="relative">
+                <input
+                  type={showSmtpPassword ? "text" : "password"}
+                  value={formData.smtp?.password || ''}
+                  onChange={(e) => handleSmtpChange('password', e.target.value)}
+                  disabled={user?.role !== 'admin'}
+                  className="input pr-10"
+                  placeholder="Escribe aquí la contraseña de 16 caracteres"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowSmtpPassword(!showSmtpPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  {showSmtpPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                <strong>Gmail:</strong> Genera una contraseña de aplicación de 16 caracteres. Se guarda automáticamente al escribir.
+              </p>
+            </div>
+
+            {/* From Name */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Nombre del Remitente
+              </label>
+              <input
+                type="text"
+                value={formData.smtp?.fromName || ''}
+                onChange={(e) => handleSmtpChange('fromName', e.target.value)}
+                disabled={user?.role !== 'admin'}
+                className="input"
+                placeholder="Mi Negocio"
+              />
+            </div>
+
+            {/* From Email */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Email del Remitente
+              </label>
+              <input
+                type="email"
+                value={formData.smtp?.fromEmail || ''}
+                onChange={(e) => handleSmtpChange('fromEmail', e.target.value)}
+                disabled={user?.role !== 'admin'}
+                className="input"
+                placeholder="noreply@minegocio.com"
+              />
+            </div>
+
+            {/* Info Box */}
+            <div className="md:col-span-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+              <div className="flex gap-3">
+                <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                <div className="text-sm text-blue-900 dark:text-blue-100">
+                  <p className="font-semibold mb-1">📧 Cómo configurar Gmail:</p>
+                  <ol className="list-decimal list-inside space-y-1 text-blue-800 dark:text-blue-200">
+                    <li>Ve a tu cuenta de Google → Seguridad</li>
+                    <li>Activa la verificación en 2 pasos</li>
+                    <li>En "Contraseñas de aplicaciones", genera una nueva</li>
+                    <li>Copia la contraseña de 16 caracteres y pégala aquí</li>
+                  </ol>
+                </div>
               </div>
             </div>
           </div>
@@ -805,6 +1042,49 @@ const Settings = ({ section = 'all' }) => {
                 </p>
               </div>
             </div>
+
+            {/* Vista Previa del Widget de Clima */}
+            {formData.showWeather && formData.weatherLocation && formData.weatherApiKey && (
+              <div className="mt-6 p-6 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border-2 border-blue-200 dark:border-blue-800">
+                <div className="flex items-center gap-2 mb-4">
+                  <Cloud className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    Vista Previa del Widget
+                  </h3>
+                </div>
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-lg">
+                  <WeatherWidget 
+                    location={formData.weatherLocation} 
+                    apiKey={formData.weatherApiKey}
+                    detailed={true}
+                  />
+                </div>
+                <p className="text-xs text-blue-700 dark:text-blue-300 mt-3 flex items-center gap-1">
+                  <Info className="w-3 h-3" />
+                  Este es el widget que se mostrará en la barra superior del sistema
+                </p>
+              </div>
+            )}
+
+            {/* Mensaje si el widget está desactivado */}
+            {!formData.showWeather && (
+              <div className="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                <p className="text-sm text-yellow-800 dark:text-yellow-300 flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4" />
+                  El widget de clima está desactivado. Actívalo arriba para ver la vista previa.
+                </p>
+              </div>
+            )}
+
+            {/* Mensaje si falta configuración */}
+            {formData.showWeather && (!formData.weatherLocation || !formData.weatherApiKey) && (
+              <div className="mt-6 p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
+                <p className="text-sm text-orange-800 dark:text-orange-300 flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4" />
+                  Completa la ubicación y el API Key para ver la vista previa del clima.
+                </p>
+              </div>
+            )}
           </div>
         </div>
         )}

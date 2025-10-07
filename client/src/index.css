@@ -266,4 +266,20 @@
     animation: fade-in 0.3s ease-out 0.4s forwards;
     opacity: 0;
   }
+
+  /* Animación para modales */
+  @keyframes scale-in {
+    from {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .animate-scale-in {
+    animation: scale-in 0.2s ease-out;
+  }
 }

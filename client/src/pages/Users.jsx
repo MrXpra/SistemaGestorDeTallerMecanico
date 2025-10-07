@@ -70,6 +70,7 @@ import {
   Users as UsersIcon,
   Info,
 } from 'lucide-react';
+import { createPortal } from 'react-dom';
 
 const Users = () => {
   const [users, setUsers] = useState([]);
@@ -512,10 +513,10 @@ const UserModal = ({ user, onSave, onClose }) => {
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="glass-strong rounded-2xl p-6 w-full max-w-md">
-        <div className="flex justify-between items-center mb-6">
+  return createPortal(
+    <div className="fixed inset-0 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" style={{ zIndex: 100000 }}>
+      <div className="glass-strong rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="flex justify-between items-center p-6 border-b border-gray-200 dark:border-gray-700">
           <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
             {user ? 'Editar Usuario' : 'Nuevo Usuario'}
           </h3>
@@ -527,7 +528,7 @@ const UserModal = ({ user, onSave, onClose }) => {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Nombre Completo *
@@ -623,7 +624,8 @@ const UserModal = ({ user, onSave, onClose }) => {
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

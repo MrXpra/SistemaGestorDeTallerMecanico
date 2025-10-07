@@ -2,6 +2,8 @@ import Sale from '../models/Sale.js';
 import Product from '../models/Product.js';
 import Customer from '../models/Customer.js';
 import CashierSession from '../models/CashierSession.js';
+import LogService from '../services/logService.js';
+import AuditLogService from '../services/auditLogService.js';
 
 // @desc    Crear nueva venta
 // @route   POST /api/sales
@@ -101,9 +103,57 @@ export const createSale = async (req, res) => {
       .populate('customer', 'fullName phone email')
       .populate('items.product', 'name sku');
 
+    // Log técnico del sistema
+    await LogService.logAction({
+      action: 'create',
+      module: 'sales',
+      user: req.user,
+      req,
+      entityId: sale._id.toString(),
+      entityName: sale.invoiceNumber,
+      details: {
+        invoiceNumber: sale.invoiceNumber,
+        total: sale.total,
+        itemsCount: sale.items.length,
+        paymentMethod: sale.paymentMethod,
+        customer: customer ? customer.fullName : 'Cliente General'
+      },
+      success: true
+    });
+
+    // Log de auditoría de usuario
+    const customerInfo = customer ? await Customer.findById(customer) : null;
+    await AuditLogService.logSale({
+      user: req.user,
+      action: 'Creación de Venta',
+      saleId: sale._id.toString(),
+      saleNumber: sale.invoiceNumber,
+      description: `Se creó la factura #${sale.invoiceNumber} por un monto de RD$${total.toFixed(2)}${customerInfo ? ` para el cliente ${customerInfo.fullName}` : ''}`,
+      amount: total,
+      customer: customerInfo?.fullName,
+      metadata: {
+        itemsCount: sale.items.length,
+        paymentMethod: sale.paymentMethod,
+        discount: totalDiscount
+      },
+      req
+    });
+
     res.status(201).json(populatedSale);
   } catch (error) {
     console.error('Error al crear venta:', error);
+    
+    // Log de error
+    await LogService.logError({
+      module: 'sales',
+      action: 'create',
+      message: `Error al crear venta: ${error.message}`,
+      error,
+      user: req.user,
+      req,
+      details: { itemsCount: req.body.items?.length }
+    });
+    
     res.status(500).json({ message: 'Error al crear venta', error: error.message });
   }
 };
@@ -165,6 +215,17 @@ export const getSales = async (req, res) => {
     if (sales.length > 0) {
       console.log('First sale date:', sales[0].createdAt);
       console.log('Last sale date:', sales[sales.length - 1].createdAt);
+      
+      // Debug: verificar productos poblados
+      const firstSale = sales[0];
+      console.log('First sale items:', firstSale.items.length);
+      firstSale.items.forEach((item, idx) => {
+        console.log(`  Item ${idx}:`, {
+          product: item.product ? (typeof item.product === 'object' ? item.product._id : item.product) : 'NULL',
+          hasName: item.product?.name ? 'YES' : 'NO',
+          quantity: item.quantity
+        });
+      });
     }
 
     res.json(sales);
@@ -253,15 +314,36 @@ export const cancelSale = async (req, res) => {
       return res.status(400).json({ message: 'La venta ya está cancelada' });
     }
 
-    // Restaurar stock de los productos
+    // Restaurar stock de los productos (solo si el producto aún existe)
+    let restoredCount = 0;
+    let skippedCount = 0;
+    
     for (const item of sale.items) {
-      await Product.findByIdAndUpdate(item.product._id, {
-        $inc: { stock: item.quantity }
-      });
+      // Verificar que el producto existe antes de actualizar
+      const productId = item.product?._id || item.product;
+      
+      if (productId) {
+        const productExists = await Product.findById(productId);
+        
+        if (productExists) {
+          await Product.findByIdAndUpdate(productId, {
+            $inc: { stock: item.quantity }
+          });
+          restoredCount++;
+        } else {
+          console.warn(`⚠️ Producto ${productId} no existe. No se puede restaurar stock.`);
+          skippedCount++;
+        }
+      } else {
+        console.warn(`⚠️ Item sin producto válido en venta ${sale._id}`);
+        skippedCount++;
+      }
     }
 
     sale.status = 'Cancelada';
     await sale.save();
+
+    console.log(`✅ Venta cancelada. Stock restaurado: ${restoredCount}, Productos no disponibles: ${skippedCount}`);
 
     // Actualizar historial del cliente si existe
     if (sale.customer) {
@@ -270,9 +352,55 @@ export const cancelSale = async (req, res) => {
       });
     }
 
+    // Log técnico del sistema
+    await LogService.logAction({
+      action: 'cancel',
+      module: 'sales',
+      user: req.user,
+      req,
+      entityId: sale._id.toString(),
+      entityName: sale.invoiceNumber,
+      details: {
+        invoiceNumber: sale.invoiceNumber,
+        total: sale.total,
+        restoredCount,
+        skippedCount,
+        reason: req.body.reason || 'No especificado'
+      },
+      success: true
+    });
+
+    // Log de auditoría de usuario
+    await AuditLogService.logSale({
+      user: req.user,
+      action: 'Anulación de Venta',
+      saleId: sale._id.toString(),
+      saleNumber: sale.invoiceNumber,
+      description: `Se anuló la factura #${sale.invoiceNumber} por un monto de RD$${sale.total.toFixed(2)}. ${req.body.reason ? `Motivo: ${req.body.reason}` : ''}`,
+      amount: sale.total,
+      metadata: {
+        itemsRestored: restoredCount,
+        itemsSkipped: skippedCount,
+        reason: req.body.reason || 'No especificado'
+      },
+      req
+    });
+
     res.json({ message: 'Venta cancelada exitosamente', sale });
   } catch (error) {
     console.error('Error al cancelar venta:', error);
+    
+    // Log de error
+    await LogService.logError({
+      module: 'sales',
+      action: 'cancel',
+      message: `Error al cancelar venta: ${error.message}`,
+      error,
+      user: req.user,
+      req,
+      details: { saleId: req.params.id }
+    });
+    
     res.status(500).json({ message: 'Error al cancelar venta', error: error.message });
   }
 };

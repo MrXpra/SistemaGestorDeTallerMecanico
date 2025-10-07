@@ -76,6 +76,7 @@ import { toast } from 'react-hot-toast';
 import { getSales, cancelSale } from '../services/api';
 import { useSettingsStore } from '../store/settingsStore';
 import { TableSkeleton } from '../components/SkeletonLoader';
+import { createPortal } from 'react-dom';
 
 const SalesHistory = () => {
   const { settings } = useSettingsStore();
@@ -706,9 +707,9 @@ const CancelSaleModal = ({ sale, onConfirm, onClose, isLoading }) => {
     return () => window.removeEventListener('keydown', handleEscape);
   }, [onClose, isLoading]);
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="glass-strong rounded-2xl p-6 w-full max-w-md animate-fade-in">
+  return createPortal(
+    <div className="fixed inset-0 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" style={{ zIndex: 100000 }}>
+      <div className="glass-strong rounded-2xl p-6 w-full max-w-md animate-fade-in" onClick={e => e.stopPropagation()}>
         {/* Header */}
         <div className="flex items-start gap-4 mb-6">
           <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0">
@@ -809,7 +810,8 @@ const CancelSaleModal = ({ sale, onConfirm, onClose, isLoading }) => {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
@@ -839,9 +841,9 @@ const SaleDetailModal = ({ sale, onClose, formatCurrency, formatDate, getStatusB
     }
   };
 
-  return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="glass-strong rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+  return createPortal(
+    <div className="fixed inset-0 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" style={{ zIndex: 100000 }}>
+      <div className="glass-strong rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <div className="p-6">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
@@ -997,7 +999,8 @@ const SaleDetailModal = ({ sale, onClose, formatCurrency, formatDate, getStatusB
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

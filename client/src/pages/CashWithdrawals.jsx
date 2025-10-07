@@ -78,6 +78,7 @@ import {
 } from '../services/api';
 import { useAuthStore } from '../store/authStore';
 import { TableSkeleton } from '../components/SkeletonLoader';
+import { createPortal } from 'react-dom';
 
 const CashWithdrawals = () => {
   const { user } = useAuthStore();
@@ -518,9 +519,9 @@ const CreateWithdrawalModal = ({ onClose, onSave }) => {
     }
   };
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6 animate-scale-in">
+  return createPortal(
+    <div className="fixed inset-0 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" style={{ zIndex: 100000 }}>
+      <div className="glass-strong rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6" onClick={e => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-xl font-bold text-gray-900 dark:text-white">Nuevo Retiro de Caja</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
@@ -619,15 +620,16 @@ const CreateWithdrawalModal = ({ onClose, onSave }) => {
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
 // Detail Modal Component
 const WithdrawalDetailModal = ({ withdrawal, onClose, formatCurrency, formatDate, getStatusBadge, getCategoryLabel }) => {
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full p-6 animate-scale-in max-h-[90vh] overflow-y-auto">
+  return createPortal(
+    <div className="fixed inset-0 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" style={{ zIndex: 100000 }}>
+      <div className="glass-strong rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6" onClick={e => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-xl font-bold text-gray-900 dark:text-white">
             Detalle de Retiro
@@ -731,7 +733,8 @@ const WithdrawalDetailModal = ({ withdrawal, onClose, formatCurrency, formatDate
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

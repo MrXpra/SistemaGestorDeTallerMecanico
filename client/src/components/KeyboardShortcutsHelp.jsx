@@ -31,7 +31,7 @@ const KeyboardShortcutsHelp = () => {
     { keys: `${modKey} + B`, description: 'Ir a Facturación (Billing)' },
     { keys: `${modKey} + I`, description: 'Ir a Inventario' },
     { keys: `${modKey} + H`, description: 'Ir a Historial de Ventas' },
-    { keys: `${modKey} + C`, description: 'Ir a Clientes' },
+    { keys: `${modKey} + L`, description: 'Ir a Clientes' },
     { keys: `${modKey} + R`, description: 'Ir a Reportes' },
     { keys: `${modKey} + ,`, description: 'Ir a Configuración' },
     { keys: `${modKey} + K`, description: 'Búsqueda rápida' },

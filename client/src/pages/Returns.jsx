@@ -62,13 +62,17 @@ import {
   FileText,
   TrendingUp,
   Calendar,
-  Eye
+  Eye,
+  Printer
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { getReturns, getReturnStats, createReturn, getSales } from '../services/api';
 import { ReportsSkeleton } from '../components/SkeletonLoader';
+import { createPortal } from 'react-dom';
+import { useSettingsStore } from '../store/settingsStore';
 
 const Returns = () => {
+  const { settings } = useSettingsStore();
   const [returns, setReturns] = useState([]);
   const [stats, setStats] = useState(null);
   const [sales, setSales] = useState([]);
@@ -165,6 +169,247 @@ const Returns = () => {
       Otro: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400',
     };
     return badges[reason] || 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400';
+  };
+
+  const handlePrintReturn = (returnData) => {
+    const printWindow = window.open('', '_blank');
+    
+    // Calcular total de items devueltos
+    const returnTotal = returnData.items.reduce((sum, item) => sum + item.returnAmount, 0);
+    
+    // Calcular total de items de cambio
+    const exchangeTotal = returnData.exchangeItems?.reduce((sum, item) => sum + (item.quantity * item.price), 0) || 0;
+    
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Devolución ${returnData.returnNumber}</title>
+          <style>
+            @media print {
+              @page { size: 80mm auto; margin: 0; }
+              body { margin: 10mm; }
+            }
+            body { 
+              font-family: 'Courier New', monospace; 
+              width: 80mm;
+              margin: 0 auto;
+              padding: 5mm;
+              font-size: 11px;
+            }
+            h1 { 
+              text-align: center; 
+              font-size: 16px; 
+              margin: 5px 0;
+              font-weight: bold;
+            }
+            h2 {
+              text-align: center;
+              font-size: 14px;
+              margin: 5px 0;
+              font-weight: bold;
+              color: #d32f2f;
+            }
+            .line { 
+              border-top: 1px dashed #000; 
+              margin: 8px 0; 
+            }
+            table { 
+              width: 100%; 
+              border-collapse: collapse;
+            }
+            td { 
+              padding: 2px 0; 
+            }
+            .right { 
+              text-align: right; 
+            }
+            .bold { 
+              font-weight: bold; 
+            }
+            .center { 
+              text-align: center; 
+            }
+            .small { 
+              font-size: 9px; 
+            }
+            .info-section {
+              margin: 8px 0;
+              font-size: 12px;
+              font-weight: bold;
+            }
+            .item-row {
+              margin-bottom: 4px;
+            }
+            .total-row {
+              font-size: 13px;
+              font-weight: bold;
+              padding-top: 4px;
+            }
+            .exchange-section {
+              margin: 8px 0;
+              padding: 6px;
+              border: 2px solid #1976d2;
+              background: #e3f2fd;
+            }
+            .exchange-title {
+              font-weight: bold;
+              color: #1976d2;
+              margin-bottom: 4px;
+            }
+            .difference-box {
+              margin: 8px 0;
+              padding: 6px;
+              border: 2px solid #000;
+              font-weight: bold;
+            }
+            .difference-positive {
+              background: #ffebee;
+              color: #d32f2f;
+            }
+            .difference-negative {
+              background: #e8f5e9;
+              color: #388e3c;
+            }
+          </style>
+        </head>
+        <body>
+          <h1>${settings.businessName || 'AutoParts Manager'}</h1>
+          <h2>NOTA DE DEVOLUCIÓN</h2>
+          <div class="line"></div>
+          
+          <div class="info-section">
+            <div><strong>No. Devolución:</strong> ${returnData.returnNumber}</div>
+            <div><strong>Fecha:</strong> ${new Date(returnData.createdAt).toLocaleString('es-DO', { 
+              day: '2-digit', 
+              month: '2-digit', 
+              year: 'numeric', 
+              hour: '2-digit', 
+              minute: '2-digit' 
+            })}</div>
+            <div><strong>Factura Original:</strong> ${returnData.sale?.invoiceNumber || 'N/A'}</div>
+            ${returnData.customer ? `<div><strong>Cliente:</strong> ${returnData.customer.fullName || returnData.customer.name || 'Cliente General'}</div>` : '<div><strong>Cliente:</strong> Cliente General</div>'}
+            ${returnData.customer?.cedula ? `<div><strong>Cédula:</strong> ${returnData.customer.cedula}</div>` : ''}
+            <div><strong>Razón:</strong> ${returnData.reason}</div>
+            <div><strong>Estado:</strong> ${returnData.status}</div>
+          </div>
+          
+          <div class="line"></div>
+          
+          <div class="bold center">PRODUCTOS DEVUELTOS</div>
+          <table>
+            <thead>
+              <tr class="bold small">
+                <td style="width: 10%;">#</td>
+                <td style="width: 50%;">PRODUCTO</td>
+                <td style="width: 20%;" class="center">CANT</td>
+                <td style="width: 20%;" class="right">TOTAL</td>
+              </tr>
+            </thead>
+            <tbody>
+              ${returnData.items.map((item, index) => `
+                <tr class="item-row">
+                  <td>${index + 1}</td>
+                  <td>${item.product?.name || 'Producto'}</td>
+                  <td class="center">${item.quantity}</td>
+                  <td class="right">${formatCurrency(item.returnAmount)}</td>
+                </tr>
+                <tr class="small">
+                  <td></td>
+                  <td colspan="3">${formatCurrency(item.originalPrice)} c/u</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          
+          ${returnData.exchangeItems && returnData.exchangeItems.length > 0 ? `
+            <div class="line"></div>
+            <div class="exchange-section">
+              <div class="exchange-title center">🔄 PRODUCTOS DE CAMBIO</div>
+              <table>
+                <thead>
+                  <tr class="bold small">
+                    <td style="width: 10%;">#</td>
+                    <td style="width: 50%;">PRODUCTO</td>
+                    <td style="width: 20%;" class="center">CANT</td>
+                    <td style="width: 20%;" class="right">TOTAL</td>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${returnData.exchangeItems.map((item, index) => `
+                    <tr class="item-row">
+                      <td>${index + 1}</td>
+                      <td>${item.product?.name || 'Producto'}</td>
+                      <td class="center">${item.quantity}</td>
+                      <td class="right">${formatCurrency(item.quantity * item.price)}</td>
+                    </tr>
+                    <tr class="small">
+                      <td></td>
+                      <td colspan="3">${formatCurrency(item.price)} c/u</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          ` : ''}
+          
+          <div class="line"></div>
+          
+          <table>
+            ${returnData.exchangeItems && returnData.exchangeItems.length > 0 ? `
+              <tr>
+                <td>Valor devuelto:</td>
+                <td class="right">${formatCurrency(returnTotal)}</td>
+              </tr>
+              <tr>
+                <td>Valor cambio:</td>
+                <td class="right">${formatCurrency(exchangeTotal)}</td>
+              </tr>
+              <tr class="line"><td colspan="2"></td></tr>
+              ${returnData.priceDifference !== undefined && returnData.priceDifference !== 0 ? `
+                <tr class="total-row ${returnData.priceDifference > 0 ? 'difference-positive' : 'difference-negative'}">
+                  <td>${returnData.priceDifference > 0 ? 'Cliente pagó:' : 'Se devolvió:'}</td>
+                  <td class="right">${formatCurrency(Math.abs(returnData.priceDifference))}</td>
+                </tr>
+              ` : `
+                <tr class="total-row">
+                  <td colspan="2" class="center">SIN DIFERENCIA DE PRECIO</td>
+                </tr>
+              `}
+            ` : `
+              <tr class="total-row">
+                <td>TOTAL DEVUELTO:</td>
+                <td class="right">${formatCurrency(returnData.totalAmount)}</td>
+              </tr>
+              <tr>
+                <td colspan="2" class="center small" style="padding-top: 4px;">
+                  Método: ${returnData.refundMethod}
+                </td>
+              </tr>
+            `}
+          </table>
+          
+          ${returnData.notes ? `
+            <div class="line"></div>
+            <div>
+              <div class="bold">Notas:</div>
+              <div class="small">${returnData.notes}</div>
+            </div>
+          ` : ''}
+          
+          <div class="line"></div>
+          <div class="small">
+            <div>Procesado por: ${returnData.processedBy?.name || 'N/A'}</div>
+            ${returnData.approvedBy ? `<div>Aprobado por: ${returnData.approvedBy?.name}</div>` : ''}
+          </div>
+          
+          <div class="line"></div>
+          <p class="center bold">Gracias por su comprensión</p>
+          <p class="center small">Este documento no tiene validez fiscal</p>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
   };
 
   if (isLoading && returns.length === 0) {
@@ -397,15 +642,25 @@ const Returns = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <button
-                      onClick={() => {
-                        setSelectedReturn(returnItem);
-                        setShowDetailModal(true);
-                      }}
-                      className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
-                    >
-                      <Eye className="w-5 h-5" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handlePrintReturn(returnItem)}
+                        className="text-gray-600 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                        title="Imprimir devolución"
+                      >
+                        <Printer className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedReturn(returnItem);
+                          setShowDetailModal(true);
+                        }}
+                        className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
+                        title="Ver detalles"
+                      >
+                        <Eye className="w-5 h-5" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -452,7 +707,7 @@ const Returns = () => {
 
 // Modal para crear nueva devolución
 const CreateReturnModal = ({ onClose, onSubmit, formatCurrency }) => {
-  const [step, setStep] = useState(1); // 1: Buscar venta, 2: Seleccionar items, 3: Detalles
+  const [step, setStep] = useState(1); // 1: Buscar venta, 2: Seleccionar items, 3: Detalles, 4: Seleccionar cambio
   const [searchTerm, setSearchTerm] = useState('');
   const [sales, setSales] = useState([]);
   const [selectedSale, setSelectedSale] = useState(null);
@@ -461,6 +716,20 @@ const CreateReturnModal = ({ onClose, onSubmit, formatCurrency }) => {
   const [notes, setNotes] = useState('');
   const [refundMethod, setRefundMethod] = useState('Efectivo');
   const [isSearching, setIsSearching] = useState(false);
+  
+  // Estados para cambio de productos
+  const [exchangeItems, setExchangeItems] = useState([]);
+  const [availableProducts, setAvailableProducts] = useState([]);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(false);
+  const [productSearchTerm, setProductSearchTerm] = useState('');
+  const [modalError, setModalError] = useState(null);
+
+  // Cargar productos disponibles cuando la razón es "Cambio"
+  useEffect(() => {
+    if (reason === 'Cambio') {
+      loadAvailableProducts();
+    }
+  }, [reason]);
 
   // Cerrar modal con tecla ESC
   useEffect(() => {
@@ -472,6 +741,70 @@ const CreateReturnModal = ({ onClose, onSubmit, formatCurrency }) => {
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
   }, [onClose]);
+
+  const loadAvailableProducts = async () => {
+    try {
+      setIsLoadingProducts(true);
+      const { getProducts } = await import('../services/api');
+      const response = await getProducts();
+      const productsData = Array.isArray(response?.data) 
+        ? response.data 
+        : Array.isArray(response) 
+          ? response 
+          : [];
+      
+      // Filtrar productos con stock disponible
+      const availableProds = productsData.filter(p => p.stock > 0);
+      setAvailableProducts(availableProds);
+    } catch (error) {
+      console.error('Error al cargar productos:', error);
+      toast.error('Error al cargar productos disponibles');
+    } finally {
+      setIsLoadingProducts(false);
+    }
+  };
+
+  const addExchangeProduct = (product) => {
+    // Verificar si ya está agregado
+    const exists = exchangeItems.find(item => item.productId === product._id);
+    if (exists) {
+      toast.info('Este producto ya fue agregado');
+      return;
+    }
+
+    setExchangeItems([...exchangeItems, {
+      productId: product._id,
+      productName: product.name,
+      price: product.sellingPrice,
+      quantity: 1,
+      maxStock: product.stock,
+    }]);
+  };
+
+  const removeExchangeProduct = (productId) => {
+    setExchangeItems(exchangeItems.filter(item => item.productId !== productId));
+  };
+
+  const updateExchangeQuantity = (productId, quantity) => {
+    const newItems = exchangeItems.map(item => {
+      if (item.productId === productId) {
+        const qty = parseInt(quantity) || 0;
+        return { ...item, quantity: Math.min(Math.max(1, qty), item.maxStock) };
+      }
+      return item;
+    });
+    setExchangeItems(newItems);
+  };
+
+  const getExchangeTotal = () => {
+    return exchangeItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  };
+
+  const getPriceDifference = () => {
+    const returnTotal = getTotalAmount();
+    const exchangeTotal = getExchangeTotal();
+    return exchangeTotal - returnTotal;
+  };
 
   const searchSales = async () => {
     if (!searchTerm) {
@@ -514,20 +847,56 @@ const CreateReturnModal = ({ onClose, onSubmit, formatCurrency }) => {
     
     // Validar que la venta tenga items
     if (!sale.items || sale.items.length === 0) {
-      toast.error('Esta venta no tiene productos');
+      setModalError('Esta venta no tiene productos registrados.');
       return;
     }
     
-    setReturnItems(
-      sale.items.map(item => ({
-        productId: item.product?._id || item.product,
-        productName: item.product?.name || 'Producto',
+    // Filtrar items válidos (que tengan producto)
+    const validItems = sale.items.filter(item => {
+      // Verificar si el producto existe (puede ser objeto o ID string)
+      if (typeof item.product === 'object' && item.product !== null) {
+        return item.product._id; // Producto poblado
+      } else if (typeof item.product === 'string') {
+        // Producto como ID string, verificar que no sea null/undefined
+        return item.product;
+      }
+      return false;
+    });
+    
+    if (validItems.length === 0) {
+      setModalError('Esta venta no tiene productos válidos para devolver. Los productos pueden haber sido eliminados del sistema.');
+      // No mostrar toast cuando hay modalError, solo mostrar en el modal
+      return;
+    }
+    
+    // Mapear items válidos
+    const mappedItems = validItems.map(item => {
+      // Manejar tanto productos poblados como IDs
+      const productId = typeof item.product === 'object' 
+        ? item.product._id 
+        : item.product;
+      
+      const productName = typeof item.product === 'object' && item.product.name
+        ? item.product.name 
+        : 'Producto (eliminado)';
+      
+      return {
+        productId: productId,
+        productName: productName,
         maxQuantity: item.quantity,
-        priceAtSale: item.priceAtSale,
+        priceAtSale: item.priceAtSale || 0,
         quantity: 0,
         selected: false,
-      }))
-    );
+      };
+    });
+    
+    setReturnItems(mappedItems);
+    
+    // Advertir si algunos productos no están disponibles
+    if (validItems.length < sale.items.length) {
+      toast.warning(`${sale.items.length - validItems.length} producto(s) no disponible(s) para devolución (eliminados del sistema)`);
+    }
+    
     setStep(2);
   };
 
@@ -577,7 +946,13 @@ const CreateReturnModal = ({ onClose, onSubmit, formatCurrency }) => {
       return;
     }
 
-    onSubmit({
+    // Si es cambio, validar que haya productos de cambio
+    if (reason === 'Cambio' && exchangeItems.length === 0) {
+      toast.error('Debe seleccionar al menos un producto para el cambio');
+      return;
+    }
+
+    const returnData = {
       saleId: selectedSale._id,
       items: selectedItems.map(item => ({
         productId: item.productId,
@@ -586,12 +961,24 @@ const CreateReturnModal = ({ onClose, onSubmit, formatCurrency }) => {
       reason,
       notes,
       refundMethod,
-    });
+    };
+
+    // Si es cambio, agregar los productos de cambio y la diferencia de precio
+    if (reason === 'Cambio') {
+      returnData.exchangeItems = exchangeItems.map(item => ({
+        productId: item.productId,
+        quantity: item.quantity,
+        price: item.price,
+      }));
+      returnData.priceDifference = getPriceDifference();
+    }
+
+    onSubmit(returnData);
   };
 
-  return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="glass-strong rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+  return createPortal(
+    <div className="fixed inset-0 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" style={{ zIndex: 100000 }}>
+      <div className="glass-strong rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <div className="p-6">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
@@ -623,6 +1010,25 @@ const CreateReturnModal = ({ onClose, onSubmit, formatCurrency }) => {
           {/* Step 1: Buscar venta */}
           {step === 1 && (
             <div className="space-y-4">
+              {/* Mensaje de error dentro del modal */}
+              {modalError && (
+                <div className="p-4 bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-red-800 dark:text-red-300">Error al seleccionar venta</p>
+                      <p className="text-sm text-red-700 dark:text-red-400 mt-1">{modalError}</p>
+                    </div>
+                    <button
+                      onClick={() => setModalError(null)}
+                      className="ml-auto text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200"
+                    >
+                      <XCircle className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Buscar venta por número de factura
@@ -631,7 +1037,10 @@ const CreateReturnModal = ({ onClose, onSubmit, formatCurrency }) => {
                   <input
                     type="text"
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={(e) => {
+                      setSearchTerm(e.target.value);
+                      setModalError(null); // Limpiar error al escribir
+                    }}
                     onKeyPress={(e) => e.key === 'Enter' && searchSales()}
                     placeholder="Ingrese número de factura..."
                     className="input flex-1"
@@ -645,32 +1054,52 @@ const CreateReturnModal = ({ onClose, onSubmit, formatCurrency }) => {
 
               {sales.length > 0 && (
                 <div className="space-y-2">
-                  {sales.map((sale) => (
-                    <div
-                      key={sale._id}
-                      onClick={() => selectSale(sale)}
-                      className="card-glass p-4 cursor-pointer hover:border-primary-500 transition-colors"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium text-gray-900 dark:text-white">
-                            {sale.invoiceNumber}
-                          </p>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
-                            {sale.customer?.fullName || 'Cliente General'} • {new Date(sale.createdAt).toLocaleDateString()}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-bold text-gray-900 dark:text-white">
-                            {formatCurrency(sale.total)}
-                          </p>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
-                            {sale.items.length} productos
-                          </p>
+                  {sales.map((sale) => {
+                    // Contar productos válidos
+                    const validItemsCount = sale.items.filter(item => {
+                      if (typeof item.product === 'object' && item.product !== null) {
+                        return item.product._id;
+                      } else if (typeof item.product === 'string') {
+                        return item.product;
+                      }
+                      return false;
+                    }).length;
+                    
+                    const hasInvalidItems = validItemsCount < sale.items.length;
+                    
+                    return (
+                      <div
+                        key={sale._id}
+                        onClick={() => selectSale(sale)}
+                        className="card-glass p-4 cursor-pointer hover:border-primary-500 transition-colors"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <p className="font-medium text-gray-900 dark:text-white">
+                              {sale.invoiceNumber}
+                            </p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              {sale.customer?.fullName || 'Cliente General'} • {new Date(sale.createdAt).toLocaleDateString()}
+                            </p>
+                            {hasInvalidItems && (
+                              <p className="text-xs text-orange-600 dark:text-orange-400 mt-1 flex items-center gap-1">
+                                <AlertCircle className="w-3 h-3" />
+                                {validItemsCount} de {sale.items.length} productos disponibles
+                              </p>
+                            )}
+                          </div>
+                          <div className="text-right">
+                            <p className="font-bold text-gray-900 dark:text-white">
+                              {formatCurrency(sale.total)}
+                            </p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              {sale.items.length} producto{sale.items.length !== 1 ? 's' : ''}
+                            </p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -784,21 +1213,80 @@ const CreateReturnModal = ({ onClose, onSubmit, formatCurrency }) => {
                 </select>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Método de reembolso <span className="text-red-500">*</span>
-                </label>
-                <select
-                  value={refundMethod}
-                  onChange={(e) => setRefundMethod(e.target.value)}
-                  className="input"
-                  required
-                >
-                  <option value="Efectivo">Efectivo</option>
-                  <option value="Tarjeta">Tarjeta</option>
-                  <option value="Crédito en Tienda">Crédito en Tienda</option>
-                </select>
-              </div>
+              {/* Si es cambio, mostrar botón para seleccionar productos */}
+              {reason === 'Cambio' && (
+                <div className="card-glass p-4 bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-500/30">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <p className="font-medium text-blue-900 dark:text-blue-100">
+                        🔄 Cambio de Productos
+                      </p>
+                      <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                        {exchangeItems.length > 0 
+                          ? `${exchangeItems.length} producto(s) seleccionado(s) para cambio`
+                          : 'Seleccione los productos por los que desea cambiar'
+                        }
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setStep(4)}
+                    className="btn btn-primary w-full"
+                  >
+                    {exchangeItems.length > 0 ? 'Modificar productos de cambio' : 'Seleccionar productos de cambio'}
+                  </button>
+                  
+                  {exchangeItems.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                      {exchangeItems.map(item => (
+                        <div key={item.productId} className="flex items-center justify-between text-sm">
+                          <span className="text-gray-700 dark:text-gray-300">
+                            {item.productName} x{item.quantity}
+                          </span>
+                          <span className="font-semibold text-gray-900 dark:text-white">
+                            {formatCurrency(item.price * item.quantity)}
+                          </span>
+                        </div>
+                      ))}
+                      <div className="border-t border-blue-300 dark:border-blue-700 pt-2 mt-2">
+                        <div className="flex items-center justify-between font-bold">
+                          <span className="text-gray-900 dark:text-white">Diferencia:</span>
+                          <span className={getPriceDifference() >= 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}>
+                            {getPriceDifference() >= 0 ? '+' : ''}{formatCurrency(getPriceDifference())}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                          {getPriceDifference() > 0 
+                            ? `Cliente debe pagar ${formatCurrency(getPriceDifference())}`
+                            : getPriceDifference() < 0
+                              ? `Se le devuelve ${formatCurrency(Math.abs(getPriceDifference()))}`
+                              : 'Sin diferencia de precio'
+                          }
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Solo mostrar método de reembolso si NO es cambio */}
+              {reason !== 'Cambio' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Método de reembolso <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={refundMethod}
+                    onChange={(e) => setRefundMethod(e.target.value)}
+                    className="input"
+                    required
+                  >
+                    <option value="Efectivo">Efectivo</option>
+                    <option value="Tarjeta">Tarjeta</option>
+                    <option value="Crédito en Tienda">Crédito en Tienda</option>
+                  </select>
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -814,13 +1302,28 @@ const CreateReturnModal = ({ onClose, onSubmit, formatCurrency }) => {
 
               <div className="card-glass p-4 border-2 border-primary-500/30">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-gray-700 dark:text-gray-300">Total a devolver:</span>
-                  <span className="text-2xl font-bold text-red-600 dark:text-red-400">
-                    {formatCurrency(getTotalAmount())}
+                  <span className="text-gray-700 dark:text-gray-300">
+                    {reason === 'Cambio' ? 'Diferencia a pagar/devolver:' : 'Total a devolver:'}
+                  </span>
+                  <span className={`text-2xl font-bold ${
+                    reason === 'Cambio' 
+                      ? getPriceDifference() > 0 
+                        ? 'text-red-600 dark:text-red-400' 
+                        : 'text-green-600 dark:text-green-400'
+                      : 'text-red-600 dark:text-red-400'
+                  }`}>
+                    {reason === 'Cambio' ? formatCurrency(Math.abs(getPriceDifference())) : formatCurrency(getTotalAmount())}
                   </span>
                 </div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Método: {refundMethod}
+                  {reason === 'Cambio' 
+                    ? getPriceDifference() > 0 
+                      ? 'Cliente debe pagar la diferencia' 
+                      : getPriceDifference() < 0
+                        ? 'Se le devuelve al cliente'
+                        : 'No hay diferencia de precio'
+                    : `Método: ${refundMethod}`
+                  }
                 </p>
               </div>
 
@@ -828,21 +1331,197 @@ const CreateReturnModal = ({ onClose, onSubmit, formatCurrency }) => {
                 <button onClick={onClose} className="btn btn-secondary flex-1">
                   Cancelar
                 </button>
-                <button onClick={handleSubmit} className="btn-primary flex-1 flex items-center justify-center gap-2">
+                <button 
+                  onClick={handleSubmit} 
+                  className="btn-primary flex-1 flex items-center justify-center gap-2"
+                  disabled={reason === 'Cambio' && exchangeItems.length === 0}
+                >
                   <CheckCircle className="w-5 h-5" />
                   Procesar Devolución
                 </button>
               </div>
             </div>
           )}
+
+          {/* Step 4: Seleccionar productos de cambio (solo si reason === 'Cambio') */}
+          {step === 4 && reason === 'Cambio' && (
+            <div className="space-y-4">
+              <button
+                onClick={() => setStep(3)}
+                className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Volver
+              </button>
+
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  Seleccionar Productos de Cambio
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Busque y seleccione los productos por los que desea hacer el cambio
+                </p>
+
+                {/* Búsqueda de productos */}
+                <div className="mb-4">
+                  <input
+                    type="text"
+                    value={productSearchTerm}
+                    onChange={(e) => setProductSearchTerm(e.target.value)}
+                    placeholder="Buscar productos..."
+                    className="input"
+                  />
+                </div>
+
+                {/* Lista de productos agregados */}
+                {exchangeItems.length > 0 && (
+                  <div className="card-glass p-4 mb-4 bg-green-50 dark:bg-green-900/20 border-2 border-green-500/30">
+                    <p className="font-medium text-green-900 dark:text-green-100 mb-3">
+                      Productos Seleccionados para Cambio:
+                    </p>
+                    <div className="space-y-2">
+                      {exchangeItems.map(item => (
+                        <div key={item.productId} className="flex items-center justify-between bg-white dark:bg-gray-800 p-3 rounded-lg">
+                          <div className="flex-1">
+                            <p className="font-medium text-gray-900 dark:text-white">
+                              {item.productName}
+                            </p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              {formatCurrency(item.price)} c/u
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2">
+                              <label className="text-sm text-gray-600 dark:text-gray-400">
+                                Cant:
+                              </label>
+                              <input
+                                type="number"
+                                min="1"
+                                max={item.maxStock}
+                                value={item.quantity}
+                                onChange={(e) => updateExchangeQuantity(item.productId, e.target.value)}
+                                className="input w-20"
+                              />
+                            </div>
+                            <button
+                              onClick={() => removeExchangeProduct(item.productId)}
+                              className="p-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg"
+                            >
+                              <XCircle className="w-5 h-5" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-3 pt-3 border-t border-green-300 dark:border-green-700">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="font-medium text-gray-700 dark:text-gray-300">
+                          Total productos de cambio:
+                        </span>
+                        <span className="font-bold text-green-700 dark:text-green-300">
+                          {formatCurrency(getExchangeTotal())}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm mt-1">
+                        <span className="font-medium text-gray-700 dark:text-gray-300">
+                          Total a devolver:
+                        </span>
+                        <span className="font-bold text-red-700 dark:text-red-400">
+                          -{formatCurrency(getTotalAmount())}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between mt-2 pt-2 border-t border-green-300 dark:border-green-700">
+                        <span className="font-bold text-gray-900 dark:text-white">
+                          Diferencia:
+                        </span>
+                        <span className={`font-bold text-lg ${getPriceDifference() >= 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                          {getPriceDifference() >= 0 ? '+' : ''}{formatCurrency(getPriceDifference())}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 text-center">
+                        {getPriceDifference() > 0 
+                          ? `El cliente debe pagar ${formatCurrency(getPriceDifference())} adicional`
+                          : getPriceDifference() < 0
+                            ? `Se le devolverá ${formatCurrency(Math.abs(getPriceDifference()))} al cliente`
+                            : 'Cambio exacto, sin diferencia de precio'
+                        }
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Lista de productos disponibles */}
+                <div className="max-h-96 overflow-y-auto space-y-2">
+                  {isLoadingProducts ? (
+                    <p className="text-center text-gray-600 dark:text-gray-400 py-8">
+                      Cargando productos...
+                    </p>
+                  ) : (
+                    availableProducts
+                      .filter(p => 
+                        !productSearchTerm || 
+                        p.name.toLowerCase().includes(productSearchTerm.toLowerCase()) ||
+                        p.sku.toLowerCase().includes(productSearchTerm.toLowerCase())
+                      )
+                      .map(product => (
+                        <div
+                          key={product._id}
+                          className="card-glass p-4 cursor-pointer hover:border-primary-500 transition-colors"
+                          onClick={() => addExchangeProduct(product)}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <p className="font-medium text-gray-900 dark:text-white">
+                                {product.name}
+                              </p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">
+                                SKU: {product.sku} • Stock: {product.stock}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-bold text-gray-900 dark:text-white">
+                                {formatCurrency(product.sellingPrice)}
+                              </p>
+                              <p className="text-xs text-gray-600 dark:text-gray-400">
+                                Click para agregar
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                  )}
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <button
+                  onClick={() => setStep(3)}
+                  className="btn btn-secondary flex-1"
+                >
+                  Volver a Detalles
+                </button>
+                <button
+                  onClick={() => setStep(3)}
+                  className="btn-primary flex-1"
+                  disabled={exchangeItems.length === 0}
+                >
+                  Confirmar Selección
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
 // Modal de detalle de devolución
 const ReturnDetailModal = ({ returnData, onClose, formatCurrency, formatDate, getStatusBadge, getReasonBadge }) => {
+  const { settings } = useSettingsStore();
+
   // Cerrar modal con tecla ESC
   useEffect(() => {
     const handleEscape = (e) => {
@@ -854,9 +1533,250 @@ const ReturnDetailModal = ({ returnData, onClose, formatCurrency, formatDate, ge
     return () => window.removeEventListener('keydown', handleEscape);
   }, [onClose]);
 
-  return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="glass-strong rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+  const handlePrintReturn = () => {
+    const printWindow = window.open('', '_blank');
+    
+    // Calcular total de items devueltos
+    const returnTotal = returnData.items.reduce((sum, item) => sum + item.returnAmount, 0);
+    
+    // Calcular total de items de cambio
+    const exchangeTotal = returnData.exchangeItems?.reduce((sum, item) => sum + (item.quantity * item.price), 0) || 0;
+    
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Devolución ${returnData.returnNumber}</title>
+          <style>
+            @media print {
+              @page { size: 80mm auto; margin: 0; }
+              body { margin: 10mm; }
+            }
+            body { 
+              font-family: 'Courier New', monospace; 
+              width: 80mm;
+              margin: 0 auto;
+              padding: 5mm;
+              font-size: 11px;
+            }
+            h1 { 
+              text-align: center; 
+              font-size: 16px; 
+              margin: 5px 0;
+              font-weight: bold;
+            }
+            h2 {
+              text-align: center;
+              font-size: 14px;
+              margin: 5px 0;
+              font-weight: bold;
+              color: #d32f2f;
+            }
+            .line { 
+              border-top: 1px dashed #000; 
+              margin: 8px 0; 
+            }
+            table { 
+              width: 100%; 
+              border-collapse: collapse;
+            }
+            td { 
+              padding: 2px 0; 
+            }
+            .right { 
+              text-align: right; 
+            }
+            .bold { 
+              font-weight: bold; 
+            }
+            .center { 
+              text-align: center; 
+            }
+            .small { 
+              font-size: 9px; 
+            }
+            .info-section {
+              margin: 8px 0;
+              font-size: 12px;
+              font-weight: bold;
+            }
+            .item-row {
+              margin-bottom: 4px;
+            }
+            .total-row {
+              font-size: 13px;
+              font-weight: bold;
+              padding-top: 4px;
+            }
+            .exchange-section {
+              margin: 8px 0;
+              padding: 6px;
+              border: 2px solid #1976d2;
+              background: #e3f2fd;
+            }
+            .exchange-title {
+              font-weight: bold;
+              color: #1976d2;
+              margin-bottom: 4px;
+            }
+            .difference-box {
+              margin: 8px 0;
+              padding: 6px;
+              border: 2px solid #000;
+              font-weight: bold;
+            }
+            .difference-positive {
+              background: #ffebee;
+              color: #d32f2f;
+            }
+            .difference-negative {
+              background: #e8f5e9;
+              color: #388e3c;
+            }
+          </style>
+        </head>
+        <body>
+          <h1>${settings.businessName || 'AutoParts Manager'}</h1>
+          <h2>NOTA DE DEVOLUCIÓN</h2>
+          <div class="line"></div>
+          
+          <div class="info-section">
+            <div><strong>No. Devolución:</strong> ${returnData.returnNumber}</div>
+            <div><strong>Fecha:</strong> ${new Date(returnData.createdAt).toLocaleString('es-DO', { 
+              day: '2-digit', 
+              month: '2-digit', 
+              year: 'numeric', 
+              hour: '2-digit', 
+              minute: '2-digit' 
+            })}</div>
+            <div><strong>Factura Original:</strong> ${returnData.sale?.invoiceNumber || 'N/A'}</div>
+            ${returnData.customer ? `<div><strong>Cliente:</strong> ${returnData.customer.fullName || returnData.customer.name || 'Cliente General'}</div>` : '<div><strong>Cliente:</strong> Cliente General</div>'}
+            ${returnData.customer?.cedula ? `<div><strong>Cédula:</strong> ${returnData.customer.cedula}</div>` : ''}
+            <div><strong>Razón:</strong> ${returnData.reason}</div>
+            <div><strong>Estado:</strong> ${returnData.status}</div>
+          </div>
+          
+          <div class="line"></div>
+          
+          <div class="bold center">PRODUCTOS DEVUELTOS</div>
+          <table>
+            <thead>
+              <tr class="bold small">
+                <td style="width: 10%;">#</td>
+                <td style="width: 50%;">PRODUCTO</td>
+                <td style="width: 20%;" class="center">CANT</td>
+                <td style="width: 20%;" class="right">TOTAL</td>
+              </tr>
+            </thead>
+            <tbody>
+              ${returnData.items.map((item, index) => `
+                <tr class="item-row">
+                  <td>${index + 1}</td>
+                  <td>${item.product?.name || 'Producto'}</td>
+                  <td class="center">${item.quantity}</td>
+                  <td class="right">${formatCurrency(item.returnAmount)}</td>
+                </tr>
+                <tr class="small">
+                  <td></td>
+                  <td colspan="3">${formatCurrency(item.originalPrice)} c/u</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          
+          ${returnData.exchangeItems && returnData.exchangeItems.length > 0 ? `
+            <div class="line"></div>
+            <div class="exchange-section">
+              <div class="exchange-title center">🔄 PRODUCTOS DE CAMBIO</div>
+              <table>
+                <thead>
+                  <tr class="bold small">
+                    <td style="width: 10%;">#</td>
+                    <td style="width: 50%;">PRODUCTO</td>
+                    <td style="width: 20%;" class="center">CANT</td>
+                    <td style="width: 20%;" class="right">TOTAL</td>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${returnData.exchangeItems.map((item, index) => `
+                    <tr class="item-row">
+                      <td>${index + 1}</td>
+                      <td>${item.product?.name || 'Producto'}</td>
+                      <td class="center">${item.quantity}</td>
+                      <td class="right">${formatCurrency(item.quantity * item.price)}</td>
+                    </tr>
+                    <tr class="small">
+                      <td></td>
+                      <td colspan="3">${formatCurrency(item.price)} c/u</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          ` : ''}
+          
+          <div class="line"></div>
+          
+          <table>
+            ${returnData.exchangeItems && returnData.exchangeItems.length > 0 ? `
+              <tr>
+                <td>Valor devuelto:</td>
+                <td class="right">${formatCurrency(returnTotal)}</td>
+              </tr>
+              <tr>
+                <td>Valor cambio:</td>
+                <td class="right">${formatCurrency(exchangeTotal)}</td>
+              </tr>
+              <tr class="line"><td colspan="2"></td></tr>
+              ${returnData.priceDifference !== undefined && returnData.priceDifference !== 0 ? `
+                <tr class="total-row ${returnData.priceDifference > 0 ? 'difference-positive' : 'difference-negative'}">
+                  <td>${returnData.priceDifference > 0 ? 'Cliente pagó:' : 'Se devolvió:'}</td>
+                  <td class="right">${formatCurrency(Math.abs(returnData.priceDifference))}</td>
+                </tr>
+              ` : `
+                <tr class="total-row">
+                  <td colspan="2" class="center">SIN DIFERENCIA DE PRECIO</td>
+                </tr>
+              `}
+            ` : `
+              <tr class="total-row">
+                <td>TOTAL DEVUELTO:</td>
+                <td class="right">${formatCurrency(returnData.totalAmount)}</td>
+              </tr>
+              <tr>
+                <td colspan="2" class="center small" style="padding-top: 4px;">
+                  Método: ${returnData.refundMethod}
+                </td>
+              </tr>
+            `}
+          </table>
+          
+          ${returnData.notes ? `
+            <div class="line"></div>
+            <div>
+              <div class="bold">Notas:</div>
+              <div class="small">${returnData.notes}</div>
+            </div>
+          ` : ''}
+          
+          <div class="line"></div>
+          <div class="small">
+            <div>Procesado por: ${returnData.processedBy?.name || 'N/A'}</div>
+            ${returnData.approvedBy ? `<div>Aprobado por: ${returnData.approvedBy?.name}</div>` : ''}
+          </div>
+          
+          <div class="line"></div>
+          <p class="center bold">Gracias por su comprensión</p>
+          <p class="center small">Este documento no tiene validez fiscal</p>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+  };
+
+  return createPortal(
+    <div className="fixed inset-0 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" style={{ zIndex: 100000 }}>
+      <div className="glass-strong rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <div className="p-6">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
@@ -905,7 +1825,7 @@ const ReturnDetailModal = ({ returnData, onClose, formatCurrency, formatDate, ge
             </div>
           </div>
 
-          {/* Items */}
+          {/* Items Devueltos */}
           <div className="mb-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
               Productos Devueltos
@@ -930,6 +1850,63 @@ const ReturnDetailModal = ({ returnData, onClose, formatCurrency, formatDate, ge
               ))}
             </div>
           </div>
+
+          {/* Items de Cambio (si existen) */}
+          {returnData.exchangeItems && returnData.exchangeItems.length > 0 && (
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                <span className="text-blue-600 dark:text-blue-400">🔄</span>
+                Productos de Cambio
+              </h3>
+              <div className="space-y-2">
+                {returnData.exchangeItems.map((item, index) => (
+                  <div key={index} className="card-glass p-4 border-2 border-blue-500/30">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-gray-900 dark:text-white">
+                          {item.product?.name || 'Producto'}
+                        </p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          Cantidad: {item.quantity} × {formatCurrency(item.price)}
+                        </p>
+                      </div>
+                      <p className="font-bold text-blue-600 dark:text-blue-400">
+                        {formatCurrency(item.quantity * item.price)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              {/* Diferencia de precio */}
+              {returnData.priceDifference !== undefined && returnData.priceDifference !== 0 && (
+                <div className={`mt-4 p-4 rounded-lg ${
+                  returnData.priceDifference > 0 
+                    ? 'bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800' 
+                    : 'bg-green-50 dark:bg-green-900/20 border-2 border-green-200 dark:border-green-800'
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <span className={`text-sm font-medium ${
+                      returnData.priceDifference > 0 
+                        ? 'text-red-700 dark:text-red-300' 
+                        : 'text-green-700 dark:text-green-300'
+                    }`}>
+                      {returnData.priceDifference > 0 
+                        ? 'Cliente pagó diferencia:' 
+                        : 'Se devolvió al cliente:'}
+                    </span>
+                    <span className={`text-lg font-bold ${
+                      returnData.priceDifference > 0 
+                        ? 'text-red-600 dark:text-red-400' 
+                        : 'text-green-600 dark:text-green-400'
+                    }`}>
+                      {formatCurrency(Math.abs(returnData.priceDifference))}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Notas */}
           {returnData.notes && (
@@ -964,9 +1941,27 @@ const ReturnDetailModal = ({ returnData, onClose, formatCurrency, formatDate, ge
               </p>
             )}
           </div>
+
+          {/* Botones de acción */}
+          <div className="mt-6 flex gap-3">
+            <button
+              onClick={handlePrintReturn}
+              className="btn-primary flex-1 flex items-center justify-center gap-2"
+            >
+              <Printer className="w-5 h-5" />
+              Imprimir Devolución
+            </button>
+            <button
+              onClick={onClose}
+              className="btn btn-secondary flex-1"
+            >
+              Cerrar
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
