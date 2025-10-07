@@ -45,9 +45,32 @@ git --version
 
 ---
 
+## ⚠️ Antes de Empezar - Importante
+
+### Orden Correcto de Instalación:
+
+```
+1. Clonar repositorio
+2. Instalar dependencias (backend + frontend)
+3. ⚠️ Configurar MongoDB (crear cluster/base de datos)
+4. ⚠️ Crear archivo .env con MONGO_URI y JWT_SECRET
+5. AHORA SÍ → Iniciar el servidor
+```
+
+**❌ Error común:** Intentar ejecutar `npm run dev` antes de configurar el `.env`
+
+**Resultado:** 
+```
+❌ Error de conexión a MongoDB: The `uri` parameter to `openUri()` must be a string, got "undefined"
+```
+
+**✅ Solución:** Sigue los pasos en orden. El archivo `.env` es OBLIGATORIO antes de iniciar.
+
+---
+
 ## 🚀 Instalación Inicial
 
-### 1. Clonar el Repositorio
+### Paso 1: Clonar el Repositorio
 
 ```bash
 # Opción A: Clonar desde GitHub
@@ -59,14 +82,16 @@ cd SistemaGestorDeTallerMecanico
 cd SistemaGestorDeTallerMecanico
 ```
 
-### 2. Instalar Dependencias del Backend
+### Paso 2: Instalar Dependencias del Backend
 
 ```bash
-# Instalar dependencias del servidor
+# En la raíz del proyecto
 npm install
 ```
 
-### 3. Instalar Dependencias del Frontend
+Este comando instalará todas las dependencias necesarias del servidor.
+
+### Paso 3: Instalar Dependencias del Frontend
 
 ```bash
 # Navegar a la carpeta del cliente
@@ -79,27 +104,70 @@ npm install
 cd ..
 ```
 
-### 4. Configurar Variables de Entorno
+---
+
+## ⚙️ Configuración (OBLIGATORIO)
+
+**⚠️ No puedes iniciar el sistema sin completar estos pasos**
+
+### Paso 4: Configurar MongoDB
+
+Antes de iniciar el sistema, necesitas una base de datos MongoDB. Tienes dos opciones:
+
+#### Opción A: MongoDB Atlas (Recomendado - Cloud)
+
+1. Ve a [MongoDB Atlas](https://cloud.mongodb.com) y crea una cuenta gratuita
+2. Crea un nuevo cluster (tier gratuito M0)
+3. En "Database Access", crea un usuario con contraseña
+4. En "Network Access", permite acceso desde cualquier IP (0.0.0.0/0) o tu IP específica
+5. Click en "Connect" → "Connect your application"
+6. Copia el connection string (se verá así):
+   ```
+   mongodb+srv://usuario:password@cluster.mongodb.net/autoparts_db
+   ```
+
+#### Opción B: MongoDB Local
 
 ```bash
-# Crear archivo .env en la raíz del proyecto
-touch .env
+# Instalar MongoDB Community Edition
+# Sigue las instrucciones en: https://www.mongodb.com/docs/manual/installation/
 
-# O en Windows:
-type nul > .env
+# Tu connection string será:
+mongodb://localhost:27017/autoparts_db
 ```
 
-Edita el archivo `.env` con tu editor favorito:
+### Paso 5: Configurar Variables de Entorno
+
+**⚠️ CRÍTICO: Sin este paso, el servidor NO arrancará**
+
+Crea el archivo `.env` en la raíz del proyecto:
+
+```bash
+# En la raíz del proyecto (Windows PowerShell)
+New-Item -Path .env -ItemType File
+
+# O con CMD:
+type nul > .env
+
+# O en Linux/Mac:
+touch .env
+```
+
+Edita el archivo `.env` con tu editor favorito y **reemplaza los valores** con tus propios datos:
 
 ```env
 # ========================================
-# CONFIGURACIÓN DE BASE DE DATOS
+# CONFIGURACIÓN DE BASE DE DATOS (OBLIGATORIO)
 # ========================================
+# ⚠️ Reemplaza esto con tu connection string real de MongoDB Atlas
+# Ejemplo: mongodb+srv://miusuario:mipassword@cluster0.xxxxx.mongodb.net/autoparts_db
 MONGO_URI=mongodb+srv://usuario:password@cluster.mongodb.net/autoparts_db
 
 # ========================================
-# CONFIGURACIÓN DE AUTENTICACIÓN
+# CONFIGURACIÓN DE AUTENTICACIÓN (OBLIGATORIO)
 # ========================================
+# ⚠️ Genera una clave secreta única (mínimo 32 caracteres)
+# Puedes usar: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 JWT_SECRET=tu_clave_secreta_super_segura_minimo_32_caracteres_12345
 
 # ========================================
@@ -118,20 +186,84 @@ EMAIL_PASS=tu-contraseña-de-aplicacion
 EMAIL_FROM=autoparts@tudominio.com
 ```
 
-### 5. Iniciar el Sistema
+**Verificar que el archivo .env esté configurado correctamente:**
+
+```bash
+# Windows PowerShell:
+Get-Content .env
+
+# CMD:
+type .env
+
+# Linux/Mac:
+cat .env
+```
+
+Deberías ver tus variables con valores reales (no los valores de ejemplo).
+
+---
+
+## 🎬 Iniciar el Sistema
+
+**✅ Checklist antes de iniciar:**
+- [ ] Dependencias instaladas (backend y frontend)
+- [ ] MongoDB configurado (Atlas o local)
+- [ ] Archivo `.env` creado y configurado
+- [ ] Variables `MONGO_URI` y `JWT_SECRET` tienen valores reales
+
+### Paso 6: Iniciar el Sistema
 
 #### Opción A: Modo Desarrollo (Recomendado)
 
-```bash
-# Terminal 1 - Backend
-npm run dev
+Abre **DOS terminales** separadas:
 
-# Terminal 2 - Frontend
-cd client
+**Terminal 1 - Backend:**
+```bash
+# En la raíz del proyecto
 npm run dev
 ```
 
-#### Opción B: Modo Producción
+Deberías ver:
+```
+[nodemon] starting `node server.js`
+🚀 Servidor corriendo en puerto 5000
+✅ MongoDB conectado exitosamente
+```
+
+❌ **Si ves un error como:**
+```
+❌ Error de conexión a MongoDB: The `uri` parameter to `openUri()` must be a string, got "undefined"
+```
+**Solución:** Verifica que el archivo `.env` existe y tiene la variable `MONGO_URI` configurada correctamente.
+
+**Terminal 2 - Frontend:**
+```bash
+# Navegar a la carpeta del cliente
+cd client
+
+# Iniciar frontend
+npm run dev
+```
+
+Deberías ver:
+```
+VITE v5.x.x  ready in xxx ms
+
+➜  Local:   http://localhost:3000/
+➜  Network: use --host to expose
+```
+
+#### Opción B: Usar Tasks de VS Code
+
+Si estás usando VS Code, puedes usar los tasks configurados:
+
+1. Presiona `Ctrl+Shift+P` (o `Cmd+Shift+P` en Mac)
+2. Escribe "Run Task"
+3. Selecciona "Start Full Application"
+
+Esto iniciará automáticamente backend y frontend.
+
+#### Opción C: Modo Producción
 
 ```bash
 # Build del frontend
@@ -139,18 +271,40 @@ cd client
 npm run build
 cd ..
 
-# Iniciar servidor
+# Iniciar servidor (sirve frontend desde backend)
 npm start
 ```
 
-### 6. Acceder al Sistema
+### 7. Poblar Base de Datos con Datos de Prueba (Opcional)
+
+Si quieres datos de ejemplo para probar el sistema:
+
+```bash
+# Detén el servidor backend (Ctrl+C)
+
+# Ejecuta el script de seed
+npm run seed
+
+# Reinicia el servidor
+npm run dev
+```
+
+Este script crea:
+- ✅ Usuario administrador
+- ✅ Usuario cajero
+- ✅ 10 productos de ejemplo
+- ✅ 3 clientes
+- ✅ 2 proveedores
+- ✅ Configuración inicial del negocio
+
+### 8. Acceder al Sistema
 
 Abre tu navegador en:
 ```
 http://localhost:3000
 ```
 
-**Credenciales por Defecto** (si usaste `npm run seed`):
+**Credenciales de Prueba** (si usaste `npm run seed`):
 - **Email:** admin@autoparts.com
 - **Contraseña:** admin123
 
@@ -798,7 +952,60 @@ git checkout develop   # Volver a desarrollo
 
 ## 🔧 Troubleshooting
 
-### Problema: Error al conectar con MongoDB
+### ❌ Problema 1: "The uri parameter must be a string, got undefined"
+
+**Este es el error MÁS COMÚN**
+
+**Síntoma completo:**
+```
+❌ Error de conexión a MongoDB: The `uri` parameter to `openUri()` must be a string, got "undefined". 
+Make sure the first parameter to `mongoose.connect()` or `mongoose.createConnection()` is a string.
+[nodemon] app crashed - waiting for file changes before starting...
+```
+
+**Causa:** El archivo `.env` no existe o la variable `MONGO_URI` no está configurada.
+
+**Soluciones (en orden):**
+
+1. **Verificar que el archivo .env existe:**
+   ```bash
+   # Windows PowerShell
+   Test-Path .env
+   # Debe devolver: True
+   
+   # Si devuelve False, crear el archivo:
+   New-Item -Path .env -ItemType File
+   ```
+
+2. **Verificar contenido del .env:**
+   ```bash
+   # Windows PowerShell
+   Get-Content .env
+   
+   # CMD
+   type .env
+   ```
+   
+   Debe contener AL MENOS:
+   ```env
+   MONGO_URI=mongodb+srv://usuario:password@cluster.mongodb.net/autoparts_db
+   JWT_SECRET=tu_clave_secreta_minimo_32_caracteres
+   ```
+
+3. **Verificar que MONGO_URI tiene un valor válido:**
+   - ❌ Incorrecto: `MONGO_URI=` (vacío)
+   - ❌ Incorrecto: `MONGO_URI=mongodb+srv://usuario:password@cluster.mongodb.net/autoparts_db` (con los valores de ejemplo)
+   - ✅ Correcto: `MONGO_URI=mongodb+srv://miusuario:mipassword123@cluster0.abc12.mongodb.net/autoparts_db` (con tus credenciales reales)
+
+4. **Reiniciar el servidor después de editar .env:**
+   ```bash
+   # En la terminal donde corre npm run dev
+   # Presiona Ctrl+C para detener
+   # Luego ejecuta de nuevo:
+   npm run dev
+   ```
+
+### ❌ Problema 2: Error al conectar con MongoDB
 
 **Síntoma:**
 ```
@@ -806,12 +1013,15 @@ Error: connect ECONNREFUSED
 ```
 
 **Soluciones:**
-1. Verifica que `MONGO_URI` en `.env` sea correcto
-2. Verifica que MongoDB Atlas esté activo
-3. Verifica IP Whitelist en MongoDB Atlas
-4. Verifica usuario y contraseña de BD
+1. Verifica que `MONGO_URI` en `.env` sea correcto (sin espacios)
+2. Si usas MongoDB Atlas:
+   - Verifica que el cluster esté activo
+   - Verifica IP Whitelist (permite 0.0.0.0/0 o tu IP)
+   - Verifica usuario y contraseña de BD (sin caracteres especiales problemáticos)
+3. Si usas MongoDB local:
+   - Verifica que MongoDB esté corriendo: `mongod --version`
 
-### Problema: Puerto 5000 ya en uso
+### ❌ Problema 3: Puerto 5000 ya en uso
 
 **Síntoma:**
 ```
@@ -833,7 +1043,7 @@ lsof -i :5000
 kill -9 [PID]
 ```
 
-### Problema: Módulos no encontrados
+### ❌ Problema 4: Módulos no encontrados
 
 **Síntoma:**
 ```
@@ -852,7 +1062,7 @@ rm -rf node_modules package-lock.json
 npm install
 ```
 
-### Problema: Frontend no se conecta al Backend
+### ❌ Problema 5: Frontend no se conecta al Backend
 
 **Síntomas:**
 - Errores de CORS
@@ -869,7 +1079,7 @@ app.use(cors({
 ```
 3. Verifica `API_URL` en `client/src/services/api.js`
 
-### Problema: Login no funciona
+### ❌ Problema 6: Login no funciona
 
 **Síntomas:**
 - "Invalid credentials"
@@ -881,7 +1091,7 @@ app.use(cors({
 3. O ejecuta `npm run create-admin` para crear admin sin limpiar BD
 4. Verifica que `JWT_SECRET` esté configurado en `.env`
 
-### Problema: Productos no aparecen
+### ❌ Problema 7: Productos no aparecen
 
 **Síntomas:**
 - Inventario vacío después de agregar productos
@@ -895,7 +1105,7 @@ curl http://localhost:5000/api/products
 3. Verifica token de autenticación en localStorage
 4. Cierra sesión y vuelve a entrar
 
-### Problema: Script setup-client falla
+### ❌ Problema 8: Script setup-client falla
 
 **Síntomas:**
 - Error durante la inicialización
