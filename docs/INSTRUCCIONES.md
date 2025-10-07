@@ -177,16 +177,9 @@ JWT_SECRET="tu_clave_secreta_super_segura_minimo_32_caracteres_12345"
 # ========================================
 NODE_ENV="development"
 PORT="5000"
-
-# ========================================
-# CONFIGURACIÓN DE EMAIL (Opcional)
-# ========================================
-EMAIL_HOST="smtp.gmail.com"
-EMAIL_PORT="587"
-EMAIL_USER="tu-email@gmail.com"
-EMAIL_PASS="tu-contraseña-de-aplicacion"
-EMAIL_FROM="autoparts@tudominio.com"
 ```
+
+> **💡 Nota:** La configuración de email SMTP se gestiona desde la interfaz del sistema en Configuración > Notificaciones.
 
 **Verificar que el archivo .env esté configurado correctamente:**
 
