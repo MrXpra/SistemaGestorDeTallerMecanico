@@ -9,6 +9,8 @@
 
 Sistema de Punto de Venta (POS) moderno y completo para tiendas de repuestos automotrices, desarrollado con tecnologías de vanguardia y diseño minimalista con efectos glassmorphism.
 
+[🚀 Demo](#) | [📖 Documentación](./docs/) | [🐛 Reportar Bug](https://github.com/MrXpra/SistemaGestorDeTallerMecanico/issues)
+
 </div>
 
 ---
@@ -21,6 +23,7 @@ Sistema de Punto de Venta (POS) moderno y completo para tiendas de repuestos aut
 - [Instalación](#-instalación)
 - [Configuración](#-configuración)
 - [Uso](#-uso)
+- [Flujo de Trabajo Git](#-flujo-de-trabajo-git)
 - [Estructura del Proyecto](#-estructura-del-proyecto)
 - [API Endpoints](#-api-endpoints)
 - [Despliegue](#-despliegue)
@@ -241,6 +244,50 @@ NODE_ENV=production npm start
 ```
 
 La aplicación completa estará disponible en `http://localhost:5000`
+
+---
+
+## 🌿 Flujo de Trabajo Git
+
+Este proyecto utiliza un flujo de trabajo profesional basado en ramas:
+
+### Ramas Principales
+
+- **`main`** 🔒 - Versión de producción (solo código estable y etiquetado)
+- **`develop`** 🛠️ - Rama de desarrollo (todo el trabajo nuevo va aquí)
+
+### Trabajo Diario
+
+```bash
+# 1. Asegúrate de estar en develop
+git checkout develop
+
+# 2. Actualiza tu rama
+git pull origin develop
+
+# 3. Haz tus cambios y commitea
+git add .
+git commit -m "feat: descripción del cambio"
+
+# 4. Sube tus cambios
+git push origin develop
+```
+
+### Publicar Nueva Versión
+
+```bash
+# Para correcciones de bugs (1.0.0 → 1.0.1)
+npm run release:patch
+
+# Para nuevas funcionalidades (1.0.0 → 1.1.0)
+npm run release:minor
+
+# Para cambios importantes (1.0.0 → 2.0.0)
+npm run release:major
+```
+
+📚 **Documentación completa**: [docs/GIT_WORKFLOW.md](./docs/GIT_WORKFLOW.md)  
+📝 **Guía rápida**: [docs/QUICK_GIT_GUIDE.md](./docs/QUICK_GIT_GUIDE.md)
 
 ---
 
