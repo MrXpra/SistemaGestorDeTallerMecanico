@@ -44,8 +44,8 @@ const setupNewClient = async () => {
 
     // Conectar a MongoDB
     console.log('📡 Conectando a MongoDB...');
-    await mongoose.connect(process.env.MONGO_URI);
-    console.log('✅ Conectado a:', process.env.MONGO_URI.split('@')[1]?.split('/')[0] || 'MongoDB');
+    await mongoose.connect(process.env.MONGODB_URI);
+    console.log('✅ Conectado a:', process.env.MONGODB_URI.split('@')[1]?.split('/')[0] || 'MongoDB');
     console.log('');
 
     // ADVERTENCIA

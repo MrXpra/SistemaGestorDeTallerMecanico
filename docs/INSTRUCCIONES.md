@@ -53,7 +53,7 @@ git --version
 1. Clonar repositorio
 2. Instalar dependencias (backend + frontend)
 3. ⚠️ Configurar MongoDB (crear cluster/base de datos)
-4. ⚠️ Crear archivo .env con MONGO_URI y JWT_SECRET
+4. ⚠️ Crear archivo .env con MONGODB_URI y JWT_SECRET
 5. AHORA SÍ → Iniciar el servidor
 ```
 
@@ -64,7 +64,11 @@ git --version
 ❌ Error de conexión a MongoDB: The `uri` parameter to `openUri()` must be a string, got "undefined"
 ```
 
-**✅ Solución:** Sigue los pasos en orden. El archivo `.env` es OBLIGATORIO antes de iniciar.
+**✅ Checklist antes de iniciar:**
+- [ ] Dependencias instaladas (backend y frontend)
+- [ ] MongoDB configurado (Atlas o local)
+- [ ] Archivo `.env` creado y configurado
+- [ ] Variables `MONGODB_URI` y `JWT_SECRET` tienen valores reales
 
 ---
 
@@ -207,7 +211,7 @@ Deberías ver tus variables con valores reales (no los valores de ejemplo).
 - [ ] Dependencias instaladas (backend y frontend)
 - [ ] MongoDB configurado (Atlas o local)
 - [ ] Archivo `.env` creado y configurado
-- [ ] Variables `MONGO_URI` y `JWT_SECRET` tienen valores reales
+- [ ] Variables `MONGODB_URI` y `JWT_SECRET` tienen valores reales
 
 ### Paso 6: Iniciar el Sistema
 
@@ -232,7 +236,7 @@ Deberías ver:
 ```
 ❌ Error de conexión a MongoDB: The `uri` parameter to `openUri()` must be a string, got "undefined"
 ```
-**Solución:** Verifica que el archivo `.env` existe y tiene la variable `MONGO_URI` configurada correctamente.
+**Solución:** Verifica que el archivo `.env` existe y tiene la variable `MONGODB_URI` configurada correctamente.
 
 **Terminal 2 - Frontend:**
 ```bash
@@ -789,7 +793,7 @@ railway login
 railway init
 
 # 4. Configurar variables de entorno
-railway variables set MONGO_URI="tu-connection-string"
+railway variables set MONGODB_URI="tu-connection-string"
 railway variables set JWT_SECRET="tu-jwt-secret"
 railway variables set NODE_ENV="production"
 
@@ -989,7 +993,7 @@ Make sure the first parameter to `mongoose.connect()` or `mongoose.createConnect
 [nodemon] app crashed - waiting for file changes before starting...
 ```
 
-**Causa:** El archivo `.env` no existe o la variable `MONGO_URI` no está configurada.
+**Causa:** El archivo `.env` no existe o la variable `MONGODB_URI` no está configurada.
 
 **Soluciones (en orden):**
 
@@ -1014,14 +1018,14 @@ Make sure the first parameter to `mongoose.connect()` or `mongoose.createConnect
    
    Debe contener AL MENOS:
    ```env
-   MONGO_URI=mongodb+srv://usuario:password@cluster.mongodb.net/autoparts_db
+   MONGODB_URI=mongodb+srv://usuario:password@cluster.mongodb.net/autoparts_db
    JWT_SECRET=tu_clave_secreta_minimo_32_caracteres
    ```
 
-3. **Verificar que MONGO_URI tiene un valor válido:**
-   - ❌ Incorrecto: `MONGO_URI=` (vacío)
-   - ❌ Incorrecto: `MONGO_URI=mongodb+srv://usuario:password@cluster.mongodb.net/autoparts_db` (con los valores de ejemplo)
-   - ✅ Correcto: `MONGO_URI=mongodb+srv://miusuario:mipassword123@cluster0.abc12.mongodb.net/autoparts_db` (con tus credenciales reales)
+3. **Verificar que MONGODB_URI tiene un valor válido:**
+   - ❌ Incorrecto: `MONGODB_URI=` (vacío)
+   - ❌ Incorrecto: `MONGODB_URI=mongodb+srv://usuario:password@cluster.mongodb.net/autoparts_db` (con los valores de ejemplo)
+   - ✅ Correcto: `MONGODB_URI=mongodb+srv://miusuario:mipassword123@cluster0.abc12.mongodb.net/autoparts_db` (con tus credenciales reales)
 
 4. **Reiniciar el servidor después de editar .env:**
    ```bash
@@ -1039,7 +1043,7 @@ Error: connect ECONNREFUSED
 ```
 
 **Soluciones:**
-1. Verifica que `MONGO_URI` en `.env` sea correcto (sin espacios)
+1. Verifica que `MONGODB_URI` en `.env` sea correcto (sin espacios)
 2. Si usas MongoDB Atlas:
    - Verifica que el cluster esté activo
    - Verifica IP Whitelist (permite 0.0.0.0/0 o tu IP)
