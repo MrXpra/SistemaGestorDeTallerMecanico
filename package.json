@@ -11,6 +11,7 @@
     "seed": "node scripts/seed.js",
     "clean-seed": "node scripts/cleanAndSeed.js",
     "reset-db": "node scripts/resetDatabase.js",
+    "setup-client": "node scripts/setupNewClient.js",
     "client": "npm start --prefix client",
     "server": "nodemon server.js",
     "build": "npm install && npm install --prefix client && npm run build --prefix client",

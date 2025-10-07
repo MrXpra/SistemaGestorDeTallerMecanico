@@ -462,17 +462,42 @@ Después de ejecutar `npm run seed`:
 
 ```bash
 # Backend
-npm start          # Iniciar servidor en producción
-npm run dev        # Iniciar servidor en desarrollo con nodemon
-npm run seed       # Poblar base de datos
+npm start              # Iniciar servidor en producción
+npm run dev            # Iniciar servidor en desarrollo con nodemon
+npm run seed           # Poblar base de datos con datos de ejemplo
+npm run setup-client   # 🆕 Configurar para un nuevo cliente (BD limpia)
 
 # Frontend (dentro de /client)
-npm run dev        # Iniciar dev server de Vite
-npm run build      # Build para producción
-npm run preview    # Preview del build
+npm run dev            # Iniciar dev server de Vite
+npm run build          # Build para producción
+npm run preview        # Preview del build
 
 # Proyecto completo
-npm run build      # Instalar dependencias y build completo
+npm run build          # Instalar dependencias y build completo
+
+# Git & Versioning
+npm run release:patch  # Publicar versión de corrección (x.x.X)
+npm run release:minor  # Publicar versión con nuevas features (x.X.0)
+npm run release:major  # Publicar versión con cambios importantes (X.0.0)
+```
+
+### 🏢 Configuración para Nuevos Clientes
+
+Si vas a vender/instalar el sistema para un nuevo cliente:
+
+```bash
+npm run setup-client
+```
+
+Este script:
+- ✅ Limpia completamente la base de datos
+- ✅ Crea un usuario administrador personalizado
+- ✅ Configura datos del negocio
+- ✅ Inicializa todas las colecciones vacías
+- ✅ Sin datos de prueba (base de datos limpia)
+
+📚 **Documentación completa**: [docs/CONFIGURACION_NUEVOS_CLIENTES.md](./docs/CONFIGURACION_NUEVOS_CLIENTES.md)
+
 ```
 
 ---
