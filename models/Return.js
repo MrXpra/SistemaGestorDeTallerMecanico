@@ -161,7 +161,7 @@ returnSchema.pre('validate', async function(next) {
  * ÍNDICES
  * Mejoran el rendimiento de búsquedas frecuentes
  */
-returnSchema.index({ returnNumber: 1 }); // Búsqueda por número
+// returnNumber ya tiene unique: true en el schema (línea 21), no necesita índice adicional
 returnSchema.index({ sale: 1 }); // Devoluciones de una venta
 returnSchema.index({ status: 1 }); // Filtrar por estado
 returnSchema.index({ createdAt: -1 }); // Ordenar por fecha
