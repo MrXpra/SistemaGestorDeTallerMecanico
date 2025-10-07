@@ -244,7 +244,7 @@ class AuditLogService {
     
     // Si no hay usuario, no intentar crear log de auditoría
     if (!user || !user._id) {
-      console.log(`⚠️ Intento de ${action} sin usuario válido: ${userName}`);
+      console.log(`⚠️ ${action} sin usuario válido: ${userName}`);
       return null;
     }
     
