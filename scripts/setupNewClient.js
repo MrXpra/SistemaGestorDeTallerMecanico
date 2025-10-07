@@ -1,5 +1,4 @@
 import mongoose from 'mongoose';
-import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
 import readline from 'readline';
 import User from '../models/User.js';
@@ -117,14 +116,11 @@ const setupNewClient = async () => {
     console.log('  PASO 3: CREANDO USUARIO ADMINISTRADOR');
     console.log('═══════════════════════════════════════════════════════════\n');
 
-    // Hashear contraseña
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(adminPassword, salt);
-
+    // Crear usuario (el modelo User hasheará la contraseña automáticamente)
     const adminUser = await User.create({
       name: adminName,
       email: adminEmail.toLowerCase(),
-      password: hashedPassword,
+      password: adminPassword,
       role: 'admin'
     });
 
