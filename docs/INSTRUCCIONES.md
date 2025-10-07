@@ -152,7 +152,6 @@ type nul > .env
 # O en Linux/Mac:
 touch .env
 ```
-
 Edita el archivo `.env` con tu editor favorito y **reemplaza los valores** con tus propios datos:
 
 ```env
@@ -160,30 +159,29 @@ Edita el archivo `.env` con tu editor favorito y **reemplaza los valores** con t
 # CONFIGURACIÓN DE BASE DE DATOS (OBLIGATORIO)
 # ========================================
 # ⚠️ Reemplaza esto con tu connection string real de MongoDB Atlas
-# Ejemplo: mongodb+srv://miusuario:mipassword@cluster0.xxxxx.mongodb.net/autoparts_db
-MONGO_URI=mongodb+srv://usuario:password@cluster.mongodb.net/autoparts_db
+MONGODB_URI="mongodb+srv://usuario:password@cluster.mongodb.net/autoparts_db"
 
 # ========================================
 # CONFIGURACIÓN DE AUTENTICACIÓN (OBLIGATORIO)
 # ========================================
 # ⚠️ Genera una clave secreta única (mínimo 32 caracteres)
 # Puedes usar: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-JWT_SECRET=tu_clave_secreta_super_segura_minimo_32_caracteres_12345
+JWT_SECRET="tu_clave_secreta_super_segura_minimo_32_caracteres_12345"
 
 # ========================================
 # CONFIGURACIÓN DEL SERVIDOR
 # ========================================
-NODE_ENV=development
-PORT=5000
+NODE_ENV="development"
+PORT="5000"
 
 # ========================================
 # CONFIGURACIÓN DE EMAIL (Opcional)
 # ========================================
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_USER=tu-email@gmail.com
-EMAIL_PASS=tu-contraseña-de-aplicacion
-EMAIL_FROM=autoparts@tudominio.com
+EMAIL_HOST="smtp.gmail.com"
+EMAIL_PORT="587"
+EMAIL_USER="tu-email@gmail.com"
+EMAIL_PASS="tu-contraseña-de-aplicacion"
+EMAIL_FROM="autoparts@tudominio.com"
 ```
 
 **Verificar que el archivo .env esté configurado correctamente:**
@@ -275,9 +273,15 @@ cd ..
 npm start
 ```
 
-### 7. Poblar Base de Datos con Datos de Prueba (Opcional)
+### Paso 7: Crear Usuario Administrador
 
-Si quieres datos de ejemplo para probar el sistema:
+**⚠️ IMPORTANTE: Tu base de datos está vacía. Debes crear al menos un usuario para poder acceder al sistema.**
+
+Tienes 3 opciones:
+
+#### Opción A: Seed con Datos de Prueba (Recomendado para desarrollo/pruebas)
+
+Crea usuarios de ejemplo + datos de prueba:
 
 ```bash
 # Detén el servidor backend (Ctrl+C)
@@ -289,13 +293,52 @@ npm run seed
 npm run dev
 ```
 
-Este script crea:
-- ✅ Usuario administrador
-- ✅ Usuario cajero
+**Crea automáticamente:**
+- ✅ Usuario administrador (admin@autoparts.com / admin123)
+- ✅ Usuario cajero (cajero@autoparts.com / cajero123)
 - ✅ 10 productos de ejemplo
 - ✅ 3 clientes
 - ✅ 2 proveedores
 - ✅ Configuración inicial del negocio
+
+#### Opción B: Setup para Cliente (Para instalación en producción)
+
+Configuración personalizada sin datos de prueba:
+
+```bash
+# Detén el servidor backend (Ctrl+C)
+
+# Ejecuta el script de setup
+npm run setup-client
+
+# Sigue las instrucciones interactivas
+# Reinicia el servidor
+npm run dev
+```
+
+**Te preguntará:**
+- Datos del administrador (nombre, email, contraseña)
+- Datos del negocio
+- Configuración regional (moneda, impuestos, zona horaria)
+
+#### Opción C: Solo Crear Admin (Mínimo necesario)
+
+Crear solo el usuario administrador:
+
+```bash
+# Detén el servidor backend (Ctrl+C)
+
+# Ejecuta el script
+npm run create-admin
+
+# Sigue las instrucciones
+# Reinicia el servidor
+npm run dev
+```
+
+**Crea:**
+- ✅ 1 usuario administrador con tus datos
+- Base de datos vacía (sin productos, clientes, etc.)
 
 ### 8. Acceder al Sistema
 
@@ -304,9 +347,59 @@ Abre tu navegador en:
 http://localhost:3000
 ```
 
-**Credenciales de Prueba** (si usaste `npm run seed`):
+#### ✅ Escenario A: Si usaste `npm run seed`
+
+**Credenciales de Prueba:**
 - **Email:** admin@autoparts.com
 - **Contraseña:** admin123
+
+El sistema ya tiene datos de ejemplo:
+- 👤 2 usuarios (admin y cajero)
+- 📦 10 productos
+- 👥 3 clientes
+- 🏪 2 proveedores
+- ⚙️ Configuración básica del negocio
+
+#### ❌ Escenario B: Si NO usaste `npm run seed`
+
+**Tu base de datos está vacía.** No tienes ningún usuario para hacer login.
+
+**Solución - Opción 1: Ejecutar seed ahora**
+```bash
+# Detén el servidor backend (Ctrl+C en la terminal del backend)
+npm run seed
+# Reinicia el servidor
+npm run dev
+```
+Luego usa las credenciales del Escenario A.
+
+**Solución - Opción 2: Usar el script de setup para cliente**
+
+Si prefieres configurar el sistema desde cero con tus propios datos:
+
+```bash
+# Detén el servidor backend (Ctrl+C)
+npm run setup-client
+```
+
+Este script te preguntará:
+- Nombre y email del administrador
+- Contraseña del administrador
+- Datos del negocio
+- Configuración regional
+
+Después de completar el script, usa las credenciales que creaste.
+
+**Solución - Opción 3: Crear solo un usuario admin**
+
+Si solo necesitas un usuario administrador sin datos de ejemplo:
+
+```bash
+# Detén el servidor backend (Ctrl+C)
+npm run create-admin
+```
+
+Sigue las instrucciones para crear el usuario admin y luego usa esas credenciales.
 
 ---
 
@@ -319,73 +412,6 @@ Usa el script de configuración cuando:
 - ✅ Necesitas una instalación limpia sin datos de prueba
 - ✅ Quieres resetear completamente el sistema
 - ✅ Estás configurando múltiples instancias del sistema
-
-### Paso 1: Preparar Base de Datos MongoDB
-
-#### Crear Cluster en MongoDB Atlas
-
-1. **Acceder a MongoDB Atlas**:  
-   https://cloud.mongodb.com
-
-2. **Crear Nueva Organización** (opcional):
-   - Nombre: "AutoParts Clientes"
-
-3. **Crear Nuevo Proyecto**:
-   - Nombre: "Cliente - [NombreNegocio]"
-
-4. **Crear Cluster**:
-   ```
-   • Name: autoparts-[nombrecliente]
-   • Tier: M0 Sandbox (FREE)
-   • Cloud Provider: AWS
-   • Region: Seleccionar la más cercana al cliente
-   ```
-
-5. **Configurar Acceso**:
-   
-   **Database Access:**
-   ```
-   • Add New Database User
-   • Username: autoparts_user
-   • Password: [Generar contraseña segura]
-   • Database User Privileges: Atlas admin
-   ```
-
-   **Network Access:**
-   ```
-   • Add IP Address
-   • Access List Entry: 0.0.0.0/0 (permitir desde cualquier lugar)
-   • O agregar IP específica del servidor
-   ```
-
-6. **Obtener Connection String**:
-   ```
-   • Click en "Connect"
-   • "Connect your application"
-   • Copiar connection string:
-   
-   mongodb+srv://autoparts_user:PASSWORD@cluster.mongodb.net/autoparts_db
-   ```
-
-### Paso 2: Configurar Variables de Entorno
-
-Crea o edita el archivo `.env`:
-
-```env
-# Connection string de MongoDB Atlas
-MONGO_URI=mongodb+srv://autoparts_user:TuPassword123@cluster.mongodb.net/cliente_db
-
-# JWT Secret único para este cliente
-JWT_SECRET=clave_super_secreta_unica_cliente_nombre_minimo_32_caracteres
-
-# Ambiente
-NODE_ENV=production
-PORT=5000
-```
-
-**IMPORTANTE:**  
-✅ Cada cliente debe tener su propio JWT_SECRET único  
-✅ Guarda las credenciales en un lugar seguro
 
 ### Paso 3: Ejecutar Script de Inicialización
 
@@ -1079,17 +1105,54 @@ app.use(cors({
 ```
 3. Verifica `API_URL` en `client/src/services/api.js`
 
-### ❌ Problema 6: Login no funciona
+### ❌ Problema 6: No puedo hacer login / "Invalid credentials"
 
 **Síntomas:**
-- "Invalid credentials"
+- Mensaje "Invalid credentials"
 - No se puede iniciar sesión
+- Página de login sin usuarios
 
-**Soluciones:**
-1. Verifica que el usuario exista en la base de datos
-2. Ejecuta `npm run setup-client` para crear nuevo admin
-3. O ejecuta `npm run create-admin` para crear admin sin limpiar BD
-4. Verifica que `JWT_SECRET` esté configurado en `.env`
+**Causas comunes:**
+1. **No creaste ningún usuario** (base de datos vacía)
+2. Email o contraseña incorrectos
+3. JWT_SECRET no configurado
+
+**Soluciones (en orden):**
+
+**1. Verificar si tienes usuarios en la base de datos:**
+
+Si acabas de instalar el sistema y NO ejecutaste ningún script (`seed`, `setup-client` o `create-admin`), tu base de datos está vacía y NO TIENES USUARIOS.
+
+**2. Crear usuario administrador:**
+
+Elige una opción:
+
+```bash
+# Opción A: Con datos de prueba (desarrollo)
+npm run seed
+# Usuario: admin@autoparts.com / admin123
+
+# Opción B: Configuración personalizada (producción)
+npm run setup-client
+# Sigue las instrucciones interactivas
+
+# Opción C: Solo crear admin (mínimo)
+npm run create-admin
+# Sigue las instrucciones
+```
+
+**3. Verificar JWT_SECRET:**
+
+Asegúrate de que `.env` tiene:
+```env
+JWT_SECRET=tu_clave_secreta_minimo_32_caracteres
+```
+
+**4. Reiniciar servidor después de crear usuario:**
+```bash
+# Ctrl+C para detener
+npm run dev
+```
 
 ### ❌ Problema 7: Productos no aparecen
 
@@ -1159,9 +1222,10 @@ Para soporte técnico o consultas:
 - [ ] MongoDB Atlas configurado
 - [ ] .env creado y configurado
 - [ ] Dependencias instaladas (backend + frontend)
+- [ ] **Usuario administrador creado** (seed, setup-client o create-admin)
 - [ ] Backend corriendo en puerto 5000
 - [ ] Frontend corriendo en puerto 3000
-- [ ] Login exitoso con usuario de prueba
+- [ ] Login exitoso con las credenciales creadas
 
 ### Para Nuevo Cliente
 - [ ] Cluster MongoDB creado
