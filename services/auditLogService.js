@@ -242,9 +242,9 @@ class AuditLogService {
     // Para intentos fallidos, el usuario puede ser null
     const userName = user?.name || user?.email || metadata.attemptedUsername || 'Desconocido';
     
-    // Si no hay usuario, no intentar crear log de auditoría
+    // Si no hay usuario válido, no crear log de auditoría
+    // Esto ocurre en intentos de login fallidos o cuando el usuario no existe
     if (!user || !user._id) {
-      console.log(`⚠️ ${action} sin usuario válido: ${userName}`);
       return null;
     }
     
