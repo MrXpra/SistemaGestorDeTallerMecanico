@@ -135,7 +135,22 @@ cd autoparts-manager
 npm install
 ```
 
-### 3. Instalar dependencias del frontend
+### 3. Configurar Variables de Entorno
+
+Ejecuta el asistente interactivo para configurar el sistema:
+
+```bash
+npm run setup
+```
+
+O genera manualmente un JWT seguro y crea el archivo `.env`:
+
+```bash
+npm run generate-jwt
+# Luego crea el archivo .env con las variables necesarias
+```
+
+### 4. Instalar dependencias del frontend
 
 ```bash
 cd client
@@ -149,7 +164,27 @@ cd ..
 
 ### 1. Variables de Entorno
 
-El archivo `.env` ya está configurado en la raíz del proyecto:
+Puedes configurar las variables de entorno de dos formas:
+
+#### Opción A: Asistente Interactivo (Recomendado)
+
+Ejecuta el asistente de configuración que te guiará paso a paso:
+
+```bash
+npm run setup
+```
+
+El asistente te pedirá:
+- **MONGODB_URI**: Cadena de conexión a tu base de datos MongoDB
+- **JWT_SECRET**: Clave secreta para tokens (puedes generarla automáticamente)
+- **PORT**: Puerto del servidor (por defecto: 5000)
+- **NODE_ENV**: Entorno de ejecución (development/production)
+
+El script creará automáticamente el archivo `.env` en la raíz del proyecto.
+
+#### Opción B: Configuración Manual
+
+Crea un archivo `.env` en la raíz del proyecto con el siguiente contenido:
 
 ```env
 # Conexión a MongoDB
@@ -165,6 +200,12 @@ PORT=5000
 
 # Entorno
 NODE_ENV=development
+```
+
+**💡 Generar JWT_SECRET seguro:**
+
+```bash
+npm run generate-jwt
 ```
 
 > ⚠️ **IMPORTANTE**: Nunca subas tu archivo `.env` a GitHub. El archivo `.gitignore` ya está configurado para ignorarlo.
@@ -461,11 +502,16 @@ Después de ejecutar `npm run seed`:
 ## 📝 Scripts Disponibles
 
 ```bash
+# Configuración Inicial
+npm run setup          # 🆕 Asistente interactivo de configuración (.env)
+npm run generate-jwt   # 🆕 Generar JWT_SECRET seguro
+
 # Backend
 npm start              # Iniciar servidor en producción
 npm run dev            # Iniciar servidor en desarrollo con nodemon
+npm run create-admin   # Crear usuario administrador
 npm run seed           # Poblar base de datos con datos de ejemplo
-npm run setup-client   # 🆕 Configurar para un nuevo cliente (BD limpia)
+npm run setup-client   # Configurar para un nuevo cliente (BD limpia)
 
 # Frontend (dentro de /client)
 npm run dev            # Iniciar dev server de Vite
