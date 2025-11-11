@@ -7,7 +7,6 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-  "bootstrap": "powershell -ExecutionPolicy Bypass -File ./scripts/bootstrap.ps1",
     "setup": "node scripts/setup.js",
     "generate-jwt": "node scripts/generateJWT.js",
     "create-admin": "node scripts/createAdmin.js",
@@ -17,11 +16,12 @@
     "setup-client": "node scripts/setupNewClient.js",
     "client": "npm start --prefix client",
     "server": "nodemon server.js",
-    "build": "npm install && npm install --prefix client && npm run build --prefix client",
+  "build": "npm install && npm install --prefix client && npm run build --prefix client",
+  "bootstrap": "npm install && npm install --prefix client",
     "release:patch": "powershell -ExecutionPolicy Bypass -File ./scripts/release.ps1 -Type patch",
     "release:minor": "powershell -ExecutionPolicy Bypass -File ./scripts/release.ps1 -Type minor",
-    "release:major": "powershell -ExecutionPolicy Bypass -File ./scripts/release.ps1 -Type major"
-    ,"postinstall": "node ./scripts/generateJwtSecret.js"
+    "release:major": "powershell -ExecutionPolicy Bypass -File ./scripts/release.ps1 -Type major",
+    "postinstall": "node ./scripts/generateJwtSecret.js && npm install --prefix client"
   },
   "keywords": [
     "pos",

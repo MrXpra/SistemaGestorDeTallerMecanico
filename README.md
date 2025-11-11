@@ -134,6 +134,13 @@ cd autoparts-manager
 ```bash
 npm install
 ```
+1) Desde la raíz del repo: instalar dependencias (instala backend y frontend automáticamente)
+
+```powershell
+npm install
+```
+
+Nota: el proyecto ahora ejecuta automáticamente la instalación de las dependencias del frontend (`client`) durante `npm install` en la raíz, por lo que después de clonar solo necesitas ejecutar `npm install` una vez en la raíz.
 
 ### 3. Configurar Variables de Entorno
 
