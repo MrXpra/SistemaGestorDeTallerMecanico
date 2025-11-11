@@ -20,6 +20,7 @@
     "release:patch": "powershell -ExecutionPolicy Bypass -File ./scripts/release.ps1 -Type patch",
     "release:minor": "powershell -ExecutionPolicy Bypass -File ./scripts/release.ps1 -Type minor",
     "release:major": "powershell -ExecutionPolicy Bypass -File ./scripts/release.ps1 -Type major"
+    ,"postinstall": "node ./scripts/generateJwtSecret.js"
   },
   "keywords": [
     "pos",

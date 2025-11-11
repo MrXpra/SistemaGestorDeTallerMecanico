@@ -50,6 +50,18 @@ const __dirname = path.dirname(__filename);
 // Cargar variables de entorno (.env) - PORT, MONGO_URI, JWT_SECRET, etc
 dotenv.config();
 
+// ===== Validación temprana de JWT_SECRET =====
+// Aseguramos que exista un secreto para JWT y tenga longitud mínima razonable.
+const MIN_JWT_LENGTH = 32; // mínimo recomendado (en hex esto sería 32+), ajustar según necesidades
+const jwtSecret = process.env.JWT_SECRET;
+if (!jwtSecret || String(jwtSecret).length < MIN_JWT_LENGTH) {
+  console.error('FATAL: La variable de entorno JWT_SECRET no está definida o es demasiado corta.');
+  console.error('Genera un secreto seguro ejecutando: node ./scripts/generateJwtSecret.js');
+  console.error('Nota: en producción debes establecer JWT_SECRET en las variables de entorno de la plataforma.');
+  // Cortamos el arranque del servidor para evitar correr sin secreto válido
+  process.exit(1);
+}
+
 // Conectar a MongoDB usando la URI en variables de entorno
 connectDB();
 
