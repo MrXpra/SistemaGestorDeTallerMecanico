@@ -93,21 +93,26 @@ async function setup() {
     const nodeEnv = nodeEnvInput.trim() || 'development';
     console.log('');
 
-    // Crear contenido del archivo .env
+    // Función para escapar comillas simples dentro de los valores
+    function escapeSingleQuotes(value) {
+      return String(value).replace(/'/g, "\\'");
+    }
+
+    // Crear contenido del archivo .env (valores entre comillas simples obligatorias)
     const envContent = `# Configuración de AutoParts Manager
 # Generado automáticamente el ${new Date().toLocaleString('es-MX')}
 
 # Conexión a MongoDB
-MONGODB_URI=${mongoUri}
+MONGODB_URI='${escapeSingleQuotes(mongoUri)}'
 
 # Secreto para JWT (¡NUNCA COMPARTAS ESTE VALOR!)
-JWT_SECRET=${jwtSecret}
+JWT_SECRET='${escapeSingleQuotes(jwtSecret)}'
 
 # Puerto del servidor
-PORT=${port}
+PORT='${escapeSingleQuotes(port)}'
 
 # Entorno de ejecución
-NODE_ENV=${nodeEnv}
+NODE_ENV='${escapeSingleQuotes(nodeEnv)}'
 `;
 
     // Guardar archivo .env
