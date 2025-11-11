@@ -93,27 +93,51 @@ async function setup() {
     const nodeEnv = nodeEnvInput.trim() || 'development';
     console.log('');
 
+  // 5. JWT_EXPIRE (opcional)
+  console.log('5️⃣  JWT_EXPIRE (opcional)');
+  console.log('   Tiempo de expiración del token JWT (ej: 7d, 24h). Presiona Enter para omitir y usar el valor por defecto del código.\n');
+  const jwtExpireInput = await question('   JWT_EXPIRE (presiona Enter para omitir): ');
+  const jwtExpire = jwtExpireInput.trim();
+  console.log('');
+
+  // 6. BACKEND_URL (opcional)
+  console.log('6️⃣  BACKEND_URL (opcional)');
+  console.log('   URL pública del backend (ej: https://miapp.example.com). Presiona Enter para omitir.\n');
+  const backendUrlInput = await question('   BACKEND_URL (presiona Enter para omitir): ');
+  const backendUrl = backendUrlInput.trim();
+  console.log('');
+
     // Función para escapar comillas simples dentro de los valores
     function escapeSingleQuotes(value) {
       return String(value).replace(/'/g, "\\'");
     }
 
     // Crear contenido del archivo .env (valores entre comillas simples obligatorias)
-    const envContent = `# Configuración de AutoParts Manager
-# Generado automáticamente el ${new Date().toLocaleString('es-MX')}
+    const lines = [];
+    lines.push("# Configuración de AutoParts Manager");
+    lines.push(`# Generado automáticamente el ${new Date().toLocaleString('es-MX')}`);
+    lines.push("");
+    lines.push("# Conexión a MongoDB");
+    lines.push(`MONGODB_URI='${escapeSingleQuotes(mongoUri)}'`);
+    lines.push("");
+    lines.push("# Secreto para JWT (¡NUNCA COMPARTAS ESTE VALOR!)");
+    lines.push(`JWT_SECRET='${escapeSingleQuotes(jwtSecret)}'`);
+    if (jwtExpire) {
+      lines.push(`JWT_EXPIRE='${escapeSingleQuotes(jwtExpire)}'`);
+    }
+    lines.push("");
+    lines.push("# Puerto del servidor");
+    lines.push(`PORT='${escapeSingleQuotes(port)}'`);
+    lines.push("");
+    lines.push("# Entorno de ejecución");
+    lines.push(`NODE_ENV='${escapeSingleQuotes(nodeEnv)}'`);
+    if (backendUrl) {
+      lines.push("");
+      lines.push("# URL pública del backend");
+      lines.push(`BACKEND_URL='${escapeSingleQuotes(backendUrl)}'`);
+    }
 
-# Conexión a MongoDB
-MONGODB_URI='${escapeSingleQuotes(mongoUri)}'
-
-# Secreto para JWT (¡NUNCA COMPARTAS ESTE VALOR!)
-JWT_SECRET='${escapeSingleQuotes(jwtSecret)}'
-
-# Puerto del servidor
-PORT='${escapeSingleQuotes(port)}'
-
-# Entorno de ejecución
-NODE_ENV='${escapeSingleQuotes(nodeEnv)}'
-`;
+    const envContent = lines.join('\n') + '\n';
 
     // Guardar archivo .env
     fs.writeFileSync(envPath, envContent, 'utf8');

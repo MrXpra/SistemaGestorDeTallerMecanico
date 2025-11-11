@@ -179,6 +179,8 @@ El asistente te pedirá:
 - **JWT_SECRET**: Clave secreta para tokens (puedes generarla automáticamente)
 - **PORT**: Puerto del servidor (por defecto: 5000)
 - **NODE_ENV**: Entorno de ejecución (development/production)
+- **JWT_EXPIRE** (opcional): Tiempo de expiración del token JWT (ej: 7d)
+- **BACKEND_URL** (opcional): URL pública del backend (ej: https://miapp.example.com)
 
 El script creará automáticamente el archivo `.env` en la raíz del proyecto.
 
@@ -188,18 +190,26 @@ Crea un archivo `.env` en la raíz del proyecto con el siguiente contenido:
 
 ```env
 # Conexión a MongoDB
-MONGODB_URI=mongodb://localhost:27017/tu-base-de-datos
+# Conexión a MongoDB
+MONGODB_URI='mongodb://localhost:27017/tu-base-de-datos'
 # O para MongoDB Atlas:
-# MONGODB_URI=mongodb+srv://usuario:password@cluster.mongodb.net/database?retryWrites=true&w=majority
+# O para MongoDB Atlas:
+# MONGODB_URI='mongodb+srv://usuario:password@cluster.mongodb.net/database?retryWrites=true&w=majority'
 
 # Secreto para JWT (genera uno único y seguro)
-JWT_SECRET=tu_secreto_jwt_super_seguro_cambiame_por_uno_real
+JWT_SECRET='tu_secreto_jwt_super_seguro_cambiame_por_uno_real'
+
+# Tiempo de expiración del token (opcional)
+JWT_EXPIRE='7d'
 
 # Puerto del servidor
-PORT=5000
+PORT='5000'
 
 # Entorno
-NODE_ENV=development
+NODE_ENV='development'
+
+# URL pública del backend (opcional)
+BACKEND_URL='https://miapp.example.com'
 ```
 
 **💡 Generar JWT_SECRET seguro:**
