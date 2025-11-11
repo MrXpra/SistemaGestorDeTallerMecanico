@@ -60,11 +60,11 @@ try {
       }
     }
   } else {
-    // create .env with secret
-    const secret = generateSecret();
-    const out = `# Variables de entorno generadas automáticamente\nJWT_SECRET=${secret}\n`;
-    fs.writeFileSync(envPath, out, 'utf8');
-    console.log('✅ .env creado y JWT_SECRET añadido');
+  // create .env with secret (JWT_SECRET env value wrapped in single quotes)
+  const secret = generateSecret();
+  const out = `# Variables de entorno generadas automáticamente\nJWT_SECRET='${secret}'\n`;
+  fs.writeFileSync(envPath, out, 'utf8');
+  console.log('✅ .env creado y JWT_SECRET añadido');
   }
 } catch (err) {
   console.error('⚠️ Error al generar/actualizar JWT_SECRET:', err);
