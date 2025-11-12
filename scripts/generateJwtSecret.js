@@ -1,72 +1,104 @@
-import fs from 'fs';
-import path from 'path';
 import crypto from 'crypto';
+import { fileURLToPath } from 'url';
+import path from 'path';
+import fs from 'fs';
 
-const envPath = path.join(process.cwd(), '.env');
+/**
+ * Script para generar un JWT_SECRET seguro y agregarlo automáticamente al .env
+ * Genera una cadena aleatoria de 64 caracteres hexadecimales
+ * 
+ * Uso:
+ * - node scripts/generateJwtSecret.js
+ * - Se ejecuta automáticamente en postinstall
+ */
 
-function generateSecret() {
-  return crypto.randomBytes(48).toString('hex');
+function generateSecureJWT() {
+  // Genera 32 bytes aleatorios y los convierte a hex (64 caracteres)
+  const secret = crypto.randomBytes(32).toString('hex');
+  return secret;
 }
 
-function looksLikePlaceholder(value) {
-  if (!value) return true;
-  const v = String(value).toLowerCase();
-  return /cambiame|tu_secreto|change(me)?|changeme|replace_me|replace\.me/.test(v);
-}
-
-try {
-  if (fs.existsSync(envPath)) {
-    const content = fs.readFileSync(envPath, 'utf8');
-    const lines = content.split(/\r?\n/);
-    const idx = lines.findIndex(l => /^\s*JWT_SECRET\s*=/.test(l));
-
-    if (idx === -1) {
-      const secret = generateSecret();
-      // add a comment and the secret at the end (wrap secret in single quotes)
-      let out = content;
-      if (!out.endsWith('\n')) out += '\n';
-      out += "# JWT secret generado automáticamente durante la instalación\n";
-      out += "# Para regenerarlo manualmente ejecute: node ./scripts/generateJwtSecret.js\n";
-      out += `JWT_SECRET='${secret}'\n`;
-      fs.writeFileSync(envPath, out, 'utf8');
-      console.log('✅ JWT_SECRET agregado a .env');
-    } else {
-      const parts = lines[idx].split('=');
-      const current = parts.slice(1).join('=') || '';
-      if (looksLikePlaceholder(current)) {
-        const secret = generateSecret();
-        // ensure the secret is wrapped in single quotes
-        lines[idx] = `JWT_SECRET='${secret}'`;
-        // insert a short comment above explaining how to regenerate
-        const comment = "# JWT secret generado automáticamente. Para regenerarlo: node ./scripts/generateJwtSecret.js";
-        // if previous line is not a similar comment, insert it
-        const prevLine = (idx > 0) ? lines[idx - 1] : null;
-        if (!prevLine || !/regenerar/i.test(prevLine)) {
-          lines.splice(idx, 0, comment);
-        }
-        fs.writeFileSync(envPath, lines.join('\n'), 'utf8');
-        console.log('✅ JWT_SECRET existente reemplazado por un valor seguro en .env');
-      } else {
-        // If JWT exists and does not look like a placeholder, add an instructive comment
-        const comment2 = "# Puedes regenerar el JWT secret ejecutando: node ./scripts/generateJwtSecret.js";
-        const prevLine2 = (idx > 0) ? lines[idx - 1] : null;
-        if (!prevLine2 || !/regenerar|regenerate|Para regenerarlo|Puedes regenerar/i.test(prevLine2)) {
-          lines.splice(idx, 0, comment2);
-          fs.writeFileSync(envPath, lines.join('\n'), 'utf8');
-          console.log('ℹ️ JWT_SECRET ya existe. Se añadió comentario con instrucciones para regenerarlo en .env');
-        } else {
-          console.log('ℹ️ JWT_SECRET ya existe y parece válido. No se realizó ningún cambio adicional.');
-        }
+function updateOrCreateEnvFile(jwtSecret) {
+  const envPath = path.join(process.cwd(), '.env');
+  const envExamplePath = path.join(process.cwd(), '.env.production.example');
+  
+  try {
+    // Si existe .env, verificar si ya tiene JWT_SECRET
+    if (fs.existsSync(envPath)) {
+      let envContent = fs.readFileSync(envPath, 'utf8');
+      
+      // Si ya tiene JWT_SECRET, no hacer nada
+      if (envContent.includes('JWT_SECRET=') && !envContent.includes('JWT_SECRET=your_jwt_secret_here')) {
+        console.log('✅ JWT_SECRET ya existe en .env');
+        return false;
       }
+      
+      // Si tiene placeholder, reemplazarlo
+      if (envContent.includes('JWT_SECRET=your_jwt_secret_here') || envContent.includes('JWT_SECRET=')) {
+        envContent = envContent.replace(/JWT_SECRET=.*/, `JWT_SECRET=${jwtSecret}`);
+        fs.writeFileSync(envPath, envContent);
+        console.log('✅ JWT_SECRET actualizado en .env');
+        return true;
+      }
+      
+      // Si no tiene JWT_SECRET, agregarlo
+      envContent += `\nJWT_SECRET=${jwtSecret}\n`;
+      fs.writeFileSync(envPath, envContent);
+      console.log('✅ JWT_SECRET agregado a .env');
+      return true;
+    } else {
+      // Si no existe .env, crearlo desde .env.production.example o desde cero
+      let envContent = '';
+      
+      if (fs.existsSync(envExamplePath)) {
+        envContent = fs.readFileSync(envExamplePath, 'utf8');
+        envContent = envContent.replace(/JWT_SECRET=.*/, `JWT_SECRET=${jwtSecret}`);
+      } else {
+        envContent = `# Configuración del servidor
+PORT=5000
+
+# Base de datos MongoDB
+MONGODB_URI=your_mongodb_uri_here
+
+# Secreto para JWT (generado automáticamente)
+JWT_SECRET=${jwtSecret}
+
+# Node environment
+NODE_ENV=development
+`;
+      }
+      
+      fs.writeFileSync(envPath, envContent);
+      console.log('✅ Archivo .env creado con JWT_SECRET');
+      return true;
     }
-  } else {
-  // create .env with secret (JWT_SECRET env value wrapped in single quotes)
-  const secret = generateSecret();
-  const out = `# Variables de entorno generadas automáticamente\nJWT_SECRET='${secret}'\n`;
-  fs.writeFileSync(envPath, out, 'utf8');
-  console.log('✅ .env creado y JWT_SECRET añadido');
+  } catch (error) {
+    console.error('❌ Error al actualizar .env:', error.message);
+    return false;
   }
-} catch (err) {
-  console.error('⚠️ Error al generar/actualizar JWT_SECRET:', err);
-  process.exitCode = 1;
 }
+
+// Detectar si se ejecuta directamente (funciona en Windows, Linux y Mac)
+const __filename = fileURLToPath(import.meta.url);
+const isMainModule = process.argv[1] && path.resolve(process.argv[1]) === __filename;
+
+// Si se ejecuta directamente o desde postinstall
+if (isMainModule || process.env.npm_lifecycle_event === 'postinstall') {
+  const jwtSecret = generateSecureJWT();
+  
+  console.log('\n🔐 Generando JWT_SECRET seguro...\n');
+  
+  const updated = updateOrCreateEnvFile(jwtSecret);
+  
+  if (!updated) {
+    console.log('\n📋 JWT_SECRET generado (no se modificó .env):');
+    console.log(jwtSecret);
+    console.log('\n💡 Puedes usar este valor en tu archivo .env si lo necesitas\n');
+  } else {
+    console.log('🔑 JWT_SECRET:', jwtSecret);
+    console.log('\n⚠️  Guarda este valor de forma segura. No lo compartas con nadie.\n');
+  }
+}
+
+// Exportar para uso en otros scripts
+export { generateSecureJWT };

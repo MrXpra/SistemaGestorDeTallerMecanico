@@ -125,22 +125,17 @@ Sistema de Punto de Venta (POS) moderno y completo para tiendas de repuestos aut
 ### 1. Clonar el repositorio
 
 ```bash
-git clone <url-del-repositorio>
-cd autoparts-manager
+git clone https://github.com/MrXpra/SistemaGestorDeTallerMecanico.git
+cd SistemaGestorDeTallerMecanico
 ```
 
-### 2. Instalar dependencias del backend
+### 2. Instalar dependencias
 
 ```bash
 npm install
 ```
-1) Desde la raíz del repo: instalar dependencias (instala backend y frontend automáticamente)
 
-```powershell
-npm install
-```
-
-Nota: el proyecto ahora ejecuta automáticamente la instalación de las dependencias del frontend (`client`) durante `npm install` en la raíz, por lo que después de clonar solo necesitas ejecutar `npm install` una vez en la raíz.
+> 💡 **Nota**: Este comando instala automáticamente las dependencias del backend y del frontend gracias al script `postinstall`.
 
 ### 3. Configurar Variables de Entorno
 
@@ -150,19 +145,17 @@ Ejecuta el asistente interactivo para configurar el sistema:
 npm run setup
 ```
 
-O genera manualmente un JWT seguro y crea el archivo `.env`:
+El asistente te guiará en la configuración de:
+- MongoDB URI
+- JWT Secret (se genera automáticamente)
+- Puerto del servidor
+- Otras variables necesarias
+
+O genera manualmente un JWT seguro:
 
 ```bash
 npm run generate-jwt
 # Luego crea el archivo .env con las variables necesarias
-```
-
-### 4. Instalar dependencias del frontend
-
-```bash
-cd client
-npm install
-cd ..
 ```
 
 ---
@@ -197,9 +190,7 @@ Crea un archivo `.env` en la raíz del proyecto con el siguiente contenido:
 
 ```env
 # Conexión a MongoDB
-# Conexión a MongoDB
 MONGODB_URI='mongodb://localhost:27017/tu-base-de-datos'
-# O para MongoDB Atlas:
 # O para MongoDB Atlas:
 # MONGODB_URI='mongodb+srv://usuario:password@cluster.mongodb.net/database?retryWrites=true&w=majority'
 
@@ -227,7 +218,7 @@ npm run generate-jwt
 
 > ⚠️ **IMPORTANTE**: Nunca subas tu archivo `.env` a GitHub. El archivo `.gitignore` ya está configurado para ignorarlo.
 
-### 2. Inicializar la Base de Datos
+### 4. Inicializar la Base de Datos
 
 #### Opción A: Crear solo usuario administrador (Recomendado para producción)
 
@@ -236,10 +227,10 @@ npm run create-admin
 ```
 
 Este comando creará:
-- ✅ Usuario administrador (admin@admin.com / 123456)
+- ✅ Usuario administrador con credenciales personalizadas
 - ✅ Configuración inicial del negocio
 
-**⚠️ IMPORTANTE:** Cambia la contraseña después del primer login.
+**⚠️ IMPORTANTE:** El script te pedirá crear una contraseña segura.
 
 #### Opción B: Poblar con datos de ejemplo (Para desarrollo/pruebas)
 
@@ -248,7 +239,8 @@ npm run seed
 ```
 
 Este comando creará:
-- ✅ Usuario administrador y cajero
+- ✅ Usuario administrador (admin@autoparts.com / Admin123!)
+- ✅ Usuario cajero (cajero@autoparts.com / Cajero123!)
 - ✅ Configuración inicial del negocio
 - ✅ Proveedores de ejemplo
 - ✅ 10 productos de ejemplo
@@ -259,7 +251,7 @@ Este comando creará:
 
 ### Desarrollo
 
-#### Opción 1: Ejecutar backend y frontend por separado
+Necesitas ejecutar backend y frontend en terminales separadas:
 
 **Terminal 1 - Backend:**
 ```bash
@@ -272,18 +264,9 @@ cd client
 npm run dev
 ```
 
-El backend estará en `http://localhost:5000` y el frontend en `http://localhost:3000`
-
-#### Opción 2: Ejecutar con el proxy de Vite
-
-```bash
-# Terminal 1
-npm run dev
-
-# Terminal 2
-cd client
-npm run dev
-```
+- Backend estará en `http://localhost:5000`
+- Frontend estará en `http://localhost:5173` (Vite)
+- El frontend se conecta al backend mediante proxy
 
 ### Producción
 
@@ -480,13 +463,26 @@ autoparts-manager/
 
 ## 🌐 Despliegue
 
-### Render.com (Recomendado)
+### Railway (Configurado)
+
+El proyecto incluye configuración para Railway (`railway.toml`):
+
+1. Crea una cuenta en [Railway.app](https://railway.app)
+2. Conecta tu repositorio de GitHub
+3. Railway detectará automáticamente la configuración
+4. Agrega las variables de entorno desde el panel de Railway:
+   - `MONGODB_URI`
+   - `JWT_SECRET`
+   - Las demás variables según tu archivo `.env`
+5. Deploy automático!
+
+### Render.com (Alternativa)
 
 1. Crea una cuenta en [Render.com](https://render.com)
 2. Conecta tu repositorio de GitHub
 3. Crea un nuevo **Web Service**
 4. Configura:
-   - **Build Command**: `npm install && cd client && npm install && npm run build`
+   - **Build Command**: `npm install && npm run build`
    - **Start Command**: `npm start`
 5. Agrega las variables de entorno desde el panel de Render
 6. Deploy!
@@ -495,10 +491,10 @@ autoparts-manager/
 
 Asegúrate de configurar todas las variables en tu plataforma de hosting:
 
-- `MONGODB_URI`
-- `JWT_SECRET`
+- `MONGODB_URI` - Cadena de conexión a MongoDB Atlas
+- `JWT_SECRET` - Clave secreta (usa el comando `npm run generate-jwt`)
 - `NODE_ENV=production`
-- `PORT` (generalmente lo asigna el hosting)
+- `PORT` - Generalmente lo asigna el hosting automáticamente
 
 ---
 
@@ -558,10 +554,6 @@ Este script:
 - ✅ Configura datos del negocio
 - ✅ Inicializa todas las colecciones vacías
 - ✅ Sin datos de prueba (base de datos limpia)
-
-📚 **Documentación completa**: [docs/CONFIGURACION_NUEVOS_CLIENTES.md](./docs/CONFIGURACION_NUEVOS_CLIENTES.md)
-
-```
 
 ---
 
