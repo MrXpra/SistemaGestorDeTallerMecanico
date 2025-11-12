@@ -135,27 +135,32 @@ cd SistemaGestorDeTallerMecanico
 npm install
 ```
 
-> 💡 **Nota**: Este comando instala automáticamente las dependencias del backend y del frontend gracias al script `postinstall`.
+> 💡 **Nota**: Este comando instala automáticamente las dependencias del backend y del frontend. Al finalizar, verás un mensaje con los siguientes pasos.
 
-### 3. Configurar Variables de Entorno
+### 3. Configurar el Sistema (Requerido)
 
-Ejecuta el asistente interactivo para configurar el sistema:
+**Ejecuta el asistente de configuración interactivo:**
 
 ```bash
 npm run setup
 ```
 
-El asistente te guiará en la configuración de:
-- MongoDB URI
-- JWT Secret (se genera automáticamente)
-- Puerto del servidor
-- Otras variables necesarias
+El asistente te guiará paso a paso en la configuración de:
+- ✅ MongoDB URI (conexión a tu base de datos)
+- ✅ JWT Secret (se genera automáticamente de forma segura)
+- ✅ Puerto del servidor (por defecto: 5000)
+- ✅ Variables de entorno necesarias
+- ✅ Creación automática del archivo `.env`
 
-O genera manualmente un JWT seguro:
+> ⚠️ **IMPORTANTE**: Este paso es **obligatorio** antes de iniciar el servidor. Sin el archivo `.env` configurado, el sistema no funcionará.
+
+**Alternativa - Configuración manual:**
+
+Si prefieres configurar manualmente, genera un JWT seguro y crea el `.env`:
 
 ```bash
 npm run generate-jwt
-# Luego crea el archivo .env con las variables necesarias
+# Luego crea manualmente el archivo .env con las variables necesarias
 ```
 
 ---

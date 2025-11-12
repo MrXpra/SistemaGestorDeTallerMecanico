@@ -16,12 +16,12 @@
     "setup-client": "node scripts/setupNewClient.js",
     "client": "npm start --prefix client",
     "server": "nodemon server.js",
-  "build": "npm install && npm install --prefix client && npm run build --prefix client",
-  "bootstrap": "npm install && npm install --prefix client",
+    "build": "npm install && npm install --prefix client && npm run build --prefix client",
+    "bootstrap": "npm install && npm install --prefix client",
     "release:patch": "powershell -ExecutionPolicy Bypass -File ./scripts/release.ps1 -Type patch",
     "release:minor": "powershell -ExecutionPolicy Bypass -File ./scripts/release.ps1 -Type minor",
     "release:major": "powershell -ExecutionPolicy Bypass -File ./scripts/release.ps1 -Type major",
-    "postinstall": "node ./scripts/generateJwtSecret.js && cd client && npm install --prefer-offline --no-audit --progress=false || exit 0"
+    "postinstall": "cd client && npm install --prefer-offline --no-audit --progress=false && cd .. && node scripts/postinstall.js || node scripts/postinstall.js"
   },
   "keywords": [
     "pos",

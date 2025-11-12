@@ -82,11 +82,8 @@ NODE_ENV=development
 const __filename = fileURLToPath(import.meta.url);
 const isMainModule = process.argv[1] && path.resolve(process.argv[1]) === __filename;
 
-// Si se ejecuta directamente o desde postinstall (solo en el proyecto raíz, no en client)
-const isRootPostinstall = process.env.npm_lifecycle_event === 'postinstall' && 
-                           !process.cwd().includes('client');
-
-if (isMainModule || isRootPostinstall) {
+// Solo ejecutar si se llama directamente, NO en postinstall
+if (isMainModule) {
   const jwtSecret = generateSecureJWT();
   
   console.log('\n🔐 Generando JWT_SECRET seguro...\n');
@@ -104,4 +101,4 @@ if (isMainModule || isRootPostinstall) {
 }
 
 // Exportar para uso en otros scripts
-export { generateSecureJWT };
+export { generateSecureJWT, updateOrCreateEnvFile };
