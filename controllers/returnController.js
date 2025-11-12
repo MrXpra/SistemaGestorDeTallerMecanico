@@ -86,10 +86,10 @@ export const createReturn = async (req, res) => {
       return res.status(400).json({ message: 'No se puede devolver una venta cancelada' });
     }
 
-    // Obtener devoluciones previas de esta venta
+    // Obtener devoluciones previas de esta venta (excluir solo las rechazadas)
     const previousReturns = await Return.find({ 
       sale: saleId,
-      status: { $in: ['Pendiente', 'Aprobada'] } // Solo contar devoluciones activas
+      status: { $ne: 'Rechazada' } // Contar todas excepto rechazadas
     }).session(session);
 
     console.log('🔍 Previous returns found:', previousReturns.length);
