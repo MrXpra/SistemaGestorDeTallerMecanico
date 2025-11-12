@@ -27,22 +27,22 @@ function updateOrCreateEnvFile(jwtSecret) {
     if (fs.existsSync(envPath)) {
       let envContent = fs.readFileSync(envPath, 'utf8');
       
-      // Si ya tiene JWT_SECRET, no hacer nada
-      if (envContent.includes('JWT_SECRET=') && !envContent.includes('JWT_SECRET=your_jwt_secret_here')) {
+      // Si ya tiene JWT_SECRET válido (no placeholder y con comillas), no hacer nada
+      if (envContent.match(/JWT_SECRET=['"][a-f0-9]{64}['"]/)) {
         console.log('✅ JWT_SECRET ya existe en .env');
         return false;
       }
       
-      // Si tiene placeholder, reemplazarlo
-      if (envContent.includes('JWT_SECRET=your_jwt_secret_here') || envContent.includes('JWT_SECRET=')) {
-        envContent = envContent.replace(/JWT_SECRET=.*/, `JWT_SECRET=${jwtSecret}`);
+      // Si tiene placeholder o sin comillas, reemplazarlo
+      if (envContent.includes('JWT_SECRET=')) {
+        envContent = envContent.replace(/JWT_SECRET=.*/, `JWT_SECRET='${jwtSecret}'`);
         fs.writeFileSync(envPath, envContent);
         console.log('✅ JWT_SECRET actualizado en .env');
         return true;
       }
       
       // Si no tiene JWT_SECRET, agregarlo
-      envContent += `\nJWT_SECRET=${jwtSecret}\n`;
+      envContent += `\nJWT_SECRET='${jwtSecret}'\n`;
       fs.writeFileSync(envPath, envContent);
       console.log('✅ JWT_SECRET agregado a .env');
       return true;
@@ -52,7 +52,7 @@ function updateOrCreateEnvFile(jwtSecret) {
       
       if (fs.existsSync(envExamplePath)) {
         envContent = fs.readFileSync(envExamplePath, 'utf8');
-        envContent = envContent.replace(/JWT_SECRET=.*/, `JWT_SECRET=${jwtSecret}`);
+        envContent = envContent.replace(/JWT_SECRET=.*/, `JWT_SECRET='${jwtSecret}'`);
       } else {
         envContent = `# Configuración del servidor
 PORT=5000
@@ -61,7 +61,7 @@ PORT=5000
 MONGODB_URI=your_mongodb_uri_here
 
 # Secreto para JWT (generado automáticamente)
-JWT_SECRET=${jwtSecret}
+JWT_SECRET='${jwtSecret}'
 
 # Node environment
 NODE_ENV=development
@@ -82,8 +82,11 @@ NODE_ENV=development
 const __filename = fileURLToPath(import.meta.url);
 const isMainModule = process.argv[1] && path.resolve(process.argv[1]) === __filename;
 
-// Si se ejecuta directamente o desde postinstall
-if (isMainModule || process.env.npm_lifecycle_event === 'postinstall') {
+// Si se ejecuta directamente o desde postinstall (solo en el proyecto raíz, no en client)
+const isRootPostinstall = process.env.npm_lifecycle_event === 'postinstall' && 
+                           !process.cwd().includes('client');
+
+if (isMainModule || isRootPostinstall) {
   const jwtSecret = generateSecureJWT();
   
   console.log('\n🔐 Generando JWT_SECRET seguro...\n');

@@ -24,7 +24,7 @@ if (isMainModule) {
   console.log(jwtSecret);
   console.log('\n⚠️  Guarda este valor de forma segura. No lo compartas con nadie.');
   console.log('💡 Copia este valor para usarlo en tu archivo .env como:');
-  console.log(`JWT_SECRET=${jwtSecret}\n`);
+  console.log(`JWT_SECRET='${jwtSecret}'\n`);
 }
 
 // Exportar para uso en otros scripts
