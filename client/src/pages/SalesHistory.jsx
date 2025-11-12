@@ -567,6 +567,17 @@ const SalesHistory = () => {
                       <span className="text-sm font-medium text-gray-900 dark:text-white">
                         {sale.invoiceNumber}
                       </span>
+                      {sale.hasReturns && (
+                        <span 
+                          className="px-2 py-0.5 text-xs font-medium bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded-full flex items-center gap-1"
+                          title={`${sale.returnsCount} devolución${sale.returnsCount > 1 ? 'es' : ''} • Total: ${formatCurrency(sale.totalReturned)}`}
+                        >
+                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                          </svg>
+                          {sale.returnsCount}
+                        </span>
+                      )}
                       <button
                         onClick={() => handleCopyInvoiceNumber(sale.invoiceNumber, sale._id)}
                         className="p-1 text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded transition-colors"
@@ -988,6 +999,58 @@ const SaleDetailModal = ({ sale, onClose, formatCurrency, formatDate, getStatusB
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 {sale.notes}
               </p>
+            </div>
+          )}
+
+          {/* Historial de Devoluciones */}
+          {sale.hasReturns && sale.returns && sale.returns.length > 0 && (
+            <div className="mt-6 p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
+              <div className="flex items-center gap-2 mb-3">
+                <svg className="w-5 h-5 text-orange-600 dark:text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                </svg>
+                <p className="text-sm font-semibold text-orange-700 dark:text-orange-300">
+                  Historial de Devoluciones ({sale.returnsCount})
+                </p>
+              </div>
+              <div className="space-y-2">
+                {sale.returns.map((returnItem, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 bg-white dark:bg-gray-800/50 rounded-lg">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        {returnItem.returnNumber}
+                      </p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                        {formatDate(returnItem.createdAt)} • {returnItem.items?.length || 0} producto(s)
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-bold text-orange-600 dark:text-orange-400">
+                        {formatCurrency(returnItem.total)}
+                      </p>
+                      <span className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${
+                        returnItem.status === 'Aprobada' 
+                          ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                          : returnItem.status === 'Rechazada'
+                          ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                          : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300'
+                      }`}>
+                        {returnItem.status}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {sale.totalReturned > 0 && (
+                <div className="mt-3 pt-3 border-t border-orange-200 dark:border-orange-800 flex justify-between items-center">
+                  <span className="text-sm font-medium text-orange-700 dark:text-orange-300">
+                    Total Devuelto:
+                  </span>
+                  <span className="text-lg font-bold text-orange-600 dark:text-orange-400">
+                    {formatCurrency(sale.totalReturned)}
+                  </span>
+                </div>
+              )}
             </div>
           )}
 

@@ -4,6 +4,7 @@ import Customer from '../models/Customer.js';
 import CashierSession from '../models/CashierSession.js';
 import LogService from '../services/logService.js';
 import AuditLogService from '../services/auditLogService.js';
+import mongoose from 'mongoose';
 
 // @desc    Crear nueva venta
 // @route   POST /api/sales
@@ -211,13 +212,31 @@ export const getSales = async (req, res) => {
       .populate('items.product', 'name sku')
       .sort({ createdAt: -1 });
 
-    console.log('💰 Sales found:', sales.length);
-    if (sales.length > 0) {
-      console.log('First sale date:', sales[0].createdAt);
-      console.log('Last sale date:', sales[sales.length - 1].createdAt);
+    // Obtener información de devoluciones para cada venta
+    const Return = mongoose.model('Return');
+    const salesWithReturns = await Promise.all(
+      sales.map(async (sale) => {
+        const returns = await Return.find({ sale: sale._id })
+          .select('returnNumber status total createdAt items')
+          .sort({ createdAt: -1 });
+        
+        const saleObj = sale.toObject();
+        saleObj.returns = returns;
+        saleObj.hasReturns = returns.length > 0;
+        saleObj.returnsCount = returns.length;
+        saleObj.totalReturned = returns.reduce((sum, ret) => sum + (ret.total || 0), 0);
+        
+        return saleObj;
+      })
+    );
+
+    console.log('💰 Sales found:', salesWithReturns.length);
+    if (salesWithReturns.length > 0) {
+      console.log('First sale date:', salesWithReturns[0].createdAt);
+      console.log('Last sale date:', salesWithReturns[salesWithReturns.length - 1].createdAt);
       
       // Debug: verificar productos poblados
-      const firstSale = sales[0];
+      const firstSale = salesWithReturns[0];
       console.log('First sale items:', firstSale.items.length);
       firstSale.items.forEach((item, idx) => {
         console.log(`  Item ${idx}:`, {
@@ -228,7 +247,7 @@ export const getSales = async (req, res) => {
       });
     }
 
-    res.json(sales);
+    res.json(salesWithReturns);
   } catch (error) {
     console.error('Error al obtener ventas:', error);
     res.status(500).json({ message: 'Error al obtener ventas', error: error.message });
