@@ -842,17 +842,26 @@ const CreateReturnModal = ({ onClose, onSubmit, formatCurrency }) => {
     }
   };
 
-  const selectSale = (sale) => {
-    setSelectedSale(sale);
-    
-    // Validar que la venta tenga items
-    if (!sale.items || sale.items.length === 0) {
-      setModalError('Esta venta no tiene productos registrados.');
-      return;
-    }
-    
-    // Filtrar items válidos (que tengan producto)
-    const validItems = sale.items.filter(item => {
+  const selectSale = async (sale) => {
+    try {
+      // Obtener detalles completos de la venta con información de devoluciones
+      const { getSaleById } = await import('../services/api');
+      const response = await getSaleById(sale._id);
+      const fullSale = response.data || response;
+      
+      console.log('🔍 Full sale with return info:', fullSale);
+      console.log('📦 Items with availability:', fullSale.items);
+      
+      setSelectedSale(fullSale);
+      
+      // Validar que la venta tenga items
+      if (!fullSale.items || fullSale.items.length === 0) {
+        setModalError('Esta venta no tiene productos registrados.');
+        return;
+      }
+      
+      // Filtrar items válidos (que tengan producto)
+      const validItems = fullSale.items.filter(item => {
       // Verificar si el producto existe (puede ser objeto o ID string)
       if (typeof item.product === 'object' && item.product !== null) {
         return item.product._id; // Producto poblado
@@ -900,11 +909,15 @@ const CreateReturnModal = ({ onClose, onSubmit, formatCurrency }) => {
     setReturnItems(mappedItems);
     
     // Advertir si algunos productos no están disponibles
-    if (validItems.length < sale.items.length) {
-      toast.warning(`${sale.items.length - validItems.length} producto(s) no disponible(s) para devolución (eliminados del sistema)`);
+    if (validItems.length < fullSale.items.length) {
+      toast.warning(`${fullSale.items.length - validItems.length} producto(s) no disponible(s) para devolución (eliminados del sistema)`);
     }
     
     setStep(2);
+    } catch (error) {
+      console.error('Error al obtener detalles de la venta:', error);
+      toast.error('Error al cargar detalles de la venta');
+    }
   };
 
   const toggleItem = (index) => {
