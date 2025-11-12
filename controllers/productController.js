@@ -59,7 +59,9 @@ export const getProducts = async (req, res) => {
       query.brand = brand;
     }
 
-    const products = await Product.find(query).sort({ createdAt: -1 });
+    const products = await Product.find(query)
+      .populate('supplier', 'name contact')
+      .sort({ createdAt: -1 });
 
     // Filtrar productos con bajo stock si se solicita
     let filteredProducts = products;
@@ -79,7 +81,8 @@ export const getProducts = async (req, res) => {
 // @access  Private
 export const getProductById = async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findById(req.params.id)
+      .populate('supplier', 'name contact');
 
     if (!product) {
       return res.status(404).json({ message: 'Producto no encontrado' });
