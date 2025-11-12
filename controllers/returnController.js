@@ -86,6 +86,21 @@ export const createReturn = async (req, res) => {
       return res.status(400).json({ message: 'No se puede devolver una venta cancelada' });
     }
 
+    // Obtener devoluciones previas de esta venta
+    const previousReturns = await Return.find({ 
+      sale: saleId,
+      status: { $in: ['Pendiente', 'Aprobada'] } // Solo contar devoluciones activas
+    }).session(session);
+
+    // Calcular cantidades ya devueltas por producto
+    const returnedQuantities = {};
+    for (const prevReturn of previousReturns) {
+      for (const prevItem of prevReturn.items) {
+        const prodId = prevItem.product.toString();
+        returnedQuantities[prodId] = (returnedQuantities[prodId] || 0) + prevItem.quantity;
+      }
+    }
+
     // Validar items de devolución
     const returnItems = [];
     let totalAmount = 0;
@@ -114,12 +129,16 @@ export const createReturn = async (req, res) => {
         });
       }
 
-      // Validar cantidad
-      if (item.quantity > saleItem.quantity) {
+      // Calcular cantidad disponible para devolver
+      const alreadyReturned = returnedQuantities[item.productId.toString()] || 0;
+      const availableToReturn = saleItem.quantity - alreadyReturned;
+
+      // Validar cantidad disponible
+      if (item.quantity > availableToReturn) {
         await session.abortTransaction();
         const productName = saleItem.product?.name || 'este producto';
         return res.status(400).json({ 
-          message: `No se pueden devolver más unidades de las vendidas para ${productName}` 
+          message: `Solo puedes devolver ${availableToReturn} unidad(es) de ${productName}. Ya se devolvieron ${alreadyReturned} de ${saleItem.quantity} originales.`
         });
       }
 

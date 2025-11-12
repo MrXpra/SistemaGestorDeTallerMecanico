@@ -1293,6 +1293,7 @@ const CustomerModal = ({ onSelect, onClose }) => {
     email: '',
     address: '',
   });
+  const [customerErrors, setCustomerErrors] = useState({});
 
   const formatPhone = (value) => {
     const cleaned = value.replace(/\D/g, '');
@@ -1328,35 +1329,48 @@ const CustomerModal = ({ onSelect, onClose }) => {
   };
 
   const handleCreateCustomer = async () => {
-    if (!newCustomer.fullName) {
-      toast.error('El nombre es requerido');
-      return;
+    const errors = {};
+
+    // Validar nombre (obligatorio)
+    if (!newCustomer.fullName.trim()) {
+      errors.fullName = 'El nombre es requerido';
     }
 
-    if (!newCustomer.cedula) {
-      toast.error('La cédula es requerida');
-      return;
+    // Validar cédula (opcional, pero si se proporciona debe ser válida)
+    if (newCustomer.cedula.trim() && newCustomer.cedula.replace(/\D/g, '').length !== 11) {
+      errors.cedula = 'La cédula debe tener 11 dígitos';
     }
 
-    if (newCustomer.cedula.replace(/\D/g, '').length !== 11) {
-      toast.error('La cédula debe tener 11 dígitos');
-      return;
+    // Validar teléfono (opcional, pero si se proporciona debe ser válido)
+    if (newCustomer.phone.trim() && newCustomer.phone.replace(/\D/g, '').length !== 10) {
+      errors.phone = 'El teléfono debe tener 10 dígitos';
     }
 
-    if (!newCustomer.phone) {
-      toast.error('El teléfono es requerido');
-      return;
+    // Validar email (opcional, pero si se proporciona debe ser válido)
+    if (newCustomer.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newCustomer.email)) {
+      errors.email = 'Email inválido';
     }
 
-    if (newCustomer.phone.replace(/\D/g, '').length !== 10) {
-      toast.error('El teléfono debe tener 10 dígitos');
+    // Si hay errores, mostrarlos
+    if (Object.keys(errors).length > 0) {
+      setCustomerErrors(errors);
+      toast.error('Por favor corrige los errores en el formulario');
       return;
     }
 
     try {
       setIsLoading(true);
+      setCustomerErrors({});
       const response = await createCustomerAPI(newCustomer);
       toast.success('Cliente creado exitosamente');
+      setShowNewCustomer(false);
+      setNewCustomer({
+        fullName: '',
+        cedula: '',
+        phone: '',
+        email: '',
+        address: '',
+      });
       onSelect(response.data);
     } catch (error) {
       console.error('Error creating customer:', error);
@@ -1448,43 +1462,61 @@ const CustomerModal = ({ onSelect, onClose }) => {
                 <input
                   type="text"
                   value={newCustomer.fullName}
-                  onChange={(e) =>
-                    setNewCustomer({ ...newCustomer, fullName: e.target.value })
-                  }
-                  className="input"
+                  onChange={(e) => {
+                    setNewCustomer({ ...newCustomer, fullName: e.target.value });
+                    if (customerErrors.fullName) {
+                      setCustomerErrors({ ...customerErrors, fullName: '' });
+                    }
+                  }}
+                  className={`input ${customerErrors.fullName ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
                   placeholder="Juan Pérez"
                   autoFocus
                 />
+                {customerErrors.fullName && (
+                  <p className="text-xs text-red-600 mt-1">{customerErrors.fullName}</p>
+                )}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Cédula *
+                  Cédula
                 </label>
                 <input
                   type="text"
                   value={newCustomer.cedula}
-                  onChange={(e) =>
-                    setNewCustomer({ ...newCustomer, cedula: formatCedula(e.target.value) })
-                  }
-                  className="input font-mono"
-                  placeholder="001-0123456-7"
+                  onChange={(e) => {
+                    setNewCustomer({ ...newCustomer, cedula: formatCedula(e.target.value) });
+                    if (customerErrors.cedula) {
+                      setCustomerErrors({ ...customerErrors, cedula: '' });
+                    }
+                  }}
+                  className={`input font-mono ${customerErrors.cedula ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+                  placeholder="001-0123456-7 (opcional)"
                 />
+                {customerErrors.cedula && (
+                  <p className="text-xs text-red-600 mt-1">{customerErrors.cedula}</p>
+                )}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Teléfono *
+                  Teléfono
                 </label>
                 <input
                   type="tel"
                   value={newCustomer.phone}
-                  onChange={(e) =>
-                    setNewCustomer({ ...newCustomer, phone: formatPhone(e.target.value) })
-                  }
-                  className="input font-mono"
-                  placeholder="809-555-1234"
+                  onChange={(e) => {
+                    setNewCustomer({ ...newCustomer, phone: formatPhone(e.target.value) });
+                    if (customerErrors.phone) {
+                      setCustomerErrors({ ...customerErrors, phone: '' });
+                    }
+                  }}
+                  className={`input font-mono ${customerErrors.phone ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+                  placeholder="809-555-1234 (opcional)"
                 />
+                {customerErrors.phone && (
+                  <p className="text-xs text-red-600 mt-1">{customerErrors.phone}</p>
+                )}
               </div>
 
               <div>
@@ -1494,12 +1526,18 @@ const CustomerModal = ({ onSelect, onClose }) => {
                 <input
                   type="email"
                   value={newCustomer.email}
-                  onChange={(e) =>
-                    setNewCustomer({ ...newCustomer, email: e.target.value })
-                  }
-                  className="input"
-                  placeholder="cliente@ejemplo.com"
+                  onChange={(e) => {
+                    setNewCustomer({ ...newCustomer, email: e.target.value });
+                    if (customerErrors.email) {
+                      setCustomerErrors({ ...customerErrors, email: '' });
+                    }
+                  }}
+                  className={`input ${customerErrors.email ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+                  placeholder="cliente@ejemplo.com (opcional)"
                 />
+                {customerErrors.email && (
+                  <p className="text-xs text-red-600 mt-1">{customerErrors.email}</p>
+                )}
               </div>
 
               <div>
