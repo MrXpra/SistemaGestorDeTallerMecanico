@@ -483,38 +483,85 @@ autoparts-manager/
 
 ## 🌐 Despliegue
 
-### Railway (Configurado)
+### 🚂 Railway + Vercel (Recomendado)
 
-El proyecto incluye configuración para Railway (`railway.toml`):
+El proyecto está **100% listo** para desplegar en Railway (backend) + Vercel (frontend).
 
-1. Crea una cuenta en [Railway.app](https://railway.app)
-2. Conecta tu repositorio de GitHub
-3. Railway detectará automáticamente la configuración
-4. Agrega las variables de entorno desde el panel de Railway:
-   - `MONGODB_URI`
-   - `JWT_SECRET`
-   - Las demás variables según tu archivo `.env`
-5. Deploy automático!
+**📖 Guía Completa:** Ver [docs/DEPLOY-RAILWAY.md](./docs/DEPLOY-RAILWAY.md)
 
-### Render.com (Alternativa)
+**Resumen Rápido:**
 
-1. Crea una cuenta en [Render.com](https://render.com)
-2. Conecta tu repositorio de GitHub
-3. Crea un nuevo **Web Service**
-4. Configura:
-   - **Build Command**: `npm install && npm run build`
-   - **Start Command**: `npm start`
-5. Agrega las variables de entorno desde el panel de Render
-6. Deploy!
+1. **Backend en Railway:**
+   ```bash
+   # Railway detecta automáticamente railway.toml
+   - New Project → Deploy from GitHub
+   - Configurar variables de entorno
+   - Deploy automático
+   ```
 
-### Variables de Entorno en Producción
+2. **Frontend en Vercel:**
+   ```bash
+   # Vercel para el cliente React
+   - New Project → Root Directory: client
+   - Framework: Vite
+   - Deploy
+   ```
 
-Asegúrate de configurar todas las variables en tu plataforma de hosting:
+3. **Base de Datos:**
+   - MongoDB Atlas (tier gratuito M0 - 512 MB)
 
-- `MONGODB_URI` - Cadena de conexión a MongoDB Atlas
-- `JWT_SECRET` - Clave secreta (usa el comando `npm run generate-jwt`)
-- `NODE_ENV=production`
-- `PORT` - Generalmente lo asigna el hosting automáticamente
+**💰 Costo Total:** ~$0-5/mes (Railway incluye $5 crédito mensual)
+
+---
+
+### 🖥️ Instalación Local para Clientes
+
+Si prefieres que tu cliente ejecute el sistema en su computadora local:
+
+**Ventajas:**
+- ✅ Sin costos de hosting
+- ✅ Control total del sistema
+- ✅ Datos seguros en MongoDB Atlas (nube)
+- ✅ No depende de conexión a internet (excepto para BD)
+
+**Cómo hacerlo:**
+1. Cliente instala Node.js
+2. Descomprime carpeta del proyecto
+3. Ejecuta script de configuración inicial
+4. Usa scripts `.bat` para iniciar/detener sistema
+
+Ver documentación completa en [docs/INSTALACION-CLIENTE.md](./docs/INSTALACION-CLIENTE.md)
+
+---
+
+### 🔐 Variables de Entorno en Producción
+
+**Railway (Backend):**
+```env
+NODE_ENV=production
+MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/dbname
+JWT_SECRET=super-secret-min-32-chars
+CLIENT_URL=https://tu-frontend.vercel.app
+PORT=5000
+```
+
+**Vercel (Frontend):**
+```env
+VITE_API_URL=https://tu-backend.railway.app/api
+```
+
+---
+
+### 📊 Opciones de Hosting Comparadas
+
+| Opción | Backend | Frontend | BD | Costo/mes |
+|--------|---------|----------|-----|-----------|
+| **Railway + Vercel** | Railway | Vercel | Atlas | $0-5 |
+| **Render** | Render | Render | Atlas | $0-14 |
+| **VPS (DigitalOcean)** | Droplet | Droplet | Atlas | $6+ |
+| **Local** | PC Cliente | PC Cliente | Atlas | $0 |
+
+**Recomendación:** Railway + Vercel para 1-5 clientes, VPS para 10+ clientes
 
 ---
 

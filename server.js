@@ -82,6 +82,11 @@ const corsOptions = {
       'http://localhost:5173',
       'https://sistema-gestor-de-taller-mecanico.vercel.app'
     ];
+
+    // Agregar CLIENT_URL de variables de entorno si existe
+    if (process.env.CLIENT_URL) {
+      allowedOrigins.push(process.env.CLIENT_URL);
+    }
     
     // Verificar si el origin está en la lista permitida
     if (allowedOrigins.indexOf(origin) !== -1) {
@@ -90,7 +95,11 @@ const corsOptions = {
     // Permitir cualquier subdominio de Vercel del proyecto
     else if (origin.includes('sistema-gestor-de-taller-mecanico') && origin.includes('.vercel.app')) {
       callback(null, true);
-    } 
+    }
+    // En producción, permitir dominios de Railway y Vercel
+    else if (process.env.NODE_ENV === 'production' && (origin.includes('railway.app') || origin.includes('vercel.app'))) {
+      callback(null, true);
+    }
     else {
       callback(new Error('Not allowed by CORS'));
     }
