@@ -65,31 +65,45 @@ API.interceptors.request.use(
  * Se ejecuta DESPUÉS de recibir respuesta del servidor.
  * Maneja errores 401 (No autorizado) globalmente:
  * - Elimina token del localStorage
+ * - Limpia el estado de autenticación de Zustand
  * - Redirige a /login
  * 
  * Esto sucede cuando:
  * - El token expiró (30 días)
  * - El token es inválido
  * - El usuario fue desactivado
+ * - Se reinstala el sistema con nueva base de datos
  */
 API.interceptors.response.use(
   (response) => response, // Si todo ok, devolver response tal cual
   (error) => {
     // Si el servidor devuelve 401 (No autorizado)
     if (error.response?.status === 401) {
-      // Limpiar token del localStorage
+      // Limpiar TODO el localStorage relacionado con autenticación
       try {
-        if (typeof localStorage !== 'undefined' && localStorage.removeItem) {
+        if (typeof localStorage !== 'undefined') {
           localStorage.removeItem('token');
+          localStorage.removeItem('auth-storage'); // Limpiar Zustand persist
+          // Limpiar cualquier otro store persistido
+          const keysToRemove = [];
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && (key.includes('auth') || key.includes('cart') || key.includes('settings'))) {
+              keysToRemove.push(key);
+            }
+          }
+          keysToRemove.forEach(key => localStorage.removeItem(key));
         }
       } catch (e) {
         // Ignorar en entorno de tests
+        console.error('Error limpiando localStorage:', e);
       }
 
       // Redirigir a login
       try {
         if (typeof window !== 'undefined' && window.location) {
-          window.location.href = '/login';
+          // Usar replace para evitar que el usuario vuelva atrás
+          window.location.replace('/login');
         }
       } catch (e) {
         // Ignorar en entorno de tests

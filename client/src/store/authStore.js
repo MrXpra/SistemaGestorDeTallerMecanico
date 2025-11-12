@@ -28,6 +28,7 @@ import { persist } from 'zustand/middleware'; // Persiste el estado en localStor
  * - login(user, token): Guardar usuario y token al hacer login
  * - setAuth(user, token): Alias de login, usado al verificar token existente
  * - logout(): Limpiar todo el estado y remover token
+ * - clearAuth(): Limpiar autenticación sin redirección (para manejo de errores)
  * - updateUser(userData): Actualizar parcialmente los datos del usuario
  */
 export const useAuthStore = create(
@@ -59,6 +60,13 @@ export const useAuthStore = create(
       logout: () => {
         set({ user: null, token: null, isAuthenticated: false });
         localStorage.removeItem('token'); // Limpiar token para que axios no lo envíe
+      },
+
+      // ===== ACCIÓN: CLEARAUTH =====
+      // Limpia la autenticación de forma silenciosa (para manejo de errores)
+      clearAuth: () => {
+        set({ user: null, token: null, isAuthenticated: false });
+        localStorage.removeItem('token');
       },
 
       // ===== ACCIÓN: UPDATEUSER =====

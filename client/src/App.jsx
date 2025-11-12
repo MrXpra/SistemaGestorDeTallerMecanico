@@ -47,6 +47,9 @@ import Monitoring from './pages/Monitoring';
 // Layout
 import Layout from './components/Layout/Layout';
 
+// Auth Validator
+import AuthValidator from './components/AuthValidator';
+
 // Keyboard Shortcuts
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import KeyboardShortcutsHelp from './components/KeyboardShortcutsHelp';
@@ -160,7 +163,9 @@ export const AppRoutes = () => {
 function App() {
   return (
     <Router>
-      <AppRoutes />
+      <AuthValidator>
+        <AppRoutes />
+      </AuthValidator>
     </Router>
   );
 }

@@ -608,6 +608,35 @@ Implementado con Tailwind CSS usando la clase `dark:`
 - Comprueba la configuración del proxy en `vite.config.js`
 - Revisa la consola del navegador para errores
 
+### Bucle infinito al cargar / Problemas con caché al reinstalar
+
+Si experimentas un bucle de carga después de reinstalar el sistema o cambiar la base de datos, es porque el navegador mantiene tokens y datos antiguos en localStorage. **Soluciones:**
+
+#### Opción 1: Página de Limpieza Automática (Recomendado)
+Accede a la página de limpieza de caché:
+```
+http://localhost:5173/clear-storage.html
+```
+Esta página limpiará automáticamente todo el localStorage y te redirigirá al login.
+
+#### Opción 2: Limpieza Manual
+1. Abre las DevTools del navegador (F12)
+2. Ve a la pestaña "Console"
+3. Ejecuta:
+```javascript
+localStorage.clear();
+sessionStorage.clear();
+location.reload();
+```
+
+#### Opción 3: Validación Automática
+El sistema ahora incluye validación automática de tokens al iniciar. Si detecta un token inválido:
+- Limpia automáticamente el localStorage
+- Te redirige al login
+- Muestra un mensaje de "Verificando sesión..."
+
+**⚠️ Nota para desarrollo:** Si estás reinstalando el sistema frecuentemente, usa siempre la página de limpieza o limpia el localStorage antes de volver a iniciar sesión.
+
 ---
 
 ## 📧 Contacto y Soporte
