@@ -19,6 +19,7 @@
  * - adminOnly=true verifica role='admin', redirige a / si no es admin
  */
 
+import { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from './store/authStore';
@@ -71,11 +72,24 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
 
 // Export AppRoutes separately for testing
 export const AppRoutes = () => {
-  const { isDarkMode } = useThemeStore();
+  const { isDarkMode, autoThemeEnabled, checkAutoTheme } = useThemeStore();
   const { settings } = useSettingsStore();
   
   // Enable keyboard shortcuts
   useKeyboardShortcuts();
+
+  // Verificar tema automático cada minuto
+  useEffect(() => {
+    // Verificar inmediatamente al cargar
+    checkAutoTheme();
+
+    // Verificar cada minuto si debe cambiar el tema
+    const interval = setInterval(() => {
+      checkAutoTheme();
+    }, 60000); // 60 segundos
+
+    return () => clearInterval(interval);
+  }, [checkAutoTheme, autoThemeEnabled]);
 
   return (
     <div className={isDarkMode ? 'dark' : ''}>

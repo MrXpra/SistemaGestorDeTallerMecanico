@@ -25,17 +25,57 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+/**
+ * Verificar si es hora de activar modo oscuro automático
+ * Se activa a las 5:00 PM (17:00) y se desactiva a las 7:00 AM
+ */
+const shouldBeInDarkMode = () => {
+  const now = new Date();
+  const hour = now.getHours();
+  
+  // Modo oscuro entre 17:00 (5 PM) y 07:00 (7 AM)
+  return hour >= 17 || hour < 7;
+};
+
 export const useThemeStore = create(
   persist(
-    (set) => ({
+    (set, get) => ({
       isDarkMode: false,
+      autoThemeEnabled: true, // Activar tema automático por defecto
 
       toggleTheme: () => {
-        set((state) => ({ isDarkMode: !state.isDarkMode }));
+        set((state) => ({ 
+          isDarkMode: !state.isDarkMode,
+          // Desactivar auto-theme cuando el usuario cambia manualmente
+          autoThemeEnabled: false
+        }));
       },
 
       setDarkMode: (isDark) => {
-        set({ isDarkMode: isDark });
+        set({ 
+          isDarkMode: isDark,
+          autoThemeEnabled: false // Desactivar auto-theme en cambio manual
+        });
+      },
+
+      enableAutoTheme: (enabled) => {
+        set({ autoThemeEnabled: enabled });
+        if (enabled) {
+          // Aplicar tema automático inmediatamente
+          const shouldBeDark = shouldBeInDarkMode();
+          set({ isDarkMode: shouldBeDark });
+        }
+      },
+
+      checkAutoTheme: () => {
+        const state = get();
+        if (state.autoThemeEnabled) {
+          const shouldBeDark = shouldBeInDarkMode();
+          if (state.isDarkMode !== shouldBeDark) {
+            set({ isDarkMode: shouldBeDark });
+            console.log(`🌓 Tema cambiado automáticamente a: ${shouldBeDark ? 'oscuro' : 'claro'}`);
+          }
+        }
       },
     }),
     {

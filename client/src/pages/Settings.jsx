@@ -79,6 +79,7 @@ import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { getSettings, updateSettings } from '../services/api';
 import { useAuthStore } from '../store/authStore';
 import { useSettingsStore } from '../store/settingsStore';
+import { useThemeStore } from '../store/themeStore';
 import toast from 'react-hot-toast';
 import { SettingsSkeleton } from '../components/SkeletonLoader';
 import WeatherWidget from '../components/WeatherWidget';
@@ -1170,6 +1171,29 @@ const Settings = ({ section = 'all' }) => {
         </div>
         )}
 
+        {/* Tema Automático Section */}
+        {(section === 'all' || section === 'system') && (
+        <div className="card-glass p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500 to-blue-600">
+              <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Tema Automático
+              </h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                El tema oscuro se activa automáticamente según la hora del día
+              </p>
+            </div>
+          </div>
+
+          <AutoThemeToggle />
+        </div>
+        )}
+
       </form>
 
       {/* Info Card */}
@@ -1235,6 +1259,142 @@ const Settings = ({ section = 'all' }) => {
           </div>
         </div>
       )}
+    </div>
+  );
+};
+
+// Componente para configurar tema automático
+const AutoThemeToggle = () => {
+  const { autoThemeEnabled, enableAutoTheme, isDarkMode } = useThemeStore();
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const hour = currentTime.getHours();
+  const shouldBeDark = hour >= 17 || hour < 7;
+
+  return (
+    <div className="space-y-6">
+      {/* Toggle */}
+      <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            <h3 className="font-semibold text-gray-900 dark:text-white">
+              Activar Tema Automático
+            </h3>
+            {autoThemeEnabled && (
+              <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">
+                Activo
+              </span>
+            )}
+          </div>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            El tema cambia automáticamente según la hora del día
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => enableAutoTheme(!autoThemeEnabled)}
+          className={`
+            relative inline-flex h-8 w-14 items-center rounded-full transition-colors duration-300
+            ${autoThemeEnabled ? 'bg-purple-600' : 'bg-gray-300 dark:bg-gray-600'}
+          `}
+        >
+          <span
+            className={`
+              inline-block h-6 w-6 transform rounded-full bg-white shadow-lg transition-transform duration-300
+              ${autoThemeEnabled ? 'translate-x-7' : 'translate-x-1'}
+            `}
+          />
+        </button>
+      </div>
+
+      {/* Horarios */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="p-4 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="p-2 rounded-lg bg-yellow-100 dark:bg-yellow-900/30">
+              <svg className="w-5 h-5 text-yellow-600 dark:text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+            </div>
+            <h4 className="font-medium text-gray-900 dark:text-white">Tema Claro</h4>
+          </div>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            7:00 AM - 4:59 PM
+          </p>
+        </div>
+
+        <div className="p-4 rounded-xl border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="p-2 rounded-lg bg-indigo-100 dark:bg-indigo-900/30">
+              <svg className="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+              </svg>
+            </div>
+            <h4 className="font-medium text-gray-900 dark:text-white">Tema Oscuro</h4>
+          </div>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            5:00 PM - 6:59 AM
+          </p>
+        </div>
+      </div>
+
+      {/* Estado actual */}
+      <div className={`p-4 rounded-xl border-2 ${
+        autoThemeEnabled && isDarkMode === shouldBeDark
+          ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
+          : 'border-gray-200 dark:border-gray-700'
+      }`}>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Hora actual: {currentTime.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+            </p>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              {autoThemeEnabled ? (
+                <>
+                  Tema {shouldBeDark ? 'oscuro' : 'claro'} activado automáticamente
+                  {isDarkMode === shouldBeDark ? ' ✓' : ' (cambiando...)'}
+                </>
+              ) : (
+                'Tema manual (automático desactivado)'
+              )}
+            </p>
+          </div>
+          {autoThemeEnabled && isDarkMode === shouldBeDark && (
+            <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          )}
+        </div>
+      </div>
+
+      {/* Info */}
+      <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+        <div className="flex items-start gap-3">
+          <svg className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <div className="flex-1">
+            <p className="text-sm text-blue-900 dark:text-blue-100 font-medium mb-1">
+              💡 Cómo funciona:
+            </p>
+            <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
+              <li>• El sistema verifica la hora cada minuto</li>
+              <li>• A las 5:00 PM se activa el tema oscuro automáticamente</li>
+              <li>• A las 7:00 AM vuelve al tema claro</li>
+              <li>• Si cambias el tema manualmente, el modo automático se desactiva</li>
+              <li>• Reactiva esta opción para volver al modo automático</li>
+            </ul>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
