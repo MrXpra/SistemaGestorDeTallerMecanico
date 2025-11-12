@@ -21,7 +21,7 @@
     "release:patch": "powershell -ExecutionPolicy Bypass -File ./scripts/release.ps1 -Type patch",
     "release:minor": "powershell -ExecutionPolicy Bypass -File ./scripts/release.ps1 -Type minor",
     "release:major": "powershell -ExecutionPolicy Bypass -File ./scripts/release.ps1 -Type major",
-    "postinstall": "cd client && npm install --prefer-offline --no-audit --progress=false && cd .. && node scripts/postinstall.js || node scripts/postinstall.js"
+    "postinstall": "npm install --prefix client --no-audit --loglevel=error && node scripts/postinstall.js"
   },
   "keywords": [
     "pos",
