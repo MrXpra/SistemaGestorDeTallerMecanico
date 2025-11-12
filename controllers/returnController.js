@@ -92,14 +92,20 @@ export const createReturn = async (req, res) => {
       status: { $in: ['Pendiente', 'Aprobada'] } // Solo contar devoluciones activas
     }).session(session);
 
+    console.log('🔍 Previous returns found:', previousReturns.length);
+
     // Calcular cantidades ya devueltas por producto
     const returnedQuantities = {};
     for (const prevReturn of previousReturns) {
+      console.log('📦 Processing return:', prevReturn.returnNumber, 'Status:', prevReturn.status);
       for (const prevItem of prevReturn.items) {
         const prodId = prevItem.product.toString();
         returnedQuantities[prodId] = (returnedQuantities[prodId] || 0) + prevItem.quantity;
+        console.log('  - Product:', prodId, 'Quantity returned:', prevItem.quantity, 'Total so far:', returnedQuantities[prodId]);
       }
     }
+
+    console.log('📊 Total returned quantities:', returnedQuantities);
 
     // Validar items de devolución
     const returnItems = [];
@@ -133,10 +139,17 @@ export const createReturn = async (req, res) => {
       const alreadyReturned = returnedQuantities[item.productId.toString()] || 0;
       const availableToReturn = saleItem.quantity - alreadyReturned;
 
+      console.log('🔢 Validation for product:', item.productId);
+      console.log('  - Original quantity in sale:', saleItem.quantity);
+      console.log('  - Already returned:', alreadyReturned);
+      console.log('  - Available to return:', availableToReturn);
+      console.log('  - Trying to return:', item.quantity);
+
       // Validar cantidad disponible
       if (item.quantity > availableToReturn) {
         await session.abortTransaction();
         const productName = saleItem.product?.name || 'este producto';
+        console.log('❌ VALIDATION FAILED: Trying to return more than available');
         return res.status(400).json({ 
           message: `Solo puedes devolver ${availableToReturn} unidad(es) de ${productName}. Ya se devolvieron ${alreadyReturned} de ${saleItem.quantity} originales.`
         });
