@@ -554,19 +554,18 @@ const CustomerModal = ({ customer, onSave, onClose }) => {
       newErrors.fullName = 'El nombre es requerido';
     }
 
-    if (!formData.cedula.trim()) {
-      newErrors.cedula = 'La cédula es requerida';
-    } else if (formData.cedula.replace(/\D/g, '').length !== 11) {
+    // Cédula opcional, pero si se proporciona debe ser válida
+    if (formData.cedula.trim() && formData.cedula.replace(/\D/g, '').length !== 11) {
       newErrors.cedula = 'La cédula debe tener 11 dígitos';
     }
 
-    if (!formData.phone.trim()) {
-      newErrors.phone = 'El teléfono es requerido';
-    } else if (formData.phone.replace(/\D/g, '').length !== 10) {
+    // Teléfono opcional, pero si se proporciona debe ser válido
+    if (formData.phone.trim() && formData.phone.replace(/\D/g, '').length !== 10) {
       newErrors.phone = 'El teléfono debe tener 10 dígitos';
     }
 
-    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    // Email opcional, pero si se proporciona debe ser válido
+    if (formData.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = 'Email inválido';
     }
 
@@ -593,17 +592,18 @@ const CustomerModal = ({ customer, onSave, onClose }) => {
   return createPortal(
     <div className="fixed inset-0 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" style={{ zIndex: 100000 }}>
       <div className="glass-strong rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
-            {customer ? 'Editar Cliente' : 'Nuevo Cliente'}
-          </h3>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-          >
-            <X className="w-6 h-6" />
-          </button>
-        </div>
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+              {customer ? 'Editar Cliente' : 'Nuevo Cliente'}
+            </h3>
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -624,7 +624,7 @@ const CustomerModal = ({ customer, onSave, onClose }) => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Cédula *
+              Cédula
             </label>
             <input
               type="text"
@@ -632,14 +632,14 @@ const CustomerModal = ({ customer, onSave, onClose }) => {
               value={formData.cedula}
               onChange={handleChange}
               className={`input font-mono ${errors.cedula ? 'border-red-500' : ''}`}
-              placeholder="001-0123456-7"
+              placeholder="001-0123456-7 (opcional)"
             />
             {errors.cedula && <p className="text-xs text-red-600 mt-1">{errors.cedula}</p>}
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Teléfono *
+              Teléfono
             </label>
             <input
               type="tel"
@@ -647,7 +647,7 @@ const CustomerModal = ({ customer, onSave, onClose }) => {
               value={formData.phone}
               onChange={handleChange}
               className={`input font-mono ${errors.phone ? 'border-red-500' : ''}`}
-              placeholder="809-555-1234"
+              placeholder="809-555-1234 (opcional)"
             />
             {errors.phone && <p className="text-xs text-red-600 mt-1">{errors.phone}</p>}
           </div>
@@ -700,6 +700,7 @@ const CustomerModal = ({ customer, onSave, onClose }) => {
             </button>
           </div>
         </form>
+        </div>
       </div>
     </div>,
     document.body

@@ -66,36 +66,42 @@ export const createCustomer = async (req, res) => {
   try {
     const { fullName, cedula, phone, email, address } = req.body;
 
-    // Verificar si ya existe un cliente con esa cédula
-    if (cedula) {
-      const existingCedula = await Customer.findOne({ cedula });
+    // Verificar si ya existe un cliente con esa cédula (solo si se proporciona y no está vacía)
+    if (cedula && cedula.trim() !== '') {
+      const existingCedula = await Customer.findOne({ cedula: cedula.trim() });
       if (existingCedula) {
         return res.status(400).json({ message: 'Ya existe un cliente con esa cédula' });
       }
     }
 
-    // Verificar si ya existe un cliente con ese teléfono o email
-    if (phone) {
-      const existingPhone = await Customer.findOne({ phone });
+    // Verificar si ya existe un cliente con ese teléfono (solo si se proporciona y no está vacío)
+    if (phone && phone.trim() !== '') {
+      const existingPhone = await Customer.findOne({ phone: phone.trim() });
       if (existingPhone) {
         return res.status(400).json({ message: 'Ya existe un cliente con ese número de teléfono' });
       }
     }
 
-    if (email) {
-      const existingEmail = await Customer.findOne({ email });
+    // Verificar si ya existe un cliente con ese email (solo si se proporciona y no está vacío)
+    if (email && email.trim() !== '') {
+      const existingEmail = await Customer.findOne({ email: email.trim().toLowerCase() });
       if (existingEmail) {
         return res.status(400).json({ message: 'Ya existe un cliente con ese email' });
       }
     }
 
-    const customer = await Customer.create({
-      fullName,
-      cedula,
-      phone,
-      email,
-      address
-    });
+    // Preparar datos del cliente
+    const customerData = {
+      fullName: fullName.trim()
+    };
+
+    // Solo agregar campos opcionales si no están vacíos
+    if (cedula && cedula.trim() !== '') customerData.cedula = cedula.trim();
+    if (phone && phone.trim() !== '') customerData.phone = phone.trim();
+    if (email && email.trim() !== '') customerData.email = email.trim().toLowerCase();
+    if (address && address.trim() !== '') customerData.address = address.trim();
+
+    const customer = await Customer.create(customerData);
 
     res.status(201).json(customer);
   } catch (error) {

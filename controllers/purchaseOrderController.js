@@ -41,10 +41,12 @@ export const createPurchaseOrder = async (req, res) => {
   try {
     const { supplier, items, notes, expectedDeliveryDate } = req.body;
 
-    // Verificar que el proveedor existe
-    const supplierExists = await Supplier.findById(supplier);
-    if (!supplierExists) {
-      return res.status(404).json({ message: 'Proveedor no encontrado' });
+    // Verificar que el proveedor existe (solo si se proporciona)
+    if (supplier && supplier.trim() !== '') {
+      const supplierExists = await Supplier.findById(supplier);
+      if (!supplierExists) {
+        return res.status(404).json({ message: 'Proveedor no encontrado' });
+      }
     }
 
     // Calcular totales
@@ -72,8 +74,8 @@ export const createPurchaseOrder = async (req, res) => {
     const tax = subtotal * 0.18;
     const total = subtotal + tax;
 
-    const order = new PurchaseOrder({
-      supplier,
+    // Preparar datos de la orden
+    const orderData = {
       items: processedItems,
       subtotal,
       tax,
@@ -81,7 +83,14 @@ export const createPurchaseOrder = async (req, res) => {
       notes,
       expectedDeliveryDate,
       createdBy: req.user.id,
-    });
+    };
+
+    // Solo agregar supplier si se proporciona y no está vacío
+    if (supplier && supplier.trim() !== '') {
+      orderData.supplier = supplier;
+    }
+
+    const order = new PurchaseOrder(orderData);
 
     await order.save();
     

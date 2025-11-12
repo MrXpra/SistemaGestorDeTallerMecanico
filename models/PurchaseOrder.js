@@ -25,11 +25,11 @@ const purchaseOrderSchema = new mongoose.Schema({
     sparse: true, // Permite null temporalmente
   },
   
-  // Proveedor al que se hace el pedido
+  // Proveedor al que se hace el pedido (opcional - puede ser proveedor genérico)
   supplier: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Supplier',
-    required: true,
+    required: false,
   },
   // Items incluidos en la orden
   items: [{
