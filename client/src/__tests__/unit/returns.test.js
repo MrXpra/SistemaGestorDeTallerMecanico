@@ -123,7 +123,7 @@ describe('Returns - Integration Tests', () => {
 
   describe('Return Number Generation', () => {
     it('should generate return number with correct format', () => {
-      const date = new Date('2025-11-11'); // Nov 11, 2025
+      const date = new Date(2025, 10, 11); // Nov 11, 2025 (month is 0-indexed)
       const counter = 1;
       
       const year = date.getFullYear().toString().slice(-2);
