@@ -13,6 +13,38 @@ class LogService {
     api: 1000,        // Peticiones API lentas
     operation: 500    // Operaciones generales lentas
   };
+
+  // Configuración de retención de logs
+  static LOG_RETENTION = {
+    production: {
+      info: 7,      // 7 días para logs INFO
+      warning: 30,  // 30 días para WARNING
+      error: 90,    // 90 días para ERROR
+      critical: 180 // 180 días para CRITICAL
+    },
+    development: {
+      info: 3,
+      warning: 7,
+      error: 30,
+      critical: 90
+    }
+  };
+
+  // Determinar si debe guardar el log en producción
+  static shouldLogInProduction(type, category) {
+    if (process.env.NODE_ENV !== 'production') return true;
+    
+    // En producción, NO guardar logs de lectura (GET)
+    if (category === 'user_action' && type === 'info') {
+      return false; // No guardar acciones de lectura
+    }
+    
+    // Solo guardar: warning, error, critical, y acciones importantes
+    const importantTypes = ['warning', 'error', 'critical'];
+    const importantCategories = ['security', 'system_action', 'critical_operation'];
+    
+    return importantTypes.includes(type) || importantCategories.includes(category);
+  }
   
   /**
    * Obtener información del sistema actual
@@ -94,6 +126,11 @@ class LogService {
     tags = []
   }) {
     try {
+      // Verificar si debe guardar este log en producción
+      if (!this.shouldLogInProduction(type, category)) {
+        return null; // No guardar log
+      }
+
       const systemInfo = this.getSystemInfo();
       
       const logData = {
@@ -723,6 +760,101 @@ class LogService {
       console.error('Error al limpiar logs:', error);
       throw error;
     }
+  }
+
+  /**
+   * Limpiar logs antiguos con retención diferenciada por tipo
+   * Mantiene logs críticos más tiempo que logs informativos
+   */
+  static async cleanOldLogsByType() {
+    try {
+      const env = process.env.NODE_ENV || 'development';
+      const retention = this.LOG_RETENTION[env] || this.LOG_RETENTION.development;
+      
+      const results = {
+        deleted: 0,
+        details: []
+      };
+
+      // Limpiar logs INFO antiguos
+      const infoDate = new Date();
+      infoDate.setDate(infoDate.getDate() - retention.info);
+      const infoDeleted = await Log.deleteMany({
+        type: 'info',
+        timestamp: { $lt: infoDate }
+      });
+      results.deleted += infoDeleted.deletedCount;
+      results.details.push({ 
+        type: 'info', 
+        deleted: infoDeleted.deletedCount, 
+        olderThan: `${retention.info} días` 
+      });
+
+      // Limpiar logs WARNING antiguos
+      const warningDate = new Date();
+      warningDate.setDate(warningDate.getDate() - retention.warning);
+      const warningDeleted = await Log.deleteMany({
+        type: 'warning',
+        timestamp: { $lt: warningDate }
+      });
+      results.deleted += warningDeleted.deletedCount;
+      results.details.push({ 
+        type: 'warning', 
+        deleted: warningDeleted.deletedCount, 
+        olderThan: `${retention.warning} días` 
+      });
+
+      // Limpiar logs ERROR antiguos
+      const errorDate = new Date();
+      errorDate.setDate(errorDate.getDate() - retention.error);
+      const errorDeleted = await Log.deleteMany({
+        type: 'error',
+        timestamp: { $lt: errorDate }
+      });
+      results.deleted += errorDeleted.deletedCount;
+      results.details.push({ 
+        type: 'error', 
+        deleted: errorDeleted.deletedCount, 
+        olderThan: `${retention.error} días` 
+      });
+
+      // Los logs CRITICAL se mantienen más tiempo (se limpian manualmente si es necesario)
+      
+      console.log(`🧹 Limpieza de logs completada: ${results.deleted} logs eliminados`);
+      results.details.forEach(d => {
+        if (d.deleted > 0) {
+          console.log(`   - ${d.type}: ${d.deleted} logs > ${d.olderThan}`);
+        }
+      });
+
+      return results;
+    } catch (error) {
+      console.error('❌ Error al limpiar logs por tipo:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Inicializar limpieza automática de logs (ejecutar cada 24 horas)
+   */
+  static startAutoCleaning() {
+    // Ejecutar limpieza inmediatamente al iniciar
+    this.cleanOldLogsByType().catch(err => 
+      console.error('Error en limpieza inicial de logs:', err)
+    );
+
+    // Programar limpieza diaria (cada 24 horas)
+    const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+    setInterval(async () => {
+      try {
+        console.log('🕐 Ejecutando limpieza automática de logs...');
+        await this.cleanOldLogsByType();
+      } catch (error) {
+        console.error('❌ Error en limpieza automática de logs:', error);
+      }
+    }, TWENTY_FOUR_HOURS);
+
+    console.log('✅ Limpieza automática de logs iniciada (cada 24 horas)');
   }
 }
 

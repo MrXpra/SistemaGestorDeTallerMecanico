@@ -17,6 +17,7 @@ import dotenv from 'dotenv'; // Carga variables de entorno desde archivo .env
 import path from 'path';
 import { fileURLToPath } from 'url';
 import connectDB from './config/db.js'; // Función para conectar a MongoDB
+import LogService from './services/logService.js'; // Servicio de logs con limpieza automática
 
 // ========== IMPORTAR TODAS LAS RUTAS ==========
 // Cada archivo de rutas maneja un módulo específico de la aplicación
@@ -64,6 +65,9 @@ if (!jwtSecret || String(jwtSecret).length < MIN_JWT_LENGTH) {
 
 // Conectar a MongoDB usando la URI en variables de entorno
 connectDB();
+
+// Iniciar limpieza automática de logs (cada 24 horas)
+LogService.startAutoCleaning();
 
 // Inicializar la aplicación Express
 const app = express();
