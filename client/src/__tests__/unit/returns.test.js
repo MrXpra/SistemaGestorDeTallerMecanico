@@ -123,7 +123,7 @@ describe('Returns - Integration Tests', () => {
 
   describe('Return Number Generation', () => {
     it('should generate return number with correct format', () => {
-      const date = new Date('2025-11-12');
+      const date = new Date('2025-11-11'); // Nov 11, 2025
       const counter = 1;
       
       const year = date.getFullYear().toString().slice(-2);
@@ -133,7 +133,7 @@ describe('Returns - Integration Tests', () => {
       
       const returnNumber = `DEV-${year}${month}${day}${counterStr}`;
       
-      expect(returnNumber).toBe('DEV-251112000 1');
+      expect(returnNumber).toBe('DEV-2511110001'); // Format: DEV-YYMMDD0001
     });
 
     it('should pad counter with zeros', () => {

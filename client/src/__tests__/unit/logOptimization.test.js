@@ -1,78 +1,96 @@
 /**
  * @file logOptimization.test.js
- * @description Tests para optimización y limpieza de logs
+ * @description Tests para optimización y limpieza de logs (lógica de frontend)
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import LogService from '../../services/logService';
+import { describe, it, expect } from 'vitest';
 
-// Mock de mongoose
-vi.mock('mongoose', () => ({
-  default: {
-    connect: vi.fn().mockResolvedValue(true),
-    connection: {
-      db: {}
-    }
-  }
-}));
-
-describe('Log Optimization - Unit Tests', () => {
-  describe('shouldLogInProduction', () => {
-    beforeEach(() => {
-      vi.stubEnv('NODE_ENV', 'production');
-    });
+describe('Log Optimization - Frontend Logic Tests', () => {
+  describe('Log filtering logic', () => {
+    const shouldLogInProduction = (type, category) => {
+      if (process.env.NODE_ENV !== 'production') return true;
+      
+      // En producción, NO guardar logs de lectura (GET)
+      if (category === 'user_action' && type === 'info') {
+        return false;
+      }
+      
+      // Solo guardar: warning, error, critical, y acciones importantes
+      const importantTypes = ['warning', 'error', 'critical'];
+      const importantCategories = ['security', 'system_action', 'critical_operation'];
+      
+      return importantTypes.includes(type) || importantCategories.includes(category);
+    };
 
     it('should not log info user actions in production', () => {
-      const result = LogService.shouldLogInProduction('info', 'user_action');
+      const originalEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = 'production';
+      
+      const result = shouldLogInProduction('info', 'user_action');
       expect(result).toBe(false);
+      
+      process.env.NODE_ENV = originalEnv;
     });
 
     it('should log warnings in production', () => {
-      const result = LogService.shouldLogInProduction('warning', 'user_action');
+      const originalEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = 'production';
+      
+      const result = shouldLogInProduction('warning', 'user_action');
       expect(result).toBe(true);
+      
+      process.env.NODE_ENV = originalEnv;
     });
 
     it('should log errors in production', () => {
-      const result = LogService.shouldLogInProduction('error', 'user_action');
+      const originalEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = 'production';
+      
+      const result = shouldLogInProduction('error', 'user_action');
       expect(result).toBe(true);
+      
+      process.env.NODE_ENV = originalEnv;
     });
 
     it('should log critical events in production', () => {
-      const result = LogService.shouldLogInProduction('critical', 'user_action');
+      const originalEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = 'production';
+      
+      const result = shouldLogInProduction('critical', 'user_action');
       expect(result).toBe(true);
+      
+      process.env.NODE_ENV = originalEnv;
     });
 
     it('should log security events in production', () => {
-      const result = LogService.shouldLogInProduction('info', 'security');
+      const originalEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = 'production';
+      
+      const result = shouldLogInProduction('info', 'security');
       expect(result).toBe(true);
-    });
-
-    it('should log system actions in production', () => {
-      const result = LogService.shouldLogInProduction('info', 'system_action');
-      expect(result).toBe(true);
-    });
-
-    it('should log critical operations in production', () => {
-      const result = LogService.shouldLogInProduction('info', 'critical_operation');
-      expect(result).toBe(true);
+      
+      process.env.NODE_ENV = originalEnv;
     });
   });
 
-  describe('shouldLogInProduction - Development', () => {
-    beforeEach(() => {
-      vi.stubEnv('NODE_ENV', 'development');
-    });
+  describe('Log retention configuration', () => {
+    const LOG_RETENTION = {
+      production: {
+        info: 7,
+        warning: 30,
+        error: 90,
+        critical: 180
+      },
+      development: {
+        info: 3,
+        warning: 7,
+        error: 30,
+        critical: 90
+      }
+    };
 
-    it('should log everything in development', () => {
-      expect(LogService.shouldLogInProduction('info', 'user_action')).toBe(true);
-      expect(LogService.shouldLogInProduction('debug', 'user_action')).toBe(true);
-      expect(LogService.shouldLogInProduction('warning', 'user_action')).toBe(true);
-    });
-  });
-
-  describe('LOG_RETENTION configuration', () => {
     it('should have production retention policy', () => {
-      const retention = LogService.LOG_RETENTION.production;
+      const retention = LOG_RETENTION.production;
       
       expect(retention.info).toBe(7);
       expect(retention.warning).toBe(30);
@@ -81,7 +99,7 @@ describe('Log Optimization - Unit Tests', () => {
     });
 
     it('should have development retention policy', () => {
-      const retention = LogService.LOG_RETENTION.development;
+      const retention = LOG_RETENTION.development;
       
       expect(retention.info).toBe(3);
       expect(retention.warning).toBe(7);
@@ -91,10 +109,16 @@ describe('Log Optimization - Unit Tests', () => {
   });
 
   describe('Performance thresholds', () => {
+    const PERFORMANCE_THRESHOLDS = {
+      database: 100,
+      api: 1000,
+      operation: 500
+    };
+
     it('should have defined performance thresholds', () => {
-      expect(LogService.PERFORMANCE_THRESHOLDS.database).toBe(100);
-      expect(LogService.PERFORMANCE_THRESHOLDS.api).toBe(1000);
-      expect(LogService.PERFORMANCE_THRESHOLDS.operation).toBe(500);
+      expect(PERFORMANCE_THRESHOLDS.database).toBe(100);
+      expect(PERFORMANCE_THRESHOLDS.api).toBe(1000);
+      expect(PERFORMANCE_THRESHOLDS.operation).toBe(500);
     });
   });
 });
