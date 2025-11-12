@@ -22,16 +22,21 @@ Sistema de Punto de Venta (POS) moderno y completo para tiendas de repuestos aut
 git clone https://github.com/MrXpra/SistemaGestorDeTallerMecanico.git
 cd SistemaGestorDeTallerMecanico
 
-# 2. Instalar dependencias (backend + frontend)
+# 2. Instalar dependencias backend
 npm install
 
-# 3. Configurar el sistema (REQUERIDO)
+# 3. Instalar dependencias frontend
+cd client
+npm install
+cd ..
+
+# 4. Configurar el sistema (REQUERIDO)
 npm run setup
 
-# 4. Inicializar base de datos
+# 5. Inicializar base de datos
 npm run create-admin  # o npm run seed
 
-# 5. Iniciar servidores
+# 6. Iniciar servidores
 npm run dev           # Terminal 1: Backend
 cd client && npm run dev  # Terminal 2: Frontend
 ```
@@ -42,26 +47,30 @@ cd client && npm run dev  # Terminal 2: Frontend
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  1. npm install                                             │
-│     └─ Instala backend + frontend                          │
-│     └─ Muestra mensaje con siguientes pasos                │
+│  1. npm install (raíz)                                      │
+│     └─ Instala dependencias del backend                    │
 └────────────────────────────┬────────────────────────────────┘
                              │
 ┌────────────────────────────▼────────────────────────────────┐
-│  2. npm run setup  ⭐ REQUERIDO                             │
+│  2. cd client && npm install                                │
+│     └─ Instala dependencias del frontend                   │
+└────────────────────────────┬────────────────────────────────┘
+                             │
+┌────────────────────────────▼────────────────────────────────┐
+│  3. npm run setup  ⭐ REQUERIDO                             │
 │     └─ Configura MongoDB URI                               │
 │     └─ Genera JWT_SECRET automáticamente                   │
 │     └─ Crea archivo .env                                   │
 └────────────────────────────┬────────────────────────────────┘
                              │
 ┌────────────────────────────▼────────────────────────────────┐
-│  3. npm run create-admin / npm run seed                     │
+│  4. npm run create-admin / npm run seed                     │
 │     └─ Inicializa base de datos                            │
 │     └─ Crea usuario(s) del sistema                         │
 └────────────────────────────┬────────────────────────────────┘
                              │
 ┌────────────────────────────▼────────────────────────────────┐
-│  4. npm run dev (backend) + cd client && npm run dev        │
+│  5. npm run dev (backend) + cd client && npm run dev        │
 │     └─ Backend: http://localhost:5000                      │
 │     └─ Frontend: http://localhost:5173                     │
 └─────────────────────────────────────────────────────────────┘
@@ -187,41 +196,19 @@ cd SistemaGestorDeTallerMecanico
 
 ### 2. Instalar dependencias
 
+**Backend:**
 ```bash
 npm install
 ```
 
-Este comando:
-- ✅ Instala todas las dependencias del **backend** (Node.js)
-- ✅ Instala todas las dependencias del **frontend** (React + Vite)
-- ✅ Muestra un mensaje con los siguientes pasos a seguir
-
-**Salida esperada:**
-```
-============================================================
-✅ Instalación completada exitosamente
-============================================================
-
-📋 SIGUIENTES PASOS:
-
-1️⃣  Configurar el sistema:
-   npm run setup
-   (Configuración interactiva de .env, MongoDB, JWT, etc.)
-
-2️⃣  Inicializar la base de datos:
-   npm run create-admin  (Solo admin - recomendado)
-   npm run seed          (Datos de ejemplo - desarrollo)
-
-3️⃣  Iniciar el servidor:
-   Terminal 1: npm run dev      (Backend)
-   Terminal 2: cd client && npm run dev  (Frontend)
-
-============================================================
-💡 Tip: Ejecuta "npm run setup" ahora para comenzar
-============================================================
+**Frontend:**
+```bash
+cd client
+npm install
+cd ..
 ```
 
-> 💡 **Nota**: Si no ves este mensaje, el script postinstall se ejecutó correctamente de todas formas.
+> � **Nota**: Necesitas instalar ambos (backend y frontend) para que el sistema funcione completamente.
 
 ### 3. Configurar el Sistema (Requerido)
 

@@ -20,8 +20,7 @@
     "bootstrap": "npm install && npm install --prefix client",
     "release:patch": "powershell -ExecutionPolicy Bypass -File ./scripts/release.ps1 -Type patch",
     "release:minor": "powershell -ExecutionPolicy Bypass -File ./scripts/release.ps1 -Type minor",
-    "release:major": "powershell -ExecutionPolicy Bypass -File ./scripts/release.ps1 -Type major",
-    "postinstall": "npm install --prefix client --no-audit --loglevel=error && node scripts/postinstall.js"
+    "release:major": "powershell -ExecutionPolicy Bypass -File ./scripts/release.ps1 -Type major"
   },
   "keywords": [
     "pos",
