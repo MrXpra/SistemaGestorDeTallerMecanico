@@ -26,15 +26,17 @@ const fixReturnTotals = async () => {
 
     console.log('\n🔧 Buscando devoluciones sin total calculado...\n');
 
-    const returns = await Return.find({
-      $or: [
-        { total: { $exists: false } },
-        { total: null },
-        { total: undefined }
-      ]
-    });
+    // Buscar todas las devoluciones y filtrar las que no tienen total válido
+    const allReturns = await Return.find({});
+    const returns = allReturns.filter(ret => 
+      ret.total === undefined || 
+      ret.total === null || 
+      !ret.total ||
+      isNaN(ret.total)
+    );
 
-    console.log(`📊 Encontradas ${returns.length} devoluciones sin total\n`);
+    console.log(`📊 Total de devoluciones: ${allReturns.length}`);
+    console.log(`📊 Devoluciones sin total válido: ${returns.length}\n`);
 
     if (returns.length === 0) {
       console.log('✅ Todas las devoluciones ya tienen su total calculado');
