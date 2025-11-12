@@ -15,13 +15,67 @@ Sistema de Punto de Venta (POS) moderno y completo para tiendas de repuestos aut
 
 ---
 
+## ⚡ Inicio Rápido
+
+```bash
+# 1. Clonar el repositorio
+git clone https://github.com/MrXpra/SistemaGestorDeTallerMecanico.git
+cd SistemaGestorDeTallerMecanico
+
+# 2. Instalar dependencias (backend + frontend)
+npm install
+
+# 3. Configurar el sistema (REQUERIDO)
+npm run setup
+
+# 4. Inicializar base de datos
+npm run create-admin  # o npm run seed
+
+# 5. Iniciar servidores
+npm run dev           # Terminal 1: Backend
+cd client && npm run dev  # Terminal 2: Frontend
+```
+
+> 📚 Para más detalles, consulta la [Guía de Instalación Completa](#-instalación)
+
+### 🔄 Flujo de Instalación
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  1. npm install                                             │
+│     └─ Instala backend + frontend                          │
+│     └─ Muestra mensaje con siguientes pasos                │
+└────────────────────────────┬────────────────────────────────┘
+                             │
+┌────────────────────────────▼────────────────────────────────┐
+│  2. npm run setup  ⭐ REQUERIDO                             │
+│     └─ Configura MongoDB URI                               │
+│     └─ Genera JWT_SECRET automáticamente                   │
+│     └─ Crea archivo .env                                   │
+└────────────────────────────┬────────────────────────────────┘
+                             │
+┌────────────────────────────▼────────────────────────────────┐
+│  3. npm run create-admin / npm run seed                     │
+│     └─ Inicializa base de datos                            │
+│     └─ Crea usuario(s) del sistema                         │
+└────────────────────────────┬────────────────────────────────┘
+                             │
+┌────────────────────────────▼────────────────────────────────┐
+│  4. npm run dev (backend) + cd client && npm run dev        │
+│     └─ Backend: http://localhost:5000                      │
+│     └─ Frontend: http://localhost:5173                     │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
 ## 📋 Tabla de Contenidos
 
+- [Inicio Rápido](#-inicio-rápido)
 - [Características](#-características)
 - [Tecnologías](#-tecnologías)
 - [Requisitos Previos](#-requisitos-previos)
 - [Instalación](#-instalación)
-- [Configuración](#-configuración)
 - [Uso](#-uso)
 - [Flujo de Trabajo Git](#-flujo-de-trabajo-git)
 - [Estructura del Proyecto](#-estructura-del-proyecto)
@@ -122,6 +176,8 @@ Sistema de Punto de Venta (POS) moderno y completo para tiendas de repuestos aut
 
 ## 🚀 Instalación
 
+> ⚠️ **IMPORTANTE**: Sigue los pasos en orden. El paso 3 (`npm run setup`) es **obligatorio** antes de iniciar el servidor.
+
 ### 1. Clonar el repositorio
 
 ```bash
@@ -135,7 +191,37 @@ cd SistemaGestorDeTallerMecanico
 npm install
 ```
 
-> 💡 **Nota**: Este comando instala automáticamente las dependencias del backend y del frontend. Al finalizar, verás un mensaje con los siguientes pasos.
+Este comando:
+- ✅ Instala todas las dependencias del **backend** (Node.js)
+- ✅ Instala todas las dependencias del **frontend** (React + Vite)
+- ✅ Muestra un mensaje con los siguientes pasos a seguir
+
+**Salida esperada:**
+```
+============================================================
+✅ Instalación completada exitosamente
+============================================================
+
+📋 SIGUIENTES PASOS:
+
+1️⃣  Configurar el sistema:
+   npm run setup
+   (Configuración interactiva de .env, MongoDB, JWT, etc.)
+
+2️⃣  Inicializar la base de datos:
+   npm run create-admin  (Solo admin - recomendado)
+   npm run seed          (Datos de ejemplo - desarrollo)
+
+3️⃣  Iniciar el servidor:
+   Terminal 1: npm run dev      (Backend)
+   Terminal 2: cd client && npm run dev  (Frontend)
+
+============================================================
+💡 Tip: Ejecuta "npm run setup" ahora para comenzar
+============================================================
+```
+
+> 💡 **Nota**: Si no ves este mensaje, el script postinstall se ejecutó correctamente de todas formas.
 
 ### 3. Configurar el Sistema (Requerido)
 
@@ -165,65 +251,7 @@ npm run generate-jwt
 
 ---
 
-## ⚙ Configuración
-
-### 1. Variables de Entorno
-
-Puedes configurar las variables de entorno de dos formas:
-
-#### Opción A: Asistente Interactivo (Recomendado)
-
-Ejecuta el asistente de configuración que te guiará paso a paso:
-
-```bash
-npm run setup
-```
-
-El asistente te pedirá:
-- **MONGODB_URI**: Cadena de conexión a tu base de datos MongoDB
-- **JWT_SECRET**: Clave secreta para tokens (puedes generarla automáticamente)
-- **PORT**: Puerto del servidor (por defecto: 5000)
-- **NODE_ENV**: Entorno de ejecución (development/production)
-- **JWT_EXPIRE** (opcional): Tiempo de expiración del token JWT (ej: 7d)
-- **BACKEND_URL** (opcional): URL pública del backend (ej: https://miapp.example.com)
-
-El script creará automáticamente el archivo `.env` en la raíz del proyecto.
-
-#### Opción B: Configuración Manual
-
-Crea un archivo `.env` en la raíz del proyecto con el siguiente contenido:
-
-```env
-# Conexión a MongoDB
-MONGODB_URI='mongodb://localhost:27017/tu-base-de-datos'
-# O para MongoDB Atlas:
-# MONGODB_URI='mongodb+srv://usuario:password@cluster.mongodb.net/database?retryWrites=true&w=majority'
-
-# Secreto para JWT (genera uno único y seguro)
-JWT_SECRET='tu_secreto_jwt_super_seguro_cambiame_por_uno_real'
-
-# Tiempo de expiración del token (opcional)
-JWT_EXPIRE='7d'
-
-# Puerto del servidor
-PORT='5000'
-
-# Entorno
-NODE_ENV='development'
-
-# URL pública del backend (opcional)
-BACKEND_URL='https://miapp.example.com'
-```
-
-**💡 Generar JWT_SECRET seguro:**
-
-```bash
-npm run generate-jwt
-```
-
-> ⚠️ **IMPORTANTE**: Nunca subas tu archivo `.env` a GitHub. El archivo `.gitignore` ya está configurado para ignorarlo.
-
-### 4. Inicializar la Base de Datos
+## 4. Inicializar la Base de Datos
 
 #### Opción A: Crear solo usuario administrador (Recomendado para producción)
 
@@ -520,15 +548,17 @@ Después de ejecutar `npm run seed`:
 ## 📝 Scripts Disponibles
 
 ```bash
-# Configuración Inicial
-npm run setup          # 🆕 Asistente interactivo de configuración (.env)
-npm run generate-jwt   # 🆕 Generar JWT_SECRET seguro
+# 🔧 Configuración Inicial (Ejecutar después de npm install)
+npm run setup          # ⭐ Asistente interactivo de configuración (.env + JWT)
+npm run generate-jwt   # Generar JWT_SECRET seguro (alternativa manual)
 
-# Backend
+# 🚀 Backend
 npm start              # Iniciar servidor en producción
 npm run dev            # Iniciar servidor en desarrollo con nodemon
-npm run create-admin   # Crear usuario administrador
+npm run create-admin   # Crear usuario administrador (después de setup)
 npm run seed           # Poblar base de datos con datos de ejemplo
+
+# 🏢 Configuración para Nuevos Clientes
 npm run setup-client   # Configurar para un nuevo cliente (BD limpia)
 
 # Frontend (dentro de /client)
