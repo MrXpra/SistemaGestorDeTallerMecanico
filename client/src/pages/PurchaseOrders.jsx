@@ -1617,15 +1617,14 @@ const CreateOrderModal = ({ suppliers, products, editingOrder, onClose, onSave }
             <div className="space-y-3 mb-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Proveedor *
+                  Proveedor
                 </label>
                 <select
                   value={supplier}
                   onChange={(e) => setSupplier(e.target.value)}
                   className="input w-full"
-                  required
                 >
-                  <option value="">Seleccione un proveedor</option>
+                  <option value="">Proveedor Genérico</option>
                   {suppliers.filter(s => s.isActive).map((sup) => (
                     <option key={sup._id} value={sup._id}>
                       {sup.name}

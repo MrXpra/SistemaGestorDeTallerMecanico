@@ -570,7 +570,7 @@ const SalesHistory = () => {
                       {sale.hasReturns && (
                         <span 
                           className="px-2 py-0.5 text-xs font-medium bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded-full flex items-center gap-1"
-                          title={`${sale.returnsCount} devolución${sale.returnsCount > 1 ? 'es' : ''} • Total: ${formatCurrency(sale.totalReturned)}`}
+                          title={`${sale.returnsCount} devolución${sale.returnsCount > 1 ? 'es' : ''} • Total: ${formatCurrency(sale.totalReturned || 0)}`}
                         >
                           <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
@@ -1041,13 +1041,13 @@ const SaleDetailModal = ({ sale, onClose, formatCurrency, formatDate, getStatusB
                   </div>
                 ))}
               </div>
-              {sale.totalReturned > 0 && (
+              {(sale.totalReturned || 0) > 0 && (
                 <div className="mt-3 pt-3 border-t border-orange-200 dark:border-orange-800 flex justify-between items-center">
                   <span className="text-sm font-medium text-orange-700 dark:text-orange-300">
                     Total Devuelto:
                   </span>
                   <span className="text-lg font-bold text-orange-600 dark:text-orange-400">
-                    {formatCurrency(sale.totalReturned)}
+                    {formatCurrency(sale.totalReturned || 0)}
                   </span>
                 </div>
               )}
