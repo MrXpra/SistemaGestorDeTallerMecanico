@@ -133,6 +133,9 @@ export const AppRoutes = () => {
 
       <Toaster
         position={settings.toastPosition || 'top-center'}
+        containerStyle={{
+          zIndex: 999999,
+        }}
         toastOptions={{
           duration: 3000,
           style: {
@@ -140,7 +143,7 @@ export const AppRoutes = () => {
             color: isDarkMode ? '#f3f4f6' : '#111827',
             borderRadius: '12px',
             boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
-            zIndex: 200000,
+            zIndex: 999999,
           },
           success: {
             iconTheme: {
