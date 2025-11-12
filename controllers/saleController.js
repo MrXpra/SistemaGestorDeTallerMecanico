@@ -268,7 +268,35 @@ export const getSaleById = async (req, res) => {
       return res.status(404).json({ message: 'Venta no encontrada' });
     }
 
-    res.json(sale);
+    // Obtener devoluciones previas de esta venta para calcular cantidades disponibles
+    const Return = mongoose.model('Return');
+    const previousReturns = await Return.find({ 
+      sale: req.params.id,
+      status: { $ne: 'Rechazada' } // Contar todas excepto rechazadas
+    });
+
+    // Calcular cantidades ya devueltas por producto
+    const returnedQuantities = {};
+    for (const prevReturn of previousReturns) {
+      for (const prevItem of prevReturn.items) {
+        const prodId = prevItem.product.toString();
+        returnedQuantities[prodId] = (returnedQuantities[prodId] || 0) + prevItem.quantity;
+      }
+    }
+
+    // Agregar información de cantidades disponibles a cada item
+    const saleObj = sale.toObject();
+    saleObj.items = saleObj.items.map(item => {
+      const productId = typeof item.product === 'object' ? item.product._id.toString() : item.product.toString();
+      const alreadyReturned = returnedQuantities[productId] || 0;
+      return {
+        ...item,
+        returnedQuantity: alreadyReturned,
+        availableToReturn: item.quantity - alreadyReturned
+      };
+    });
+
+    res.json(saleObj);
   } catch (error) {
     console.error('Error al obtener venta:', error);
     res.status(500).json({ message: 'Error al obtener venta', error: error.message });

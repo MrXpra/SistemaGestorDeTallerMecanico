@@ -880,10 +880,17 @@ const CreateReturnModal = ({ onClose, onSubmit, formatCurrency }) => {
         ? item.product.name 
         : 'Producto (eliminado)';
       
+      // Usar availableToReturn si está disponible, sino usar quantity original
+      const maxAvailable = item.availableToReturn !== undefined 
+        ? item.availableToReturn 
+        : item.quantity;
+      
       return {
         productId: productId,
         productName: productName,
-        maxQuantity: item.quantity,
+        maxQuantity: maxAvailable,
+        originalQuantity: item.quantity,
+        returnedQuantity: item.returnedQuantity || 0,
         priceAtSale: item.priceAtSale || 0,
         quantity: 0,
         selected: false,
@@ -1127,23 +1134,38 @@ const CreateReturnModal = ({ onClose, onSubmit, formatCurrency }) => {
                 </p>
                 <div className="space-y-2">
                   {returnItems.map((item, index) => (
-                    <div key={index} className="card-glass p-4">
+                    <div key={index} className={`card-glass p-4 ${item.maxQuantity === 0 ? 'opacity-50' : ''}`}>
                       <div className="flex items-center gap-4">
                         <input
                           type="checkbox"
                           checked={item.selected}
                           onChange={() => toggleItem(index)}
-                          className="w-5 h-5 text-primary-600 rounded"
+                          disabled={item.maxQuantity === 0}
+                          className="w-5 h-5 text-primary-600 rounded disabled:opacity-50 disabled:cursor-not-allowed"
                         />
                         <div className="flex-1">
                           <p className="font-medium text-gray-900 dark:text-white">
                             {item.productName}
                           </p>
                           <p className="text-sm text-gray-600 dark:text-gray-400">
-                            Precio: {formatCurrency(item.priceAtSale)} • Máx: {item.maxQuantity}
+                            Precio: {formatCurrency(item.priceAtSale)}
                           </p>
+                          {item.returnedQuantity > 0 ? (
+                            <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">
+                              Original: {item.originalQuantity} • Devuelto: {item.returnedQuantity} • Disponible: {item.maxQuantity}
+                            </p>
+                          ) : (
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                              Disponible: {item.maxQuantity}
+                            </p>
+                          )}
+                          {item.maxQuantity === 0 && (
+                            <p className="text-xs text-red-600 dark:text-red-400 mt-1 font-medium">
+                              ⚠️ Ya se devolvieron todas las unidades
+                            </p>
+                          )}
                         </div>
-                        {item.selected && (
+                        {item.selected && item.maxQuantity > 0 && (
                           <div className="flex items-center gap-2">
                             <label className="text-sm text-gray-600 dark:text-gray-400">
                               Cantidad:
