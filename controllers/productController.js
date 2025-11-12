@@ -124,7 +124,8 @@ export const createProduct = async (req, res) => {
       return res.status(400).json({ message: 'El SKU ya existe' });
     }
 
-    const product = await Product.create({
+    // Preparar datos del producto
+    const productData = {
       sku: sku.toUpperCase(),
       name,
       description,
@@ -134,9 +135,15 @@ export const createProduct = async (req, res) => {
       sellingPrice,
       stock,
       lowStockThreshold,
-      discountPercentage,
-      supplier
-    });
+      discountPercentage
+    };
+
+    // Solo agregar supplier si no está vacío
+    if (supplier && supplier.trim() !== '') {
+      productData.supplier = supplier;
+    }
+
+    const product = await Product.create(productData);
 
     // Log técnico del sistema
     await LogService.logAction({
@@ -220,9 +227,20 @@ export const updateProduct = async (req, res) => {
       }
     }
 
+    // Preparar datos de actualización
+    const updateData = { 
+      ...req.body, 
+      sku: req.body.sku ? req.body.sku.toUpperCase() : product.sku 
+    };
+
+    // Si supplier está vacío, eliminarlo del objeto de actualización
+    if (updateData.supplier !== undefined && (!updateData.supplier || updateData.supplier.trim() === '')) {
+      delete updateData.supplier;
+    }
+
     const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,
-      { ...req.body, sku: req.body.sku ? req.body.sku.toUpperCase() : product.sku },
+      updateData,
       { new: true, runValidators: true }
     );
 
