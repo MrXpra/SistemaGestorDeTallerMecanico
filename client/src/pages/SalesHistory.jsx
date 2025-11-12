@@ -1026,7 +1026,7 @@ const SaleDetailModal = ({ sale, onClose, formatCurrency, formatDate, getStatusB
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-bold text-orange-600 dark:text-orange-400">
-                        {formatCurrency(returnItem.total)}
+                        {formatCurrency(returnItem.total || 0)}
                       </p>
                       <span className={`inline-block px-2 py-0.5 text-xs font-medium rounded-full ${
                         returnItem.status === 'Aprobada' 
@@ -1035,7 +1035,7 @@ const SaleDetailModal = ({ sale, onClose, formatCurrency, formatDate, getStatusB
                           ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
                           : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300'
                       }`}>
-                        {returnItem.status}
+                        {returnItem.status || 'Pendiente'}
                       </span>
                     </div>
                   </div>
