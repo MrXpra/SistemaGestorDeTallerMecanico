@@ -220,23 +220,11 @@ export const getSales = async (req, res) => {
           .select('returnNumber status total createdAt items')
           .sort({ createdAt: -1 });
         
-        console.log(`📦 Returns for sale ${sale.invoiceNumber}:`, returns.map(r => ({ 
-          returnNumber: r.returnNumber, 
-          total: r.total,
-          hasTotal: r.total !== undefined
-        })));
-        
         const saleObj = sale.toObject();
         saleObj.returns = returns;
         saleObj.hasReturns = returns.length > 0;
         saleObj.returnsCount = returns.length;
-        saleObj.totalReturned = returns.reduce((sum, ret) => {
-          const amount = ret.total || 0;
-          console.log(`  Adding ${amount} to total (current: ${sum})`);
-          return sum + amount;
-        }, 0);
-        
-        console.log(`  Final totalReturned: ${saleObj.totalReturned}`);
+        saleObj.totalReturned = returns.reduce((sum, ret) => sum + (ret.total || 0), 0);
         
         return saleObj;
       })

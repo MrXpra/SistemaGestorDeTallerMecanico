@@ -23,6 +23,7 @@ export const requestLogger = (req, res, next) => {
       // Normalizar nombres de módulos compuestos
       if (module === 'purchase-orders') module = 'purchaseOrders';
       if (module === 'cash-withdrawals') module = 'cashWithdrawals';
+      if (module === 'audit-logs') module = 'logs'; // Normalizar audit-logs a logs
       
       // Validar que el módulo está en la lista permitida
       const validModules = [
