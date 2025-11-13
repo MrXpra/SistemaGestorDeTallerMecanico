@@ -83,9 +83,19 @@ const Customers = () => {
   const [customerSales, setCustomerSales] = useState([]);
   const [showTooltip, setShowTooltip] = useState(null);
 
+  // Paginación
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 50,
+    total: 0,
+    pages: 0,
+    hasNextPage: false,
+    hasPrevPage: false
+  });
+
   useEffect(() => {
     fetchCustomers();
-  }, []);
+  }, [pagination.page]);
 
   useEffect(() => {
     filterCustomers();
@@ -115,11 +125,20 @@ const Customers = () => {
   const fetchCustomers = async () => {
     try {
       setIsLoading(true);
-      const response = await getCustomers();
-      setCustomers(response.data);
+      const response = await getCustomers({ page: pagination.page, limit: pagination.limit });
+      
+      const customersData = response?.data?.customers || response?.data || [];
+      const paginationData = response?.data?.pagination || {};
+      
+      setCustomers(Array.isArray(customersData) ? customersData : []);
+      setPagination(prev => ({
+        ...prev,
+        ...paginationData
+      }));
     } catch (error) {
       console.error('Error fetching customers:', error);
       toast.error('Error al cargar clientes');
+      setCustomers([]);
     } finally {
       setIsLoading(false);
     }
@@ -446,6 +465,42 @@ const Customers = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Paginación */}
+        {!isLoading && pagination.pages > 1 && (
+          <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              Mostrando {Math.min((pagination.page - 1) * pagination.limit + 1, pagination.total)} - {Math.min(pagination.page * pagination.limit, pagination.total)} de {pagination.total} clientes
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
+                disabled={!pagination.hasPrevPage}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  pagination.hasPrevPage
+                    ? 'bg-primary-600 text-white hover:bg-primary-700'
+                    : 'bg-gray-200 text-gray-400 dark:bg-gray-700 dark:text-gray-600 cursor-not-allowed'
+                }`}
+              >
+                Anterior
+              </button>
+              <span className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300">
+                Página {pagination.page} de {pagination.pages}
+              </span>
+              <button
+                onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
+                disabled={!pagination.hasNextPage}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  pagination.hasNextPage
+                    ? 'bg-primary-600 text-white hover:bg-primary-700'
+                    : 'bg-gray-200 text-gray-400 dark:bg-gray-700 dark:text-gray-600 cursor-not-allowed'
+                }`}
+              >
+                Siguiente
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Customer Modal */}

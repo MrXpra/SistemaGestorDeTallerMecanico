@@ -1,9 +1,9 @@
 import Supplier from '../models/Supplier.js';
 
-// Obtener todos los proveedores
+// Obtener todos los proveedores (con paginación)
 export const getSuppliers = async (req, res) => {
   try {
-    const { includeArchived } = req.query;
+    const { includeArchived, search, page = 1, limit = 50 } = req.query;
     
     let query = {};
     
@@ -11,9 +11,40 @@ export const getSuppliers = async (req, res) => {
     if (includeArchived !== 'true') {
       query.isArchived = { $ne: true };
     }
+
+    // Búsqueda por nombre o contacto
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { contact: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    // Paginación
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+    const skip = (pageNum - 1) * limitNum;
+
+    // Contar total
+    const totalDocs = await Supplier.countDocuments(query);
     
-    const suppliers = await Supplier.find(query).sort({ name: 1 });
-    res.json(suppliers);
+    const suppliers = await Supplier.find(query)
+      .sort({ name: 1 })
+      .skip(skip)
+      .limit(limitNum)
+      .lean();
+
+    res.json({
+      suppliers,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total: totalDocs,
+        pages: Math.ceil(totalDocs / limitNum),
+        hasNextPage: pageNum < Math.ceil(totalDocs / limitNum),
+        hasPrevPage: pageNum > 1
+      }
+    });
   } catch (error) {
     console.error('Error al obtener proveedores:', error);
     res.status(500).json({ message: 'Error al obtener proveedores' });

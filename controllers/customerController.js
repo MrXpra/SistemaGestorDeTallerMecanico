@@ -1,12 +1,12 @@
 import Customer from '../models/Customer.js';
 import Sale from '../models/Sale.js';
 
-// @desc    Obtener todos los clientes
+// @desc    Obtener todos los clientes (con paginación)
 // @route   GET /api/customers
 // @access  Private
 export const getCustomers = async (req, res) => {
   try {
-    const { search, includeArchived } = req.query;
+    const { search, includeArchived, page = 1, limit = 50 } = req.query;
     
     let query = {};
 
@@ -25,9 +25,31 @@ export const getCustomers = async (req, res) => {
       ];
     }
 
-    const customers = await Customer.find(query).sort({ createdAt: -1 });
+    // Paginación
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+    const skip = (pageNum - 1) * limitNum;
 
-    res.json(customers);
+    // Contar total
+    const totalDocs = await Customer.countDocuments(query);
+
+    const customers = await Customer.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum)
+      .lean();
+
+    res.json({
+      customers,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total: totalDocs,
+        pages: Math.ceil(totalDocs / limitNum),
+        hasNextPage: pageNum < Math.ceil(totalDocs / limitNum),
+        hasPrevPage: pageNum > 1
+      }
+    });
   } catch (error) {
     console.error('Error al obtener clientes:', error);
     res.status(500).json({ message: 'Error al obtener clientes', error: error.message });
