@@ -94,17 +94,29 @@ const Inventory = () => {
   const [brands, setBrands] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
 
+  // Paginación
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 50,
+    total: 0,
+    pages: 0,
+    hasNextPage: false,
+    hasPrevPage: false
+  });
+
   useEffect(() => {
     fetchProducts();
     fetchSuppliers();
-  }, []);
+  }, [pagination.page]);
 
   const fetchSuppliers = async () => {
     try {
-      const response = await getSuppliers();
-      setSuppliers(response.data);
+      const response = await getSuppliers({ limit: 1000 });
+      const suppliersData = response?.data?.suppliers || response?.data || [];
+      setSuppliers(Array.isArray(suppliersData) ? suppliersData : []);
     } catch (error) {
       console.error('Error al cargar proveedores:', error);
+      setSuppliers([]);
     }
   };
 
@@ -129,11 +141,17 @@ const Inventory = () => {
   const fetchProducts = async () => {
     try {
       setIsLoading(true);
-      const response = await getProducts();
+      const response = await getProducts({ page: pagination.page, limit: pagination.limit });
       
       // El backend ahora devuelve { products, pagination }
       const productsData = response?.data?.products || response?.data || [];
+      const paginationData = response?.data?.pagination || {};
+      
       setProducts(Array.isArray(productsData) ? productsData : []);
+      setPagination(prev => ({
+        ...prev,
+        ...paginationData
+      }));
       
       // Extract unique categories and brands
       const uniqueCategories = [...new Set(productsData.map(p => p.category).filter(Boolean))];
@@ -586,6 +604,42 @@ const Inventory = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Paginación */}
+        {!isLoading && pagination.pages > 1 && (
+          <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              Mostrando {Math.min((pagination.page - 1) * pagination.limit + 1, pagination.total)} - {Math.min(pagination.page * pagination.limit, pagination.total)} de {pagination.total} productos
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
+                disabled={!pagination.hasPrevPage}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  pagination.hasPrevPage
+                    ? 'bg-primary-600 text-white hover:bg-primary-700'
+                    : 'bg-gray-200 text-gray-400 dark:bg-gray-700 dark:text-gray-600 cursor-not-allowed'
+                }`}
+              >
+                Anterior
+              </button>
+              <span className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300">
+                Página {pagination.page} de {pagination.pages}
+              </span>
+              <button
+                onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
+                disabled={!pagination.hasNextPage}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  pagination.hasNextPage
+                    ? 'bg-primary-600 text-white hover:bg-primary-700'
+                    : 'bg-gray-200 text-gray-400 dark:bg-gray-700 dark:text-gray-600 cursor-not-allowed'
+                }`}
+              >
+                Siguiente
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Product Modal */}
