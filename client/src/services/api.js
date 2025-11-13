@@ -158,6 +158,13 @@ export const deleteUser = (id) => API.delete(`/users/${id}`); // Desactivar usua
 // ===== SETTINGS - Configuración del sistema =====
 export const getSettings = () => API.get('/settings'); // Obtener configuración actual
 export const updateSettings = (data) => API.put('/settings', data); // Actualizar configuración
+export const getCompanyInfo = () => API.get('/settings/company'); // Obtener info de la empresa
+export const updateCompanyInfo = (data) => API.put('/settings/company', data); // Actualizar info empresa (admin)
+export const getNotificationPreferences = () => API.get('/settings/notifications'); // Obtener preferencias de notificaciones
+export const updateNotificationPreferences = (data) => API.put('/settings/notifications', data); // Actualizar preferencias
+export const exportSystemData = () => API.get('/settings/export'); // Exportar todos los datos del sistema
+export const importSystemData = (data, mode = 'merge') => API.post('/settings/import', { data, mode }); // Importar datos
+export const cleanTestData = (confirmation) => API.delete('/settings/clean-test-data', { data: { confirmation } }); // Limpiar datos de prueba
 
 // ===== DASHBOARD - Estadísticas y KPIs =====
 export const getAllDashboardData = () => API.get('/dashboard/all'); // TODO en una sola petición (OPTIMIZADO)
