@@ -159,14 +159,12 @@ export const createSale = async (req, res) => {
   }
 };
 
-// @desc    Obtener todas las ventas
+// @desc    Obtener todas las ventas (con paginación)
 // @route   GET /api/sales
 // @access  Private
 export const getSales = async (req, res) => {
   try {
-    const { startDate, endDate, user, paymentMethod, status, search } = req.query;
-    
-    console.log('📅 Query params:', { startDate, endDate, search });
+    const { startDate, endDate, user, paymentMethod, status, search, page = 1, limit = 50 } = req.query;
     
     let query = {};
 
@@ -179,16 +177,13 @@ export const getSales = async (req, res) => {
     if (startDate || endDate) {
       query.createdAt = {};
       if (startDate) {
-        // Inicio del día en zona horaria local
         const start = new Date(startDate + 'T00:00:00.000');
         query.createdAt.$gte = start;
       }
       if (endDate) {
-        // Final del día en zona horaria local (23:59:59.999)
         const end = new Date(endDate + 'T23:59:59.999');
         query.createdAt.$lte = end;
       }
-      console.log('📅 Query createdAt:', query.createdAt);
     }
 
     // Filtro por usuario (cajero)
@@ -206,48 +201,62 @@ export const getSales = async (req, res) => {
       query.status = status;
     }
 
+    // Calcular skip y limit para paginación
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+    const skip = (pageNum - 1) * limitNum;
+
+    // Contar total de documentos que coinciden con el query
+    const totalDocs = await Sale.countDocuments(query);
+
+    // Obtener ventas con paginación
     const sales = await Sale.find(query)
       .populate('user', 'name email')
       .populate('customer', 'fullName phone')
       .populate('items.product', 'name sku')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum)
+      .lean(); // usar lean() para mejorar performance
 
-    // Obtener información de devoluciones para cada venta
+    // Obtener información de devoluciones para cada venta (en paralelo)
     const Return = mongoose.model('Return');
-    const salesWithReturns = await Promise.all(
-      sales.map(async (sale) => {
-        const returns = await Return.find({ sale: sale._id })
-          .select('returnNumber status total createdAt items')
-          .sort({ createdAt: -1 });
-        
-        const saleObj = sale.toObject();
-        saleObj.returns = returns;
-        saleObj.hasReturns = returns.length > 0;
-        saleObj.returnsCount = returns.length;
-        saleObj.totalReturned = returns.reduce((sum, ret) => sum + (ret.total || 0), 0);
-        
-        return saleObj;
-      })
-    );
+    const saleIds = sales.map(s => s._id);
+    const allReturns = await Return.find({ sale: { $in: saleIds } })
+      .select('sale returnNumber status total createdAt')
+      .lean();
 
-    console.log('💰 Sales found:', salesWithReturns.length);
-    if (salesWithReturns.length > 0) {
-      console.log('First sale date:', salesWithReturns[0].createdAt);
-      console.log('Last sale date:', salesWithReturns[salesWithReturns.length - 1].createdAt);
-      
-      // Debug: verificar productos poblados
-      const firstSale = salesWithReturns[0];
-      console.log('First sale items:', firstSale.items.length);
-      firstSale.items.forEach((item, idx) => {
-        console.log(`  Item ${idx}:`, {
-          product: item.product ? (typeof item.product === 'object' ? item.product._id : item.product) : 'NULL',
-          hasName: item.product?.name ? 'YES' : 'NO',
-          quantity: item.quantity
-        });
-      });
-    }
+    // Agrupar returns por sale
+    const returnsBySale = {};
+    allReturns.forEach(ret => {
+      const saleId = ret.sale.toString();
+      if (!returnsBySale[saleId]) returnsBySale[saleId] = [];
+      returnsBySale[saleId].push(ret);
+    });
 
-    res.json(salesWithReturns);
+    // Agregar info de returns a cada sale
+    const salesWithReturns = sales.map(sale => {
+      const returns = returnsBySale[sale._id.toString()] || [];
+      return {
+        ...sale,
+        returns,
+        hasReturns: returns.length > 0,
+        returnsCount: returns.length,
+        totalReturned: returns.reduce((sum, ret) => sum + (ret.total || 0), 0)
+      };
+    });
+
+    res.json({
+      sales: salesWithReturns,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total: totalDocs,
+        pages: Math.ceil(totalDocs / limitNum),
+        hasNextPage: pageNum < Math.ceil(totalDocs / limitNum),
+        hasPrevPage: pageNum > 1
+      }
+    });
   } catch (error) {
     console.error('Error al obtener ventas:', error);
     res.status(500).json({ message: 'Error al obtener ventas', error: error.message });

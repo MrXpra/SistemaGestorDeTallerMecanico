@@ -95,6 +95,16 @@ const SalesHistory = () => {
     endDate: '',
   });
 
+  // Paginación
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 50,
+    total: 0,
+    pages: 0,
+    hasNextPage: false,
+    hasPrevPage: false
+  });
+
   // Stats
   const [stats, setStats] = useState({
     total: 0,
@@ -105,19 +115,22 @@ const SalesHistory = () => {
 
   useEffect(() => {
     fetchSales();
-  }, [filters]);
+  }, [filters, pagination.page]);
 
   const fetchSales = async () => {
     try {
       setIsLoading(true);
-      const response = await getSales(filters);
-      const salesData = Array.isArray(response?.data) 
-        ? response.data 
-        : Array.isArray(response) 
-          ? response 
-          : [];
+      const response = await getSales({ ...filters, page: pagination.page, limit: pagination.limit });
+      
+      // El backend ahora devuelve { sales, pagination }
+      const salesData = response?.data?.sales || response?.sales || [];
+      const paginationData = response?.data?.pagination || response?.pagination || {};
       
       setSales(salesData);
+      setPagination(prev => ({
+        ...prev,
+        ...paginationData
+      }));
       calculateStats(salesData);
     } catch (error) {
       console.error('Error al cargar ventas:', error);
@@ -669,6 +682,42 @@ const SalesHistory = () => {
             <p className="text-gray-600 dark:text-gray-400">
               No se encontraron facturas
             </p>
+          </div>
+        )}
+
+        {/* Paginación */}
+        {!isLoading && pagination.pages > 1 && (
+          <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              Mostrando {Math.min((pagination.page - 1) * pagination.limit + 1, pagination.total)} - {Math.min(pagination.page * pagination.limit, pagination.total)} de {pagination.total} facturas
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
+                disabled={!pagination.hasPrevPage}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  pagination.hasPrevPage
+                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    : 'bg-gray-200 text-gray-400 dark:bg-gray-700 dark:text-gray-600 cursor-not-allowed'
+                }`}
+              >
+                Anterior
+              </button>
+              <span className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300">
+                Página {pagination.page} de {pagination.pages}
+              </span>
+              <button
+                onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
+                disabled={!pagination.hasNextPage}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  pagination.hasNextPage
+                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    : 'bg-gray-200 text-gray-400 dark:bg-gray-700 dark:text-gray-600 cursor-not-allowed'
+                }`}
+              >
+                Siguiente
+              </button>
+            </div>
           </div>
         )}
       </div>
