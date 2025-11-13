@@ -32,7 +32,7 @@ import AuditLogService from '../services/auditLogService.js';
  */
 export const getProducts = async (req, res) => {
   try {
-    const { search, category, brand, lowStock, includeArchived } = req.query;
+    const { search, category, brand, lowStock, includeArchived, page = 1, limit = 100 } = req.query;
     
     let query = {};
 
@@ -59,17 +59,37 @@ export const getProducts = async (req, res) => {
       query.brand = brand;
     }
 
-    const products = await Product.find(query)
-      .populate('supplier', 'name contact')
-      .sort({ createdAt: -1 });
+    // Paginación
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+    const skip = (pageNum - 1) * limitNum;
 
-    // Filtrar productos con bajo stock si se solicita
-    let filteredProducts = products;
+    // Contar total
+    const totalDocs = await Product.countDocuments(query);
+
+    let products = await Product.find(query)
+      .populate('supplier', 'name contact')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum)
+      .lean();
+
+    // Filtrar productos con bajo stock si se solicita (después de paginar)
     if (lowStock === 'true') {
-      filteredProducts = products.filter(p => p.stock <= p.lowStockThreshold);
+      products = products.filter(p => p.stock <= p.lowStockThreshold);
     }
 
-    res.json(filteredProducts);
+    res.json({
+      products,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total: totalDocs,
+        pages: Math.ceil(totalDocs / limitNum),
+        hasNextPage: pageNum < Math.ceil(totalDocs / limitNum),
+        hasPrevPage: pageNum > 1
+      }
+    });
   } catch (error) {
     console.error('Error al obtener productos:', error);
     res.status(500).json({ message: 'Error al obtener productos', error: error.message });

@@ -122,16 +122,23 @@ const SalesHistory = () => {
       setIsLoading(true);
       const response = await getSales({ ...filters, page: pagination.page, limit: pagination.limit });
       
-      // El backend ahora devuelve { sales, pagination }
+      // El backend ahora devuelve { sales, pagination, stats }
       const salesData = response?.data?.sales || response?.sales || [];
       const paginationData = response?.data?.pagination || response?.pagination || {};
+      const statsData = response?.data?.stats || response?.stats || null;
       
       setSales(salesData);
       setPagination(prev => ({
         ...prev,
         ...paginationData
       }));
-      calculateStats(salesData);
+      
+      // Usar stats del backend si están disponibles, sino calcular localmente
+      if (statsData) {
+        setStats(statsData);
+      } else {
+        calculateStats(salesData);
+      }
     } catch (error) {
       console.error('Error al cargar ventas:', error);
       toast.error('Error al cargar historial de ventas');

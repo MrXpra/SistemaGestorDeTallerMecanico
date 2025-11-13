@@ -209,6 +209,15 @@ export const getSales = async (req, res) => {
     // Contar total de documentos que coinciden con el query
     const totalDocs = await Sale.countDocuments(query);
 
+    // Calcular estadísticas globales (sin paginación)
+    const allSales = await Sale.find(query).select('status total').lean();
+    const stats = {
+      total: allSales.length,
+      completed: allSales.filter(s => s.status === 'Completada').length,
+      cancelled: allSales.filter(s => s.status === 'Cancelada').length,
+      totalAmount: allSales.filter(s => s.status === 'Completada').reduce((sum, s) => sum + (s.total || 0), 0)
+    };
+
     // Obtener ventas con paginación
     const sales = await Sale.find(query)
       .populate('user', 'name email')
@@ -255,7 +264,8 @@ export const getSales = async (req, res) => {
         pages: Math.ceil(totalDocs / limitNum),
         hasNextPage: pageNum < Math.ceil(totalDocs / limitNum),
         hasPrevPage: pageNum > 1
-      }
+      },
+      stats
     });
   } catch (error) {
     console.error('Error al obtener ventas:', error);

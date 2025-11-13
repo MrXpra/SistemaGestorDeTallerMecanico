@@ -4,10 +4,10 @@ import Product from '../models/Product.js';
 import Customer from '../models/Customer.js';
 import mongoose from 'mongoose';
 
-// Obtener todas las devoluciones con filtros
+// Obtener todas las devoluciones con filtros y paginación
 export const getReturns = async (req, res) => {
   try {
-    const { startDate, endDate, status, search } = req.query;
+    const { startDate, endDate, status, search, page = 1, limit = 50 } = req.query;
 
     let query = {};
 
@@ -29,15 +29,36 @@ export const getReturns = async (req, res) => {
       query.returnNumber = { $regex: search, $options: 'i' };
     }
 
+    // Paginación
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+    const skip = (pageNum - 1) * limitNum;
+
+    // Contar total
+    const totalDocs = await Return.countDocuments(query);
+
     const returns = await Return.find(query)
       .populate('sale', 'invoiceNumber totalAmount')
       .populate('customer', 'fullName email phone')
       .populate('items.product', 'name sku')
       .populate('processedBy', 'name email')
       .populate('approvedBy', 'name email')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum)
+      .lean();
 
-    res.json(returns);
+    res.json({
+      returns,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total: totalDocs,
+        pages: Math.ceil(totalDocs / limitNum),
+        hasNextPage: pageNum < Math.ceil(totalDocs / limitNum),
+        hasPrevPage: pageNum > 1
+      }
+    });
   } catch (error) {
     console.error('Error al obtener devoluciones:', error);
     res.status(500).json({ message: 'Error al obtener devoluciones', error: error.message });
