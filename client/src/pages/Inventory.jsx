@@ -130,16 +130,20 @@ const Inventory = () => {
     try {
       setIsLoading(true);
       const response = await getProducts();
-      setProducts(response.data);
+      
+      // El backend ahora devuelve { products, pagination }
+      const productsData = response?.data?.products || response?.data || [];
+      setProducts(Array.isArray(productsData) ? productsData : []);
       
       // Extract unique categories and brands
-      const uniqueCategories = [...new Set(response.data.map(p => p.category).filter(Boolean))];
-      const uniqueBrands = [...new Set(response.data.map(p => p.brand).filter(Boolean))];
+      const uniqueCategories = [...new Set(productsData.map(p => p.category).filter(Boolean))];
+      const uniqueBrands = [...new Set(productsData.map(p => p.brand).filter(Boolean))];
       setCategories(uniqueCategories);
       setBrands(uniqueBrands);
     } catch (error) {
       console.error('Error fetching products:', error);
       toast.error('Error al cargar productos');
+      setProducts([]);
     } finally {
       setIsLoading(false);
     }
