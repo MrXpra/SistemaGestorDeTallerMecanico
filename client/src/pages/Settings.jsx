@@ -74,9 +74,17 @@
  * - Frontend recarga settings al guardar
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { getSettings, updateSettings } from '../services/api';
+import { 
+  getSettings, 
+  updateSettings, 
+  exportSystemData, 
+  importSystemData, 
+  cleanTestData,
+  getNotificationPreferences,
+  updateNotificationPreferences
+} from '../services/api';
 import { useAuthStore } from '../store/authStore';
 import { useSettingsStore } from '../store/settingsStore';
 import { useThemeStore } from '../store/themeStore';
@@ -106,6 +114,12 @@ import {
   CreditCard,
   Cloud,
   Send,
+  Download,
+  Upload,
+  Trash2,
+  Database,
+  FileDown,
+  FileUp,
 } from 'lucide-react';
 
 const Settings = ({ section = 'all' }) => {
@@ -120,6 +134,19 @@ const Settings = ({ section = 'all' }) => {
   const [showApiKey, setShowApiKey] = useState(false);
   const [showSmtpPassword, setShowSmtpPassword] = useState(false);
   const [testingEmail, setTestingEmail] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [isCleaning, setIsCleaning] = useState(false);
+  const [showCleanConfirmModal, setShowCleanConfirmModal] = useState(false);
+  const [cleanConfirmText, setCleanConfirmText] = useState('');
+  const [importMode, setImportMode] = useState('merge');
+  const [notificationPrefs, setNotificationPrefs] = useState({
+    lowStockAlerts: true,
+    expirationAlerts: true,
+    salesAlerts: true,
+    paymentReminders: true
+  });
+  const fileInputRef = useRef(null);
   
   const [formData, setFormData] = useState({
     businessName: '',
@@ -153,6 +180,7 @@ const Settings = ({ section = 'all' }) => {
 
   useEffect(() => {
     fetchSettings();
+    fetchNotificationPreferences();
   }, []);
 
   const fetchSettings = async () => {
@@ -258,6 +286,150 @@ const Settings = ({ section = 'all' }) => {
       smtp: { ...formData.smtp, [field]: value }
     });
     setHasChanges(true);
+  };
+
+  const fetchNotificationPreferences = async () => {
+    try {
+      const response = await getNotificationPreferences();
+      if (response.data?.data) {
+        setNotificationPrefs(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error al cargar preferencias de notificaciones:', error);
+    }
+  };
+
+  const handleNotificationPrefChange = async (key, value) => {
+    try {
+      const newPrefs = { ...notificationPrefs, [key]: value };
+      setNotificationPrefs(newPrefs);
+      
+      await updateNotificationPreferences(newPrefs);
+      toast.success('Preferencia actualizada', { duration: 1500 });
+    } catch (error) {
+      console.error('Error al actualizar preferencia:', error);
+      toast.error('Error al actualizar preferencia');
+      // Revertir cambio en caso de error
+      setNotificationPrefs(notificationPrefs);
+    }
+  };
+
+  const handleExportData = async () => {
+    try {
+      setIsExporting(true);
+      toast.loading('Exportando datos...', { id: 'export' });
+      
+      const response = await exportSystemData();
+      const data = response.data;
+      
+      // Crear blob y descargar
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `sgtm-backup-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast.success(`✅ Datos exportados: ${data.metadata.totalRecords.products} productos, ${data.metadata.totalRecords.sales} ventas`, { id: 'export' });
+    } catch (error) {
+      console.error('Error al exportar datos:', error);
+      toast.error('Error al exportar datos', { id: 'export' });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleImportData = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsImporting(true);
+      toast.loading('Importando datos...', { id: 'import' });
+
+      // Leer archivo
+      const text = await file.text();
+      const importData = JSON.parse(text);
+
+      // Validar estructura básica
+      if (!importData.metadata || !importData.data) {
+        throw new Error('Archivo inválido: estructura incorrecta');
+      }
+
+      // Confirmar importación
+      const confirmMsg = importMode === 'replace' 
+        ? '⚠️ MODO REEMPLAZAR: Se eliminarán datos existentes. ¿Continuar?' 
+        : '¿Importar datos en modo COMBINAR?';
+      
+      if (!window.confirm(confirmMsg)) {
+        toast.dismiss('import');
+        setIsImporting(false);
+        return;
+      }
+
+      // Ejecutar importación
+      const response = await importSystemData(importData, importMode);
+      
+      if (response.data.success) {
+        toast.success(`✅ ${response.data.message}`, { id: 'import', duration: 4000 });
+        
+        // Recargar configuración
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      } else {
+        toast.error(`⚠️ ${response.data.message}`, { id: 'import', duration: 4000 });
+      }
+    } catch (error) {
+      console.error('Error al importar datos:', error);
+      toast.error(error.message || 'Error al importar datos', { id: 'import' });
+    } finally {
+      setIsImporting(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleCleanTestData = async () => {
+    if (cleanConfirmText !== 'ELIMINAR DATOS DE PRUEBA') {
+      toast.error('Debe escribir exactamente: ELIMINAR DATOS DE PRUEBA');
+      return;
+    }
+
+    try {
+      setIsCleaning(true);
+      toast.loading('Limpiando datos de prueba...', { id: 'clean' });
+
+      const response = await cleanTestData(cleanConfirmText);
+      
+      if (response.data.success) {
+        const { deleted } = response.data;
+        const summary = Object.entries(deleted)
+          .filter(([_, count]) => count > 0)
+          .map(([key, count]) => `${count} ${key}`)
+          .join(', ');
+        
+        toast.success(`✅ ${response.data.message}\nEliminados: ${summary || 'ninguno'}`, { id: 'clean', duration: 5000 });
+        setShowCleanConfirmModal(false);
+        setCleanConfirmText('');
+        
+        // Recargar después de 2 segundos
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      } else {
+        toast.error(response.data.message, { id: 'clean' });
+      }
+    } catch (error) {
+      console.error('Error al limpiar datos:', error);
+      toast.error('Error al limpiar datos de prueba', { id: 'clean' });
+    } finally {
+      setIsCleaning(false);
+    }
   };
 
   const handleTestEmail = async () => {
@@ -1169,6 +1341,365 @@ const Settings = ({ section = 'all' }) => {
             </div>
           </div>
         </div>
+        )}
+
+        {/* User Notification Preferences */}
+        {shouldShowSection('notifications') && (
+        <div className="card-glass p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
+              <Bell className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Mis Preferencias de Notificaciones
+              </h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Elige qué alertas deseas recibir
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {/* Low Stock Alerts */}
+            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+                <div>
+                  <p className="font-medium text-gray-900 dark:text-white">
+                    Alertas de Stock Bajo
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Notificaciones cuando productos estén por agotarse
+                  </p>
+                </div>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={notificationPrefs.lowStockAlerts}
+                  onChange={(e) => handleNotificationPrefChange('lowStockAlerts', e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
+              </label>
+            </div>
+
+            {/* Expiration Alerts */}
+            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
+                <div>
+                  <p className="font-medium text-gray-900 dark:text-white">
+                    Alertas de Vencimiento
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Notificaciones sobre productos próximos a vencer
+                  </p>
+                </div>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={notificationPrefs.expirationAlerts}
+                  onChange={(e) => handleNotificationPrefChange('expirationAlerts', e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
+              </label>
+            </div>
+
+            {/* Sales Alerts */}
+            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+              <div className="flex items-center gap-3">
+                <DollarSign className="w-5 h-5 text-green-600 dark:text-green-400" />
+                <div>
+                  <p className="font-medium text-gray-900 dark:text-white">
+                    Alertas de Ventas
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Notificaciones sobre ventas importantes o hitos
+                  </p>
+                </div>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={notificationPrefs.salesAlerts}
+                  onChange={(e) => handleNotificationPrefChange('salesAlerts', e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
+              </label>
+            </div>
+
+            {/* Payment Reminders */}
+            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+              <div className="flex items-center gap-3">
+                <CreditCard className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                <div>
+                  <p className="font-medium text-gray-900 dark:text-white">
+                    Recordatorios de Pagos
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Notificaciones sobre pagos pendientes o vencidos
+                  </p>
+                </div>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={notificationPrefs.paymentReminders}
+                  onChange={(e) => handleNotificationPrefChange('paymentReminders', e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
+              </label>
+            </div>
+          </div>
+        </div>
+        )}
+
+        {/* Data Management Section - Export/Import/Clean */}
+        {(section === 'all' || section === 'system') && user?.role === 'admin' && (
+        <div className="card-glass p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-lg bg-cyan-100 dark:bg-cyan-900/30 flex items-center justify-center">
+              <Database className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Gestión de Datos
+              </h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Exportar, importar y limpiar datos del sistema
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            {/* Export Data */}
+            <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <FileDown className="w-5 h-5 text-green-600 dark:text-green-400" />
+                  <div>
+                    <h3 className="font-semibold text-gray-900 dark:text-white">
+                      Exportar Datos
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Descarga todos los datos del sistema en formato JSON
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={handleExportData}
+                disabled={isExporting}
+                className="btn btn-success w-full flex items-center justify-center gap-2"
+              >
+                {isExporting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Exportando...
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4" />
+                    Exportar Datos
+                  </>
+                )}
+              </button>
+              <p className="text-xs text-green-700 dark:text-green-300 mt-2">
+                💾 Incluye: productos, ventas, clientes, proveedores, órdenes y configuración
+              </p>
+            </div>
+
+            {/* Import Data */}
+            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <FileUp className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                  <div>
+                    <h3 className="font-semibold text-gray-900 dark:text-white">
+                      Importar Datos
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Restaura datos desde un archivo JSON exportado
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mb-3">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Modo de Importación
+                </label>
+                <select
+                  value={importMode}
+                  onChange={(e) => setImportMode(e.target.value)}
+                  className="input mb-2"
+                >
+                  <option value="merge">Combinar (mantener datos existentes)</option>
+                  <option value="replace">Reemplazar (eliminar datos existentes)</option>
+                </select>
+                <p className="text-xs text-blue-700 dark:text-blue-300">
+                  {importMode === 'merge' 
+                    ? '✓ Los datos se combinarán con los existentes' 
+                    : '⚠️ Se eliminarán los datos existentes antes de importar'}
+                </p>
+              </div>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".json"
+                onChange={handleImportData}
+                className="hidden"
+                id="import-file-input"
+              />
+              <label
+                htmlFor="import-file-input"
+                className={`btn btn-primary w-full flex items-center justify-center gap-2 cursor-pointer ${isImporting ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                {isImporting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Importando...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4" />
+                    Seleccionar Archivo JSON
+                  </>
+                )}
+              </label>
+              <p className="text-xs text-blue-700 dark:text-blue-300 mt-2">
+                📂 Solo archivos JSON exportados desde este sistema
+              </p>
+            </div>
+
+            {/* Clean Test Data */}
+            <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <Trash2 className="w-5 h-5 text-red-600 dark:text-red-400" />
+                  <div>
+                    <h3 className="font-semibold text-gray-900 dark:text-white">
+                      Limpiar Datos de Prueba
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Elimina productos, clientes y proveedores de prueba
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowCleanConfirmModal(true)}
+                disabled={isCleaning}
+                className="btn btn-danger w-full flex items-center justify-center gap-2"
+              >
+                <Trash2 className="w-4 h-4" />
+                Limpiar Datos de Prueba
+              </button>
+              <p className="text-xs text-red-700 dark:text-red-300 mt-2">
+                ⚠️ Elimina: productos test, clientes demo, proveedores prueba, órdenes antiguas
+              </p>
+            </div>
+
+            {/* Warning Box */}
+            <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-yellow-900 dark:text-yellow-100 mb-1">
+                    ⚡ Recomendaciones Importantes
+                  </p>
+                  <ul className="text-xs text-yellow-800 dark:text-yellow-200 space-y-1">
+                    <li>• Exporta los datos regularmente como respaldo</li>
+                    <li>• Verifica los archivos JSON antes de importar</li>
+                    <li>• La limpieza NO elimina usuarios ni ventas históricas</li>
+                    <li>• Haz pruebas en modo "Combinar" antes de "Reemplazar"</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        )}
+
+        {/* Clean Confirmation Modal */}
+        {showCleanConfirmModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                  <AlertCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                  Confirmar Limpieza
+                </h3>
+              </div>
+
+              <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                <p className="text-sm text-red-900 dark:text-red-100 mb-2">
+                  <strong>⚠️ Esta acción eliminará:</strong>
+                </p>
+                <ul className="text-sm text-red-800 dark:text-red-200 space-y-1 list-disc list-inside">
+                  <li>Productos con "test", "prueba", "demo" en el nombre</li>
+                  <li>Clientes y proveedores de prueba</li>
+                  <li>Órdenes de compra pendientes antiguas (+6 meses)</li>
+                  <li>Retiros de caja rechazados antiguos</li>
+                </ul>
+                <p className="text-xs text-red-700 dark:text-red-300 mt-2">
+                  ✓ NO se eliminarán usuarios, ventas ni configuración
+                </p>
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Escribe exactamente: <strong>ELIMINAR DATOS DE PRUEBA</strong>
+                </label>
+                <input
+                  type="text"
+                  value={cleanConfirmText}
+                  onChange={(e) => setCleanConfirmText(e.target.value)}
+                  className="input"
+                  placeholder="ELIMINAR DATOS DE PRUEBA"
+                />
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowCleanConfirmModal(false);
+                    setCleanConfirmText('');
+                  }}
+                  className="btn btn-secondary flex-1"
+                  disabled={isCleaning}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleCleanTestData}
+                  disabled={cleanConfirmText !== 'ELIMINAR DATOS DE PRUEBA' || isCleaning}
+                  className="btn btn-danger flex-1 flex items-center justify-center gap-2"
+                >
+                  {isCleaning ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Limpiando...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="w-4 h-4" />
+                      Confirmar
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Tema Automático Section */}

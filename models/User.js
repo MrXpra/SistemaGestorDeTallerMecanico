@@ -55,6 +55,26 @@ const userSchema = new mongoose.Schema({
     default: true // Usuarios activos por defecto
   },
   
+  // Preferencias de notificaciones del usuario
+  notificationPreferences: {
+    lowStockAlerts: {
+      type: Boolean,
+      default: true // Alertas de stock bajo activadas por defecto
+    },
+    expirationAlerts: {
+      type: Boolean,
+      default: true // Alertas de productos por vencer
+    },
+    salesAlerts: {
+      type: Boolean,
+      default: true // Alertas de ventas importantes
+    },
+    paymentReminders: {
+      type: Boolean,
+      default: true // Recordatorios de pagos pendientes
+    }
+  },
+  
   // Fecha de creación (se establece automáticamente)
   createdAt: {
     type: Date,
