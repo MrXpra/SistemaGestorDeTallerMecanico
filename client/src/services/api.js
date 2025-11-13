@@ -160,6 +160,7 @@ export const getSettings = () => API.get('/settings'); // Obtener configuración
 export const updateSettings = (data) => API.put('/settings', data); // Actualizar configuración
 
 // ===== DASHBOARD - Estadísticas y KPIs =====
+export const getAllDashboardData = () => API.get('/dashboard/all'); // TODO en una sola petición (OPTIMIZADO)
 export const getDashboardStats = () => API.get('/dashboard/stats'); // Stats generales (ventas, productos, etc)
 export const getSalesByDay = (days) => API.get('/dashboard/sales-by-day', { params: { days } }); // Ventas por día
 export const getTopProducts = (params) => API.get('/dashboard/top-products', { params }); // Productos más vendidos

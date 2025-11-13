@@ -3,7 +3,7 @@ import Product from '../models/Product.js';
 import User from '../models/User.js';
 import Customer from '../models/Customer.js';
 
-// @desc    Obtener estadísticas del dashboard
+// @desc    Obtener estadísticas del dashboard (optimizado)
 // @route   GET /api/dashboard/stats
 // @access  Private
 export const getDashboardStats = async (req, res) => {
@@ -16,64 +16,78 @@ export const getDashboardStats = async (req, res) => {
 
     const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
-    // Ventas de hoy
-    const todaySales = await Sale.find({
-      createdAt: { $gte: today },
-      status: 'Completada'
-    });
+    // Usar agregación para calcular todo en una sola query
+    const salesStats = await Sale.aggregate([
+      {
+        $match: {
+          status: 'Completada'
+        }
+      },
+      {
+        $facet: {
+          today: [
+            { $match: { createdAt: { $gte: today } } },
+            {
+              $group: {
+                _id: null,
+                total: { $sum: '$total' },
+                count: { $sum: 1 }
+              }
+            }
+          ],
+          week: [
+            { $match: { createdAt: { $gte: startOfWeek } } },
+            {
+              $group: {
+                _id: null,
+                total: { $sum: '$total' },
+                count: { $sum: 1 }
+              }
+            }
+          ],
+          month: [
+            { $match: { createdAt: { $gte: startOfMonth } } },
+            {
+              $group: {
+                _id: null,
+                total: { $sum: '$total' },
+                count: { $sum: 1 }
+              }
+            }
+          ]
+        }
+      }
+    ]);
 
-    const todayTotal = todaySales.reduce((sum, sale) => sum + sale.total, 0);
-    const todayTransactions = todaySales.length;
-    const todayAvgTicket = todayTransactions > 0 ? todayTotal / todayTransactions : 0;
+    const todayData = salesStats[0].today[0] || { total: 0, count: 0 };
+    const weekData = salesStats[0].week[0] || { total: 0, count: 0 };
+    const monthData = salesStats[0].month[0] || { total: 0, count: 0 };
 
-    // Ventas de la semana
-    const weekSales = await Sale.find({
-      createdAt: { $gte: startOfWeek },
-      status: 'Completada'
-    });
-
-    const weekTotal = weekSales.reduce((sum, sale) => sum + sale.total, 0);
-
-    // Ventas del mes
-    const monthSales = await Sale.find({
-      createdAt: { $gte: startOfMonth },
-      status: 'Completada'
-    });
-
-    const monthTotal = monthSales.reduce((sum, sale) => sum + sale.total, 0);
-
-    // Productos con bajo stock
-    const lowStockProducts = await Product.find({
-      $expr: { $lte: ['$stock', '$lowStockThreshold'] }
-    }).limit(10);
-
-    // Total de productos
-    const totalProducts = await Product.countDocuments();
-
-    // Total de clientes
-    const totalCustomers = await Customer.countDocuments();
-
-    // Total de usuarios activos
-    const activeUsers = await User.countDocuments({ isActive: true });
+    // Ejecutar queries de conteo en paralelo
+    const [lowStockCount, totalProducts, totalCustomers, activeUsers] = await Promise.all([
+      Product.countDocuments({ $expr: { $lte: ['$stock', '$lowStockThreshold'] } }),
+      Product.countDocuments(),
+      Customer.countDocuments(),
+      User.countDocuments({ isActive: true })
+    ]);
 
     res.json({
       today: {
-        total: todayTotal,
-        transactions: todayTransactions,
-        avgTicket: todayAvgTicket
+        total: todayData.total,
+        transactions: todayData.count,
+        avgTicket: todayData.count > 0 ? todayData.total / todayData.count : 0
       },
       week: {
-        total: weekTotal,
-        transactions: weekSales.length
+        total: weekData.total,
+        transactions: weekData.count
       },
       month: {
-        total: monthTotal,
-        transactions: monthSales.length
+        total: monthData.total,
+        transactions: monthData.count
       },
       inventory: {
         totalProducts,
-        lowStockProducts: lowStockProducts.length,
-        lowStockItems: lowStockProducts
+        lowStockProducts: lowStockCount
       },
       customers: totalCustomers,
       users: activeUsers
@@ -211,6 +225,153 @@ export const getSalesByPayment = async (req, res) => {
     res.json(salesByPayment);
   } catch (error) {
     console.error('Error al obtener ventas por método de pago:', error);
+    res.status(500).json({ message: 'Error al obtener datos', error: error.message });
+  }
+};
+
+// @desc    Obtener todos los datos del dashboard en una sola petición (OPTIMIZADO)
+// @route   GET /api/dashboard/all
+// @access  Private
+export const getAllDashboardData = async (req, res) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - 7);
+
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const days30Ago = new Date();
+    days30Ago.setDate(days30Ago.getDate() - 30);
+    const days7Ago = new Date();
+    days7Ago.setDate(days7Ago.getDate() - 7);
+
+    // Ejecutar TODAS las queries en paralelo
+    const [salesStats, salesByDay, topProducts, salesByPayment, counts] = await Promise.all([
+      // Stats
+      Sale.aggregate([
+        { $match: { status: 'Completada' } },
+        {
+          $facet: {
+            today: [
+              { $match: { createdAt: { $gte: today } } },
+              { $group: { _id: null, total: { $sum: '$total' }, count: { $sum: 1 } } }
+            ],
+            week: [
+              { $match: { createdAt: { $gte: startOfWeek } } },
+              { $group: { _id: null, total: { $sum: '$total' }, count: { $sum: 1 } } }
+            ],
+            month: [
+              { $match: { createdAt: { $gte: startOfMonth } } },
+              { $group: { _id: null, total: { $sum: '$total' }, count: { $sum: 1 } } }
+            ]
+          }
+        }
+      ]),
+      
+      // Sales by day (last 7 days)
+      Sale.aggregate([
+        { $match: { createdAt: { $gte: days7Ago }, status: 'Completada' } },
+        {
+          $group: {
+            _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+            total: { $sum: '$total' },
+            count: { $sum: 1 }
+          }
+        },
+        { $sort: { _id: 1 } }
+      ]),
+      
+      // Top products (last 30 days)
+      Sale.aggregate([
+        { $match: { createdAt: { $gte: days30Ago }, status: 'Completada' } },
+        { $unwind: '$items' },
+        {
+          $group: {
+            _id: '$items.product',
+            totalQuantity: { $sum: '$items.quantity' },
+            totalRevenue: { $sum: '$items.subtotal' }
+          }
+        },
+        { $sort: { totalQuantity: -1 } },
+        { $limit: 5 },
+        {
+          $lookup: {
+            from: 'products',
+            localField: '_id',
+            foreignField: '_id',
+            as: 'product'
+          }
+        },
+        { $unwind: '$product' },
+        {
+          $project: {
+            _id: 1,
+            name: '$product.name',
+            sku: '$product.sku',
+            totalQuantity: 1,
+            totalRevenue: 1
+          }
+        }
+      ]),
+      
+      // Sales by payment method (last 30 days)
+      Sale.aggregate([
+        { $match: { createdAt: { $gte: days30Ago }, status: 'Completada' } },
+        {
+          $group: {
+            _id: '$paymentMethod',
+            total: { $sum: '$total' },
+            count: { $sum: 1 }
+          }
+        }
+      ]),
+      
+      // Counts
+      Promise.all([
+        Product.countDocuments({ $expr: { $lte: ['$stock', '$lowStockThreshold'] } }),
+        Product.countDocuments(),
+        Customer.countDocuments(),
+        User.countDocuments({ isActive: true })
+      ])
+    ]);
+
+    const todayData = salesStats[0].today[0] || { total: 0, count: 0 };
+    const weekData = salesStats[0].week[0] || { total: 0, count: 0 };
+    const monthData = salesStats[0].month[0] || { total: 0, count: 0 };
+
+    res.json({
+      stats: {
+        today: {
+          total: todayData.total,
+          transactions: todayData.count,
+          avgTicket: todayData.count > 0 ? todayData.total / todayData.count : 0
+        },
+        week: {
+          total: weekData.total,
+          transactions: weekData.count
+        },
+        month: {
+          total: monthData.total,
+          transactions: monthData.count
+        },
+        inventory: {
+          totalProducts: counts[1],
+          lowStockProducts: counts[0]
+        },
+        customers: counts[2],
+        users: counts[3]
+      },
+      salesByDay: salesByDay.map(item => ({
+        date: item._id,
+        total: item.total,
+        transactions: item.count
+      })),
+      topProducts,
+      salesByPayment
+    });
+  } catch (error) {
+    console.error('Error al obtener datos del dashboard:', error);
     res.status(500).json({ message: 'Error al obtener datos', error: error.message });
   }
 };
