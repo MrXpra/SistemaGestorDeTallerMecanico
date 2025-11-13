@@ -23,12 +23,17 @@ import {
   getDashboardStats,
   getSalesByDay,
   getTopProducts,
-  getSalesByPayment
+  getSalesByPayment,
+  getAllDashboardData
 } from '../controllers/dashboardController.js';
 import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
+// Endpoint optimizado que devuelve todo en una sola petición
+router.get('/all', protect, getAllDashboardData);
+
+// Endpoints individuales (legacy, mantener por compatibilidad)
 router.get('/stats', protect, getDashboardStats);
 router.get('/sales-by-day', protect, getSalesByDay);
 router.get('/top-products', protect, getTopProducts);

@@ -34,10 +34,7 @@
 
 import { useState, useEffect } from 'react';
 import {
-  getDashboardStats,
-  getSalesByDay,
-  getTopProducts,
-  getSalesByPayment,
+  getAllDashboardData,
 } from '../services/api';
 import toast from 'react-hot-toast';
 import {
@@ -83,17 +80,14 @@ const Dashboard = () => {
   const fetchDashboardData = async () => {
     try {
       setIsLoading(true);
-      const [statsRes, salesRes, productsRes, paymentRes] = await Promise.all([
-        getDashboardStats(),
-        getSalesByDay(7),
-        getTopProducts({ limit: 5, days: 30 }),
-        getSalesByPayment(30),
-      ]);
+      // Una sola petición para todo el dashboard
+      const response = await getAllDashboardData();
+      const data = response.data;
 
-      setStats(statsRes.data);
-      setSalesByDay(salesRes.data);
-      setTopProducts(productsRes.data);
-      setSalesByPayment(paymentRes.data);
+      setStats(data.stats);
+      setSalesByDay(data.salesByDay);
+      setTopProducts(data.topProducts);
+      setSalesByPayment(data.salesByPayment);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
       toast.error('Error al cargar datos del dashboard');
