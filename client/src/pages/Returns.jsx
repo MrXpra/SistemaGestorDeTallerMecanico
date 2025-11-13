@@ -87,34 +87,45 @@ const Returns = () => {
     endDate: '',
   });
 
+  // Paginación
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 50,
+    total: 0,
+    pages: 0,
+    hasNextPage: false,
+    hasPrevPage: false
+  });
+
   useEffect(() => {
     fetchData();
-  }, [filters]);
+  }, [filters, pagination.page]);
 
   const fetchData = async () => {
     try {
       setIsLoading(true);
       const [returnsResponse, statsResponse] = await Promise.all([
-        getReturns(filters),
+        getReturns({ ...filters, page: pagination.page, limit: pagination.limit }),
         getReturnStats(filters),
       ]);
       
-      // Asegurar que returnsData es un array
-      const returnsData = Array.isArray(returnsResponse?.data) 
-        ? returnsResponse.data 
-        : Array.isArray(returnsResponse) 
-          ? returnsResponse 
-          : [];
+      // Backend ahora devuelve { returns, pagination }
+      const returnsData = returnsResponse?.data?.returns || returnsResponse?.returns || [];
+      const paginationData = returnsResponse?.data?.pagination || returnsResponse?.pagination || {};
       
       // Asegurar que statsData tiene la estructura correcta
       const statsData = statsResponse?.data || statsResponse || null;
       
       setReturns(returnsData);
+      setPagination(prev => ({
+        ...prev,
+        ...paginationData
+      }));
       setStats(statsData);
     } catch (error) {
       console.error('Error al cargar devoluciones:', error);
       toast.error('Error al cargar devoluciones');
-      setReturns([]); // Asegurar que returns siempre sea un array
+      setReturns([]);
       setStats(null);
     } finally {
       setIsLoading(false);
@@ -674,6 +685,42 @@ const Returns = () => {
             <p className="text-gray-600 dark:text-gray-400">
               No se encontraron devoluciones
             </p>
+          </div>
+        )}
+
+        {/* Paginación */}
+        {!isLoading && pagination.pages > 1 && (
+          <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              Mostrando {Math.min((pagination.page - 1) * pagination.limit + 1, pagination.total)} - {Math.min(pagination.page * pagination.limit, pagination.total)} de {pagination.total} devoluciones
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
+                disabled={!pagination.hasPrevPage}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  pagination.hasPrevPage
+                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    : 'bg-gray-200 text-gray-400 dark:bg-gray-700 dark:text-gray-600 cursor-not-allowed'
+                }`}
+              >
+                Anterior
+              </button>
+              <span className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300">
+                Página {pagination.page} de {pagination.pages}
+              </span>
+              <button
+                onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
+                disabled={!pagination.hasNextPage}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  pagination.hasNextPage
+                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    : 'bg-gray-200 text-gray-400 dark:bg-gray-700 dark:text-gray-600 cursor-not-allowed'
+                }`}
+              >
+                Siguiente
+              </button>
+            </div>
           </div>
         )}
       </div>
