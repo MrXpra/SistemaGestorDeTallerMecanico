@@ -107,6 +107,16 @@ const Billing = () => {
   const [viewMode, setViewMode] = useState('list'); // 'list' o 'grid'
   const searchInputRef = useRef(null);
 
+  // Paginación
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 100,
+    total: 0,
+    pages: 0,
+    hasNextPage: false,
+    hasPrevPage: false
+  });
+
   const {
     items,
     addItem,
@@ -125,7 +135,7 @@ const Billing = () => {
     fetchProducts();
     // Auto-focus en el campo de búsqueda
     searchInputRef.current?.focus();
-  }, []);
+  }, [pagination.page, selectedCategory]);
 
   // Cerrar modales con tecla ESC
   useEffect(() => {
@@ -146,12 +156,26 @@ const Billing = () => {
   const fetchProducts = async () => {
     try {
       setIsLoading(true);
-      const response = await getProducts();
-      setProducts(response.data);
+      const response = await getProducts({ 
+        page: pagination.page, 
+        limit: pagination.limit,
+        category: selectedCategory || undefined
+      });
       
-      // Extraer categorías únicas
-      const uniqueCategories = [...new Set(response.data.map(p => p.category).filter(Boolean))];
-      setCategories(uniqueCategories);
+      const productsData = response?.data?.products || response?.data || [];
+      const paginationData = response?.data?.pagination || {};
+      
+      setProducts(productsData);
+      setPagination(prev => ({
+        ...prev,
+        ...paginationData
+      }));
+      
+      // Extraer categorías únicas (solo en primera carga)
+      if (pagination.page === 1 && !selectedCategory) {
+        const uniqueCategories = [...new Set(productsData.map(p => p.category).filter(Boolean))];
+        setCategories(uniqueCategories);
+      }
     } catch (error) {
       console.error('Error fetching products:', error);
       toast.error('Error al cargar productos');
@@ -591,6 +615,39 @@ const Billing = () => {
                   onAdd={handleAddToCart}
                 />
               ))}
+            </div>
+          )}
+
+          {/* Paginación */}
+          {!isLoading && pagination.pages > 1 && (
+            <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="text-xs text-gray-600 dark:text-gray-400">
+                Página {pagination.page} de {pagination.pages} ({pagination.total} productos)
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))}
+                  disabled={!pagination.hasPrevPage}
+                  className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                    pagination.hasPrevPage
+                      ? 'bg-primary-600 text-white hover:bg-primary-700'
+                      : 'bg-gray-200 text-gray-400 dark:bg-gray-700 dark:text-gray-600 cursor-not-allowed'
+                  }`}
+                >
+                  Ant
+                </button>
+                <button
+                  onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))}
+                  disabled={!pagination.hasNextPage}
+                  className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                    pagination.hasNextPage
+                      ? 'bg-primary-600 text-white hover:bg-primary-700'
+                      : 'bg-gray-200 text-gray-400 dark:bg-gray-700 dark:text-gray-600 cursor-not-allowed'
+                  }`}
+                >
+                  Sig
+                </button>
+              </div>
             </div>
           )}
         </div>
