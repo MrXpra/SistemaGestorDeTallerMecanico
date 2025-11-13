@@ -17,7 +17,8 @@
  *  --scenario: A (moderado), B (intensivo), C (stress)  (por defecto A)
  *  --batchSize: tamaño de lote por inserción (por defecto 500)
  *  --pause: ms a pausar entre batches (por defecto 100)
- *  --cleanup: si se pasa, borra las colecciones `loadtest_*` al final
+ *  --real: usar colecciones reales (customers, sales, etc) en lugar de loadtest_*
+ *  --cleanup: si se pasa, borra las colecciones `loadtest_*` al final (solo si no es --real)
  *
  * Nota: ejecuta este script en tu máquina local (en la copia del repo con dependencias instaladas).
  */
@@ -50,6 +51,7 @@ const DB_NAME = ARGS.db || 'PRUEBA';
 const SCENARIO = (ARGS.scenario || 'A').toUpperCase();
 const BATCH_SIZE = parseInt(ARGS.batchSize || '500', 10) || 500;
 const PAUSE_MS = parseInt(ARGS.pause || '100', 10) || 100;
+const USE_REAL_COLLECTIONS = ARGS.real === 'true' || ARGS.real === true || ARGS.real === '1';
 const CLEANUP = ARGS.cleanup === 'true' || ARGS.cleanup === true || ARGS.cleanup === '1';
 
 if (!MONGODB_URI) {
@@ -248,29 +250,43 @@ async function run() {
   const before = await snapshot(db);
   console.log(JSON.stringify({ before: { dbStats: before.dbStats, collectionsCount: Object.keys(before.collStats).length } }, null, 2));
 
-  // Collections names
-  const cCustomers = 'loadtest_customers';
-  const cSuppliers = 'loadtest_suppliers';
-  const cProducts = 'loadtest_products';
-  const cSales = 'loadtest_sales';
-  const cReturns = 'loadtest_returns';
-  const cLogs = 'loadtest_logs';
+  // Collections names - usar reales o loadtest_*
+  const cCustomers = USE_REAL_COLLECTIONS ? 'customers' : 'loadtest_customers';
+  const cSuppliers = USE_REAL_COLLECTIONS ? 'suppliers' : 'loadtest_suppliers';
+  const cProducts = USE_REAL_COLLECTIONS ? 'products' : 'loadtest_products';
+  const cSales = USE_REAL_COLLECTIONS ? 'sales' : 'loadtest_sales';
+  const cReturns = USE_REAL_COLLECTIONS ? 'returns' : 'loadtest_returns';
+  const cLogs = USE_REAL_COLLECTIONS ? 'logs' : 'loadtest_logs';
+
+  console.log(`\nUsing ${USE_REAL_COLLECTIONS ? 'REAL' : 'TEST'} collections:`, {cCustomers, cSuppliers, cProducts, cSales, cReturns, cLogs});
+
+  // Contar documentos existentes para continuar índices
+  const existingCounts = {
+    customers: await db.collection(cCustomers).countDocuments().catch(() => 0),
+    suppliers: await db.collection(cSuppliers).countDocuments().catch(() => 0),
+    products: await db.collection(cProducts).countDocuments().catch(() => 0),
+    sales: await db.collection(cSales).countDocuments().catch(() => 0),
+    returns: await db.collection(cReturns).countDocuments().catch(() => 0),
+    logs: await db.collection(cLogs).countDocuments().catch(() => 0)
+  };
+
+  console.log('Existing document counts:', existingCounts);
 
   // 1) Customers
   console.log('\n== Inserting customers ==');
-  const customersDocs = generateCustomers(counts.customers);
+  const customersDocs = generateCustomers(counts.customers, existingCounts.customers);
   await db.createCollection(cCustomers).catch(()=>{});
   await insertInBatches(db.collection(cCustomers), customersDocs, BATCH_SIZE, PAUSE_MS);
 
   // 2) Suppliers
   console.log('\n== Inserting suppliers ==');
-  const suppliersDocs = generateSuppliers(counts.suppliers);
+  const suppliersDocs = generateSuppliers(counts.suppliers, existingCounts.suppliers);
   await db.createCollection(cSuppliers).catch(()=>{});
   await insertInBatches(db.collection(cSuppliers), suppliersDocs, BATCH_SIZE, PAUSE_MS);
 
   // 3) Products
   console.log('\n== Inserting products ==');
-  const productsDocs = generateProducts(counts.products);
+  const productsDocs = generateProducts(counts.products, existingCounts.products);
   await db.createCollection(cProducts).catch(()=>{});
   await insertInBatches(db.collection(cProducts), productsDocs, BATCH_SIZE, PAUSE_MS);
 
@@ -280,7 +296,7 @@ async function run() {
 
   // 4) Sales
   console.log('\n== Inserting sales ==');
-  const salesDocs = generateSales(counts.sales, customersInserted.map(c=>c._id), productsInserted);
+  const salesDocs = generateSales(counts.sales, customersInserted.map(c=>c._id), productsInserted, existingCounts.sales);
   await db.createCollection(cSales).catch(()=>{});
   // insert sales in batches but to avoid huge memory, generate and insert per batch
   for (let i = 0; i < salesDocs.length; i += BATCH_SIZE) {
@@ -294,13 +310,13 @@ async function run() {
 
   // 5) Returns
   console.log('\n== Inserting returns ==');
-  const returnsDocs = generateReturns(counts.returns, salesInserted);
+  const returnsDocs = generateReturns(counts.returns, salesInserted, existingCounts.returns);
   await db.createCollection(cReturns).catch(()=>{});
   await insertInBatches(db.collection(cReturns), returnsDocs, BATCH_SIZE, PAUSE_MS);
 
   // 6) Logs
   console.log('\n== Inserting logs ==');
-  const logsDocs = generateLogs(counts.logs);
+  const logsDocs = generateLogs(counts.logs, existingCounts.logs);
   await db.createCollection(cLogs).catch(()=>{});
   await insertInBatches(db.collection(cLogs), logsDocs, BATCH_SIZE, PAUSE_MS);
 
@@ -330,12 +346,14 @@ async function run() {
   console.log('\nTotal delta size (bytes):', totalDeltaBytes);
   console.log('Estimated usage vs Atlas M0 (512 MB):', (totalDeltaBytes / (512 * 1024 * 1024) * 100).toFixed(4) + '%');
 
-  if (CLEANUP) {
+  if (CLEANUP && !USE_REAL_COLLECTIONS) {
     console.log('\nCleanup requested: dropping loadtest collections...');
     for (const name of [cCustomers,cSuppliers,cProducts,cSales,cReturns,cLogs]) {
       try { await db.collection(name).drop(); console.log(' Dropped', name); } catch(e){ console.log(' Skip drop', name, e.message); }
     }
     console.log('Cleanup complete.');
+  } else if (CLEANUP && USE_REAL_COLLECTIONS) {
+    console.log('\n⚠️  Cleanup no disponible cuando --real está activo (protección de datos reales)');
   }
 
   await mongoose.disconnect();
