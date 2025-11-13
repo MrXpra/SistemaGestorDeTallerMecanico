@@ -167,17 +167,25 @@ const PurchaseOrders = () => {
       setIsLoading(true);
       const [ordersRes, suppliersRes, productsRes, settingsRes] = await Promise.all([
         getPurchaseOrders(),
-        getSuppliers(),
-        getProducts(),
+        getSuppliers({ limit: 1000 }),
+        getProducts({ limit: 1000 }),
         getSettings(),
       ]);
-      setOrders(ordersRes.data);
+      
+      const ordersData = ordersRes?.data || [];
+      const suppliersData = suppliersRes?.data?.suppliers || suppliersRes?.data || [];
+      const productsData = productsRes?.data?.products || productsRes?.data || [];
+      
+      setOrders(Array.isArray(ordersData) ? ordersData : []);
       setSettings(settingsRes);
-      setSuppliers(suppliersRes.data.filter(s => s.isActive));
-      setProducts(productsRes.data);
+      setSuppliers(Array.isArray(suppliersData) ? suppliersData.filter(s => s.isActive) : []);
+      setProducts(Array.isArray(productsData) ? productsData : []);
     } catch (error) {
       console.error('Error al cargar datos:', error);
       toast.error('Error al cargar datos');
+      setOrders([]);
+      setSuppliers([]);
+      setProducts([]);
     } finally {
       setIsLoading(false);
     }
