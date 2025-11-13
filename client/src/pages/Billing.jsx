@@ -1372,14 +1372,26 @@ const CustomerModal = ({ onSelect, onClose }) => {
     fetchCustomers();
   }, []);
 
+  // Buscar clientes cuando cambia el término de búsqueda (con debounce)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchTerm !== '') {
+        fetchCustomers();
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
   const fetchCustomers = async () => {
     try {
       setIsLoading(true);
-      const response = await getCustomers({ search: searchTerm });
-      setCustomers(response.data);
+      const response = await getCustomers({ search: searchTerm, limit: 100 });
+      const customersData = response?.data?.customers || response?.data || [];
+      setCustomers(Array.isArray(customersData) ? customersData : []);
     } catch (error) {
       console.error('Error fetching customers:', error);
       toast.error('Error al cargar clientes');
+      setCustomers([]);
     } finally {
       setIsLoading(false);
     }
