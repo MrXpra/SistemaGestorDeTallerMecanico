@@ -179,21 +179,29 @@ const Reports = () => {
         const response = await getSales({
           startDate: dateRange.startDate,
           endDate: dateRange.endDate,
+          limit: 10000 // Para reportes, obtener todos los registros
         });
-        setSalesData(response.data);
-        setFilteredData(response.data);
+        const salesArray = response?.data?.sales || response?.data || [];
+        setSalesData(Array.isArray(salesArray) ? salesArray : []);
+        setFilteredData(Array.isArray(salesArray) ? salesArray : []);
       } else if (activeTab === 'products') {
-        const response = await getProducts();
-        setProductsData(response.data);
-        setFilteredData(response.data);
+        const response = await getProducts({ limit: 10000 });
+        const productsArray = response?.data?.products || response?.data || [];
+        setProductsData(Array.isArray(productsArray) ? productsArray : []);
+        setFilteredData(Array.isArray(productsArray) ? productsArray : []);
       } else if (activeTab === 'customers') {
-        const response = await getCustomers();
-        setCustomersData(response.data);
-        setFilteredData(response.data);
+        const response = await getCustomers({ limit: 10000 });
+        const customersArray = response?.data?.customers || response?.data || [];
+        setCustomersData(Array.isArray(customersArray) ? customersArray : []);
+        setFilteredData(Array.isArray(customersArray) ? customersArray : []);
       }
     } catch (error) {
       console.error('Error fetching report data:', error);
       toast.error('Error al cargar datos del reporte');
+      setSalesData([]);
+      setProductsData([]);
+      setCustomersData([]);
+      setFilteredData([]);
     } finally {
       setIsLoading(false);
     }
