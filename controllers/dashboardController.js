@@ -20,7 +20,8 @@ export const getDashboardStats = async (req, res) => {
     const salesStats = await Sale.aggregate([
       {
         $match: {
-          status: 'Completada'
+          status: 'Completada',
+          total: { $ne: null, $exists: true }
         }
       },
       {
@@ -250,7 +251,7 @@ export const getAllDashboardData = async (req, res) => {
     const [salesStats, salesByDay, topProducts, salesByPayment, counts] = await Promise.all([
       // Stats
       Sale.aggregate([
-        { $match: { status: 'Completada' } },
+        { $match: { status: 'Completada', total: { $ne: null, $exists: true } } },
         {
           $facet: {
             today: [
@@ -271,7 +272,7 @@ export const getAllDashboardData = async (req, res) => {
       
       // Sales by day (last 7 days)
       Sale.aggregate([
-        { $match: { createdAt: { $gte: days7Ago }, status: 'Completada' } },
+        { $match: { createdAt: { $gte: days7Ago }, status: 'Completada', total: { $ne: null, $exists: true } } },
         {
           $group: {
             _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
@@ -284,7 +285,7 @@ export const getAllDashboardData = async (req, res) => {
       
       // Top products (last 30 days)
       Sale.aggregate([
-        { $match: { createdAt: { $gte: days30Ago }, status: 'Completada' } },
+        { $match: { createdAt: { $gte: days30Ago }, status: 'Completada', total: { $ne: null, $exists: true } } },
         { $unwind: '$items' },
         {
           $group: {
@@ -317,7 +318,7 @@ export const getAllDashboardData = async (req, res) => {
       
       // Sales by payment method (last 30 days)
       Sale.aggregate([
-        { $match: { createdAt: { $gte: days30Ago }, status: 'Completada' } },
+        { $match: { createdAt: { $gte: days30Ago }, status: 'Completada', total: { $ne: null, $exists: true } } },
         {
           $group: {
             _id: '$paymentMethod',
