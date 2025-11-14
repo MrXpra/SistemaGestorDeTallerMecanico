@@ -1056,7 +1056,7 @@ const CashClosingModal = ({ summary, onClose, onConfirm, formatCurrency }) => {
 
   return createPortal(
     <div className="fixed inset-0 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" style={{ zIndex: 100000 }}>
-      <div className="glass-strong rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+      <div className="glass-strong rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto p-6" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
             <CheckCircle className="w-7 h-7 text-primary-600" />
