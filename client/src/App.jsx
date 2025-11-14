@@ -91,6 +91,15 @@ export const AppRoutes = () => {
     return () => clearInterval(interval);
   }, [checkAutoTheme, autoThemeEnabled]);
 
+  // Aplicar clase dark al documentElement para que funcione con portals
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDarkMode]);
+
   return (
     <div className={isDarkMode ? 'dark' : ''}>
       <KeyboardShortcutsHelp />
