@@ -1061,6 +1061,7 @@ const ProductModal = ({ product, onSave, onClose, categories, brands, allProduct
                 rows="3"
                 placeholder="Descripción del producto..."
               />
+            </div>
           </div>
 
           {/* Prices */}
