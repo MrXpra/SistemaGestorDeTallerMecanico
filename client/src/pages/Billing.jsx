@@ -525,11 +525,11 @@ const Billing = () => {
               />
             </div>
 
-            {/* Category Filter */}
+            {/* Category Filter - Hidden on small screens */}
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="input w-32 flex-shrink-0"
+              className="input w-32 flex-shrink-0 hidden xl:block"
             >
               <option value="">Todas</option>
               {categories.map((category) => (
