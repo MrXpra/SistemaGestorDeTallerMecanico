@@ -504,35 +504,35 @@ const Billing = () => {
   }
 
   return (
-    <div className="h-full flex gap-6 animate-fade-in">
+    <div className="h-full flex gap-3 lg:gap-6 animate-fade-in">
       {/* Left Side - Product Catalog */}
-      <div className="flex-1 flex flex-col gap-4">
+      <div className="flex-1 flex flex-col gap-3 lg:gap-4">
         {/* Search and Filters */}
-        <div className="card-glass p-4">
-          <div className="flex gap-3">
+        <div className="card-glass p-3 lg:p-4">
+          <div className="flex gap-2 lg:gap-3">
             {/* Search Input */}
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Search className="absolute left-2.5 lg:left-3 top-1/2 -translate-y-1/2 w-4 h-4 lg:w-5 lg:h-5 text-gray-400" />
               <input
                 ref={searchInputRef}
                 type="text"
-                placeholder="Buscar por SKU, nombre o marca (Enter para escanear)..."
+                placeholder="Buscar por SKU, nombre o marca..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyPress={handleSearchKeyPress}
-                className="input pl-10 pr-4"
+                className="input pl-8 lg:pl-10 pr-8 lg:pr-10 text-sm"
                 autoFocus
               />
-              <Barcode className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Barcode className="absolute right-2.5 lg:right-3 top-1/2 -translate-y-1/2 w-4 h-4 lg:w-5 lg:h-5 text-gray-400" />
             </div>
 
             {/* Category Filter */}
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="input w-48"
+              className="input w-36 lg:w-48 text-sm"
             >
-              <option value="">Todas las categorías</option>
+              <option value="">Todas</option>
               {categories.map((category) => (
                 <option key={category} value={category}>
                   {category}
@@ -545,48 +545,48 @@ const Billing = () => {
                 setSearchTerm('');
                 setSelectedCategory('');
               }}
-              className="btn-secondary"
+              className="btn-secondary px-2 lg:px-3"
               title="Limpiar filtros"
             >
-              <Filter className="w-5 h-5" />
+              <Filter className="w-4 h-4 lg:w-5 lg:h-5" />
             </button>
 
             {/* Toggle Vista */}
-            <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+            <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5 lg:p-1">
               <button
                 onClick={() => setViewMode('list')}
-                className={`p-2 rounded transition-colors ${
+                className={`p-1.5 lg:p-2 rounded transition-colors ${
                   viewMode === 'list'
                     ? 'bg-white dark:bg-gray-700 text-primary-600 shadow-sm'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                 }`}
                 title="Vista de lista"
               >
-                <List className="w-5 h-5" />
+                <List className="w-4 h-4 lg:w-5 lg:h-5" />
               </button>
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-2 rounded transition-colors ${
+                className={`p-1.5 lg:p-2 rounded transition-colors ${
                   viewMode === 'grid'
                     ? 'bg-white dark:bg-gray-700 text-primary-600 shadow-sm'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                 }`}
                 title="Vista de tarjetas"
               >
-                <LayoutGrid className="w-5 h-5" />
+                <LayoutGrid className="w-4 h-4 lg:w-5 lg:h-5" />
               </button>
             </div>
           </div>
 
           {/* Indicador de ordenamiento */}
-          <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 mt-2">
-            <TrendingUp className="w-4 h-4" />
+          <div className="flex items-center gap-2 text-[10px] lg:text-xs text-gray-600 dark:text-gray-400 mt-2">
+            <TrendingUp className="w-3 h-3 lg:w-4 lg:h-4" />
             <span>Ordenado por más vendidos</span>
           </div>
         </div>
 
         {/* Product Grid */}
-        <div className="flex-1 card-glass p-4 overflow-y-auto custom-scrollbar">
+        <div className="flex-1 card-glass p-3 lg:p-4 overflow-y-auto custom-scrollbar">
           {isLoading ? (
             <div className="flex items-center justify-center h-full">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600" />
@@ -654,12 +654,12 @@ const Billing = () => {
       </div>
 
       {/* Right Side - Cart */}
-      <div className="w-[550px] flex flex-col gap-4">
+      <div className="w-[450px] lg:w-[550px] flex flex-col gap-3 lg:gap-4">
         {/* Cart Header */}
-        <div className="card-glass p-4">
+        <div className="card-glass p-3 lg:p-4">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-              <ShoppingCart className="w-5 h-5" />
+            <h3 className="text-base lg:text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <ShoppingCart className="w-4 h-4 lg:w-5 lg:h-5" />
               Carrito ({items.length})
             </h3>
             {items.length > 0 && (
@@ -670,7 +670,7 @@ const Billing = () => {
                     toast.success('Carrito limpiado');
                   }
                 }}
-                className="text-red-600 hover:text-red-700 text-sm"
+                className="text-red-600 hover:text-red-700 text-xs lg:text-sm"
               >
                 Limpiar
               </button>
@@ -680,21 +680,21 @@ const Billing = () => {
           {/* Customer Selection */}
           <button
             onClick={() => setShowCustomerModal(true)}
-            className="w-full flex items-center gap-2 p-3 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+            className="w-full flex items-center gap-2 p-2.5 lg:p-3 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
           >
-            <User className="w-5 h-5" />
+            <User className="w-4 h-4 lg:w-5 lg:h-5" />
             <div className="flex-1 text-left">
               {selectedCustomer ? (
                 <>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                  <p className="text-xs lg:text-sm font-medium text-gray-900 dark:text-white">
                     {selectedCustomer.fullName}
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <p className="text-[10px] lg:text-xs text-gray-500 dark:text-gray-400">
                     {selectedCustomer.phone || selectedCustomer.email}
                   </p>
                 </>
               ) : (
-                <p className="text-sm text-gray-600 dark:text-gray-300">
+                <p className="text-xs lg:text-sm text-gray-600 dark:text-gray-300">
                   Seleccionar cliente (opcional)
                 </p>
               )}
@@ -707,21 +707,21 @@ const Billing = () => {
                 }}
                 className="p-1 hover:bg-gray-300 dark:hover:bg-gray-500 rounded"
               >
-                <X className="w-4 h-4" />
+                <X className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
               </button>
             )}
           </button>
         </div>
 
         {/* Cart Items */}
-        <div className="flex-1 card-glass p-4 overflow-y-auto custom-scrollbar">
+        <div className="flex-1 card-glass p-3 lg:p-4 overflow-y-auto custom-scrollbar">
           {items.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
-              <ShoppingCart className="w-16 h-16 mb-4 opacity-50" />
-              <p className="text-center">El carrito está vacío</p>
+              <ShoppingCart className="w-12 h-12 lg:w-16 lg:h-16 mb-4 opacity-50" />
+              <p className="text-center text-sm">El carrito está vacío</p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2 lg:space-y-3">
               {items.map((item) => (
                 <CartItem
                   key={item.product._id}
@@ -738,18 +738,18 @@ const Billing = () => {
 
         {/* Cart Summary */}
         {items.length > 0 && (
-          <div className="glass-strong p-4 rounded-xl">
-            <div className="space-y-2 mb-4">
-              <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
+          <div className="glass-strong p-3 lg:p-4 rounded-xl">
+            <div className="space-y-1.5 lg:space-y-2 mb-3 lg:mb-4">
+              <div className="flex justify-between text-xs lg:text-sm text-gray-600 dark:text-gray-400">
                 <span>Subtotal:</span>
                 <span>{formatCurrency(getSubtotal())}</span>
               </div>
-              <div className="flex justify-between text-sm text-green-600 dark:text-green-400">
+              <div className="flex justify-between text-xs lg:text-sm text-green-600 dark:text-green-400">
                 <span>Descuento:</span>
                 <span>-{formatCurrency(getTotalDiscount())}</span>
               </div>
               <div className="border-t border-gray-300 dark:border-gray-600 pt-2">
-                <div className="flex justify-between text-xl font-bold text-gray-900 dark:text-white">
+                <div className="flex justify-between text-lg lg:text-xl font-bold text-gray-900 dark:text-white">
                   <span>Total:</span>
                   <span>{formatCurrency(getTotal())}</span>
                 </div>
@@ -758,9 +758,9 @@ const Billing = () => {
 
             <button
               onClick={handleProceedToPayment}
-              className="btn-primary w-full"
+              className="btn-primary w-full text-sm lg:text-base"
             >
-              <Check className="w-5 h-5" />
+              <Check className="w-4 h-4 lg:w-5 lg:h-5" />
               Proceder al Pago
             </button>
           </div>
