@@ -1060,15 +1060,15 @@ const CreateReturnModal = ({ onClose, onSubmit, formatCurrency }) => {
           {/* Steps */}
           <div className="flex items-center justify-center mb-8">
             <div className="flex items-center space-x-4">
-              <div className={`flex items-center justify-center w-10 h-10 rounded-full ${step >= 1 ? 'bg-primary-600 text-white' : 'bg-gray-300 text-gray-600'}`}>
+              <div className={`flex items-center justify-center w-10 h-10 rounded-full ${step >= 1 ? 'bg-primary-600 text-white' : 'bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-300'}`}>
                 1
               </div>
-              <div className={`w-20 h-1 ${step >= 2 ? 'bg-primary-600' : 'bg-gray-300'}`}></div>
-              <div className={`flex items-center justify-center w-10 h-10 rounded-full ${step >= 2 ? 'bg-primary-600 text-white' : 'bg-gray-300 text-gray-600'}`}>
+              <div className={`w-20 h-1 ${step >= 2 ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'}`}></div>
+              <div className={`flex items-center justify-center w-10 h-10 rounded-full ${step >= 2 ? 'bg-primary-600 text-white' : 'bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-300'}`}>
                 2
               </div>
-              <div className={`w-20 h-1 ${step >= 3 ? 'bg-primary-600' : 'bg-gray-300'}`}></div>
-              <div className={`flex items-center justify-center w-10 h-10 rounded-full ${step >= 3 ? 'bg-primary-600 text-white' : 'bg-gray-300 text-gray-600'}`}>
+              <div className={`w-20 h-1 ${step >= 3 ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'}`}></div>
+              <div className={`flex items-center justify-center w-10 h-10 rounded-full ${step >= 3 ? 'bg-primary-600 text-white' : 'bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-300'}`}>
                 3
               </div>
             </div>
