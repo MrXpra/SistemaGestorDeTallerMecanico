@@ -52,13 +52,13 @@ const ClockWidget = () => {
   };
 
   return (
-    <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-      <Clock className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+    <div className="flex items-center gap-2 px-2.5 py-1.5 lg:px-3 lg:py-2 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+      <Clock className="w-4 h-4 lg:w-5 lg:h-5 text-primary-600 dark:text-primary-400" />
       <div className="flex flex-col">
-        <span className="text-lg font-bold text-gray-900 dark:text-white tabular-nums">
+        <span className="text-base lg:text-lg font-bold text-gray-900 dark:text-white tabular-nums">
           {formatTime(time)}
         </span>
-        <span className="text-xs text-gray-500 dark:text-gray-400 capitalize">
+        <span className="text-[10px] lg:text-xs text-gray-500 dark:text-gray-400 capitalize leading-tight">
           {formatDate(time)}
         </span>
       </div>

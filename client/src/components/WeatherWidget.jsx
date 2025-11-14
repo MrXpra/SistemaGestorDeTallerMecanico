@@ -369,25 +369,25 @@ const WeatherWidget = ({ location, apiKey, detailed = false }) => {
   // Vista compacta para TopBar (por defecto)
   return (
     <div 
-      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
+      className="flex items-center gap-1.5 lg:gap-2 px-2 lg:px-3 py-1.5 lg:py-2 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
       title={`Última actualización: ${weather.lastUpdate || 'Ahora'}`}
     >
       {/* Icono del clima */}
       <div className="flex-shrink-0">
-        {getWeatherIcon(weather.icon)}
+        {getWeatherIcon(weather.icon, "w-4 h-4 lg:w-5 lg:h-5")}
       </div>
       
       {/* Información del clima */}
       <div className="flex flex-col">
-        <div className="flex items-baseline gap-2">
-          <span className="text-lg font-bold text-gray-900 dark:text-white tabular-nums">
+        <div className="flex items-baseline gap-1.5 lg:gap-2">
+          <span className="text-base lg:text-lg font-bold text-gray-900 dark:text-white tabular-nums">
             {weather.temp}°
           </span>
-          <span className="text-xs text-gray-500 dark:text-gray-400">
+          <span className="text-[10px] lg:text-xs text-gray-500 dark:text-gray-400">
             {weather.tempMin}° / {weather.tempMax}°
           </span>
         </div>
-        <span className="text-xs text-gray-600 dark:text-gray-400 capitalize leading-tight">
+        <span className="text-[10px] lg:text-xs text-gray-600 dark:text-gray-400 capitalize leading-tight">
           {weather.description}
         </span>
       </div>
@@ -396,10 +396,10 @@ const WeatherWidget = ({ location, apiKey, detailed = false }) => {
       <button
         onClick={handleRefresh}
         disabled={loading}
-        className="ml-1 p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+        className="ml-1 p-1 lg:p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
         title="Actualizar clima"
       >
-        <RefreshCw className={`w-3.5 h-3.5 text-gray-600 dark:text-gray-400 ${loading ? 'animate-spin' : ''}`} />
+        <RefreshCw className={`w-3 h-3 lg:w-3.5 lg:h-3.5 text-gray-600 dark:text-gray-400 ${loading ? 'animate-spin' : ''}`} />
       </button>
     </div>
   );

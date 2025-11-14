@@ -140,15 +140,15 @@ const Sidebar = () => {
   ];
 
   return (
-    <aside className="w-64 glass-strong border-r border-gray-200 dark:border-gray-700 flex flex-col">
+    <aside className="w-56 xl:w-64 glass-strong border-r border-gray-200 dark:border-gray-700 flex flex-col">
       {/* Logo */}
-      <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex items-center gap-3">
+      <div className="p-3 xl:p-6 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center gap-2 xl:gap-3">
           {settings.businessLogoUrl && settings.businessLogoUrl !== '/logo.png' && settings.businessLogoUrl !== '/default-logo.png' ? (
             <img 
               src={settings.businessLogoUrl} 
               alt={settings.businessName || 'Logo'}
-              className="w-10 h-10 rounded-xl object-cover"
+              className="w-8 h-8 xl:w-10 xl:h-10 rounded-xl object-cover"
               onError={(e) => {
                 e.target.style.display = 'none';
                 e.target.nextSibling.style.display = 'flex';
@@ -156,22 +156,22 @@ const Sidebar = () => {
             />
           ) : null}
           <div 
-            className="w-10 h-10 bg-gradient-to-br from-primary-600 to-primary-700 rounded-xl flex items-center justify-center"
+            className="w-8 h-8 xl:w-10 xl:h-10 bg-gradient-to-br from-primary-600 to-primary-700 rounded-xl flex items-center justify-center"
             style={{ display: (settings.businessLogoUrl && settings.businessLogoUrl !== '/logo.png' && settings.businessLogoUrl !== '/default-logo.png') ? 'none' : 'flex' }}
           >
-            <FileText className="w-6 h-6 text-white" />
+            <FileText className="w-5 h-5 xl:w-6 xl:h-6 text-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <h1 className="text-lg font-bold text-gray-900 dark:text-white truncate">
+            <h1 className="text-base xl:text-lg font-bold text-gray-900 dark:text-white truncate">
               {settings.businessName || 'AutoParts Manager'}
             </h1>
-            <p className="text-xs text-gray-500 dark:text-gray-400">POS System</p>
+            <p className="text-[10px] xl:text-xs text-gray-500 dark:text-gray-400">POS System</p>
           </div>
         </div>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-2 overflow-y-auto custom-scrollbar">
+      <nav className="flex-1 p-2 xl:p-4 space-y-1 xl:space-y-2 overflow-y-auto custom-scrollbar">
         {/* Main Items */}
         <div className="space-y-1">
           {mainItems.map((item) => (
@@ -179,24 +179,24 @@ const Sidebar = () => {
               key={item.path}
               to={item.path}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                `flex items-center gap-2 xl:gap-3 px-3 xl:px-4 py-2 xl:py-3 rounded-lg transition-all duration-200 text-sm xl:text-base ${
                   isActive
                     ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/30'
                     : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                 }`
               }
             >
-              <item.icon className="w-5 h-5" />
+              <item.icon className="w-4 h-4 xl:w-5 xl:h-5" />
               <span className="font-medium">{item.label}</span>
             </NavLink>
           ))}
         </div>
 
         {/* Sección Ventas */}
-        <div className="pt-2">
+        <div className="pt-1 xl:pt-2">
           <button
             onClick={() => setVentasExpanded(!ventasExpanded)}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+            className={`w-full flex items-center gap-2 xl:gap-3 px-3 xl:px-4 py-2 xl:py-3 rounded-lg transition-all duration-200 text-sm xl:text-base ${
               location.pathname.includes('/facturacion') || 
               location.pathname.includes('/historial-ventas') || 
               location.pathname.includes('/devoluciones')
