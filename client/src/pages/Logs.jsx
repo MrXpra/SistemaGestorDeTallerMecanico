@@ -205,11 +205,11 @@ const Logs = () => {
     <div className="p-6 max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-2">
-            <Activity className="w-8 h-8 text-indigo-600" />
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+            <Activity className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
             Sistema de Logs
           </h1>
-          <p className="text-gray-600 mt-1">Auditoría y seguimiento de actividades del sistema</p>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">Auditoría y seguimiento de actividades del sistema</p>
         </div>
 
         <div className="flex gap-2">
@@ -236,48 +236,48 @@ const Logs = () => {
           <div className="card-glass p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Total Logs (7d)</p>
-                <p className="text-2xl font-bold">
+                <p className="text-sm text-gray-600 dark:text-gray-400">Total Logs (7d)</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {stats.reduce((sum, s) => sum + s.count, 0)}
                 </p>
               </div>
-              <Activity className="w-8 h-8 text-indigo-500" />
+              <Activity className="w-8 h-8 text-indigo-500 dark:text-indigo-400" />
             </div>
           </div>
 
           <div className="card-glass p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Errores</p>
-                <p className="text-2xl font-bold text-red-600">
+                <p className="text-sm text-gray-600 dark:text-gray-400">Errores</p>
+                <p className="text-2xl font-bold text-red-600 dark:text-red-400">
                   {stats.reduce((sum, s) => sum + s.errors, 0)}
                 </p>
               </div>
-              <XCircle className="w-8 h-8 text-red-500" />
+              <XCircle className="w-8 h-8 text-red-500 dark:text-red-400" />
             </div>
           </div>
 
           <div className="card-glass p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Módulos Activos</p>
-                <p className="text-2xl font-bold">
+                <p className="text-sm text-gray-600 dark:text-gray-400">Módulos Activos</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {new Set(stats.map(s => s._id.module)).size}
                 </p>
               </div>
-              <Box className="w-8 h-8 text-blue-500" />
+              <Box className="w-8 h-8 text-blue-500 dark:text-blue-400" />
             </div>
           </div>
 
           <div className="card-glass p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Tiempo Promedio</p>
-                <p className="text-2xl font-bold">
+                <p className="text-sm text-gray-600 dark:text-gray-400">Tiempo Promedio</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {(stats.reduce((sum, s) => sum + (s.avgDuration || 0), 0) / stats.length).toFixed(0)}ms
                 </p>
               </div>
-              <AlertCircle className="w-8 h-8 text-green-500" />
+              <AlertCircle className="w-8 h-8 text-green-500 dark:text-green-400" />
             </div>
           </div>
         </div>
@@ -285,8 +285,8 @@ const Logs = () => {
 
       <div className="card-glass p-4 mb-6">
         <div className="flex items-center gap-2 mb-4">
-          <Filter className="w-5 h-5 text-gray-600" />
-          <h2 className="font-semibold text-gray-800">Filtros</h2>
+          <Filter className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+          <h2 className="font-semibold text-gray-900 dark:text-white">Filtros</h2>
           <button
             onClick={resetFilters}
             className="ml-auto text-sm text-indigo-600 hover:text-indigo-800"
@@ -383,7 +383,7 @@ const Logs = () => {
         ) : logs.length === 0 ? (
           <div className="text-center p-12">
             <AlertCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600">No se encontraron logs con los filtros seleccionados</p>
+            <p className="text-gray-600 dark:text-gray-400">No se encontraron logs con los filtros seleccionados</p>
           </div>
         ) : (
           <>
@@ -420,7 +420,7 @@ const Logs = () => {
                       <td className="px-4 py-3">
                         <span className="text-sm font-medium text-gray-900">{log.module}</span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{log.action}</td>
+                      <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{log.action}</td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
                           <span
@@ -438,7 +438,7 @@ const Logs = () => {
                           </span>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-600 max-w-md truncate">
+                      <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 max-w-md truncate">
                         {log.message}
                       </td>
                       <td className="px-4 py-3">
@@ -539,7 +539,7 @@ const Logs = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[100000]">
           <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-bold text-gray-800">Detalles del Log</h2>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Detalles del Log</h2>
               <button
                 onClick={() => setSelectedLog(null)}
                 className="text-gray-500 hover:text-gray-700"
@@ -551,45 +551,45 @@ const Logs = () => {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-gray-600">Tipo</label>
+                  <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Tipo</label>
                   <div className="flex items-center gap-2 mt-1">
                     {getTypeIcon(selectedLog.type)}
-                    <span className="font-medium">{getTypeLabel(selectedLog.type)}</span>
+                    <span className="font-medium text-gray-900 dark:text-white">{getTypeLabel(selectedLog.type)}</span>
                   </div>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-600">Severidad</label>
+                  <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Severidad</label>
                   <div className="mt-1">
                     {getSeverityBadge(selectedLog.severity)}
                   </div>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-600">Módulo</label>
-                  <p className="mt-1 font-medium">{selectedLog.module}</p>
+                  <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Módulo</label>
+                  <p className="mt-1 font-medium text-gray-900 dark:text-white">{selectedLog.module}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-600">Acción</label>
-                  <p className="mt-1 font-medium">{selectedLog.action}</p>
+                  <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Acción</label>
+                  <p className="mt-1 font-medium text-gray-900 dark:text-white">{selectedLog.action}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-600">Fecha/Hora</label>
-                  <p className="mt-1">{new Date(selectedLog.timestamp).toLocaleString("es-DO")}</p>
+                  <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Fecha/Hora</label>
+                  <p className="mt-1 text-gray-900 dark:text-white">{new Date(selectedLog.timestamp).toLocaleString("es-DO")}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-600">Usuario</label>
-                  <p className="mt-1">{selectedLog.userDetails?.name || selectedLog.userDetails?.username || "Sistema"}</p>
+                  <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Usuario</label>
+                  <p className="mt-1 text-gray-900 dark:text-white">{selectedLog.userDetails?.name || selectedLog.userDetails?.username || "Sistema"}</p>
                 </div>
               </div>
 
               <div>
-                <label className="text-sm font-medium text-gray-600">Mensaje</label>
-                <p className="mt-1 bg-gray-50 p-3 rounded">{selectedLog.message}</p>
+                <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Mensaje</label>
+                <p className="mt-1 bg-gray-50 dark:bg-gray-800 p-3 rounded text-gray-900 dark:text-white">{selectedLog.message}</p>
               </div>
 
               {selectedLog.request && Object.keys(selectedLog.request).length > 0 && (
                 <div>
-                  <label className="text-sm font-medium text-gray-600">Información de la Petición</label>
-                  <pre className="mt-1 bg-gray-50 p-3 rounded text-xs overflow-x-auto">
+                  <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Información de la Petición</label>
+                  <pre className="mt-1 bg-gray-50 dark:bg-gray-800 p-3 rounded text-xs overflow-x-auto text-gray-900 dark:text-white">
                     {JSON.stringify(selectedLog.request, null, 2)}
                   </pre>
                 </div>
@@ -597,8 +597,8 @@ const Logs = () => {
 
               {selectedLog.details && Object.keys(selectedLog.details).length > 0 && (
                 <div>
-                  <label className="text-sm font-medium text-gray-600">Detalles</label>
-                  <pre className="mt-1 bg-gray-50 p-3 rounded text-xs overflow-x-auto">
+                  <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Detalles</label>
+                  <pre className="mt-1 bg-gray-50 dark:bg-gray-800 p-3 rounded text-xs overflow-x-auto text-gray-900 dark:text-white">
                     {JSON.stringify(selectedLog.details, null, 2)}
                   </pre>
                 </div>
@@ -606,17 +606,17 @@ const Logs = () => {
 
               {selectedLog.changes && Object.keys(selectedLog.changes).length > 0 && (
                 <div>
-                  <label className="text-sm font-medium text-gray-600">Cambios Realizados</label>
+                  <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Cambios Realizados</label>
                   <div className="mt-1 grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-xs font-medium text-gray-500 mb-1">Antes</p>
-                      <pre className="bg-red-50 p-3 rounded text-xs overflow-x-auto">
+                      <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Antes</p>
+                      <pre className="bg-red-50 dark:bg-red-900/20 p-3 rounded text-xs overflow-x-auto text-gray-900 dark:text-white">
                         {JSON.stringify(selectedLog.changes.before, null, 2)}
                       </pre>
                     </div>
                     <div>
-                      <p className="text-xs font-medium text-gray-500 mb-1">Después</p>
-                      <pre className="bg-green-50 p-3 rounded text-xs overflow-x-auto">
+                      <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Después</p>
+                      <pre className="bg-green-50 dark:bg-green-900/20 p-3 rounded text-xs overflow-x-auto text-gray-900 dark:text-white">
                         {JSON.stringify(selectedLog.changes.after, null, 2)}
                       </pre>
                     </div>
