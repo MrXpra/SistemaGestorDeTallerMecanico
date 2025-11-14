@@ -529,7 +529,7 @@ const Billing = () => {
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="input w-32 flex-shrink-0 hidden xl:block"
+              className="input w-32 flex-shrink-0 hidden 2xl:block"
             >
               <option value="">Todas</option>
               {categories.map((category) => (
