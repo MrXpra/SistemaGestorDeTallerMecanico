@@ -980,45 +980,119 @@ const Settings = ({ section = 'all' }) => {
         </div>
         )}
 
-        {/* Alerts Settings */}
+        {/* Mis Preferencias de Notificaciones */}
         {shouldShowSection('notifications') && (
         <div className="card-glass p-6">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-lg bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
-              <Bell className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+            <div className="w-10 h-10 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
+              <Bell className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
             </div>
             <div>
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                Alertas y Notificaciones
+                Mis Preferencias de Notificaciones
               </h2>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Configura las alertas del sistema
+                Elige qué alertas deseas recibir
               </p>
             </div>
           </div>
 
-          <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-            <div className="flex items-center gap-3">
-              <AlertCircle className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-              <div>
-                <p className="font-medium text-gray-900 dark:text-white">
-                  Alertas de Stock Bajo
-                </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Recibe notificaciones cuando los productos estén por agotarse
-                </p>
+          <div className="space-y-3">
+            {/* Low Stock Alerts */}
+            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+                <div>
+                  <p className="font-medium text-gray-900 dark:text-white">
+                    Alertas de Stock Bajo
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Notificaciones cuando productos estén por agotarse
+                  </p>
+                </div>
               </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={notificationPrefs.lowStockAlerts}
+                  onChange={(e) => handleNotificationPrefChange('lowStockAlerts', e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
+              </label>
             </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={formData.lowStockAlert}
-                onChange={(e) => handleChange('lowStockAlert', e.target.checked)}
-                disabled={user?.role !== 'admin'}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
-            </label>
+
+            {/* Expiration Alerts */}
+            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
+                <div>
+                  <p className="font-medium text-gray-900 dark:text-white">
+                    Alertas de Vencimiento
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Notificaciones sobre productos próximos a vencer
+                  </p>
+                </div>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={notificationPrefs.expirationAlerts}
+                  onChange={(e) => handleNotificationPrefChange('expirationAlerts', e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
+              </label>
+            </div>
+
+            {/* Sales Alerts */}
+            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+              <div className="flex items-center gap-3">
+                <DollarSign className="w-5 h-5 text-green-600 dark:text-green-400" />
+                <div>
+                  <p className="font-medium text-gray-900 dark:text-white">
+                    Alertas de Ventas
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Notificaciones sobre ventas importantes o hitos
+                  </p>
+                </div>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={notificationPrefs.salesAlerts}
+                  onChange={(e) => handleNotificationPrefChange('salesAlerts', e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
+              </label>
+            </div>
+
+            {/* Payment Reminders */}
+            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+              <div className="flex items-center gap-3">
+                <CreditCard className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                <div>
+                  <p className="font-medium text-gray-900 dark:text-white">
+                    Recordatorios de Pagos
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Notificaciones sobre pagos pendientes o vencidos
+                  </p>
+                </div>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={notificationPrefs.paymentReminders}
+                  onChange={(e) => handleNotificationPrefChange('paymentReminders', e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
+              </label>
+            </div>
           </div>
         </div>
         )}
@@ -1338,123 +1412,6 @@ const Settings = ({ section = 'all' }) => {
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
                 💡 Haz clic en "Probar Notificación" para ver cómo se verá en la posición seleccionada
               </p>
-            </div>
-          </div>
-        </div>
-        )}
-
-        {/* User Notification Preferences */}
-        {shouldShowSection('notifications') && (
-        <div className="card-glass p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
-              <Bell className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-            </div>
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                Mis Preferencias de Notificaciones
-              </h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Elige qué alertas deseas recibir
-              </p>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            {/* Low Stock Alerts */}
-            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-              <div className="flex items-center gap-3">
-                <AlertCircle className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-                <div>
-                  <p className="font-medium text-gray-900 dark:text-white">
-                    Alertas de Stock Bajo
-                  </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Notificaciones cuando productos estén por agotarse
-                  </p>
-                </div>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={notificationPrefs.lowStockAlerts}
-                  onChange={(e) => handleNotificationPrefChange('lowStockAlerts', e.target.checked)}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
-              </label>
-            </div>
-
-            {/* Expiration Alerts */}
-            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-              <div className="flex items-center gap-3">
-                <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
-                <div>
-                  <p className="font-medium text-gray-900 dark:text-white">
-                    Alertas de Vencimiento
-                  </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Notificaciones sobre productos próximos a vencer
-                  </p>
-                </div>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={notificationPrefs.expirationAlerts}
-                  onChange={(e) => handleNotificationPrefChange('expirationAlerts', e.target.checked)}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
-              </label>
-            </div>
-
-            {/* Sales Alerts */}
-            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-              <div className="flex items-center gap-3">
-                <DollarSign className="w-5 h-5 text-green-600 dark:text-green-400" />
-                <div>
-                  <p className="font-medium text-gray-900 dark:text-white">
-                    Alertas de Ventas
-                  </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Notificaciones sobre ventas importantes o hitos
-                  </p>
-                </div>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={notificationPrefs.salesAlerts}
-                  onChange={(e) => handleNotificationPrefChange('salesAlerts', e.target.checked)}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
-              </label>
-            </div>
-
-            {/* Payment Reminders */}
-            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-              <div className="flex items-center gap-3">
-                <CreditCard className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                <div>
-                  <p className="font-medium text-gray-900 dark:text-white">
-                    Recordatorios de Pagos
-                  </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Notificaciones sobre pagos pendientes o vencidos
-                  </p>
-                </div>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={notificationPrefs.paymentReminders}
-                  onChange={(e) => handleNotificationPrefChange('paymentReminders', e.target.checked)}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
-              </label>
             </div>
           </div>
         </div>
