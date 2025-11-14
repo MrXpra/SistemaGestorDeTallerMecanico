@@ -67,6 +67,15 @@ import {
   TrendingUp,
   TrendingDown,
   Info,
+  Barcode,
+  Tag,
+  Grid,
+  Award,
+  Truck,
+  FileText,
+  DollarSign,
+  Percent,
+  Hash,
 } from 'lucide-react';
 
 const Inventory = () => {
@@ -857,20 +866,24 @@ const ProductModal = ({ product, onSave, onClose, categories, brands, allProduct
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* SKU Field - Always first */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-2">
+              <Barcode className="w-4 h-4" />
               SKU * {!product && <span className="text-xs text-gray-500">(Escanee el código de barras)</span>}
             </label>
-            <input
-              ref={skuInputRef}
-              type="text"
-              name="sku"
-              value={formData.sku}
-              onChange={handleSkuChange}
-              disabled={!!product || isRestockMode}
-              className={`input ${errors.sku ? 'border-red-500' : ''} ${(product || isRestockMode) ? 'bg-gray-100 dark:bg-gray-800' : ''}`}
-              placeholder="Ej: FLT-001"
-              autoComplete="off"
-            />
+            <div className="relative">
+              <Barcode className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                ref={skuInputRef}
+                type="text"
+                name="sku"
+                value={formData.sku}
+                onChange={handleSkuChange}
+                disabled={!!product || isRestockMode}
+                className={`input pl-10 ${errors.sku ? 'border-red-500' : ''} ${(product || isRestockMode) ? 'bg-gray-100 dark:bg-gray-800' : ''}`}
+                placeholder="Ej: FLT-001"
+                autoComplete="off"
+              />
+            </div>
             {errors.sku && <p className="text-xs text-red-600 mt-1">{errors.sku}</p>}
           </div>
 
@@ -938,17 +951,21 @@ const ProductModal = ({ product, onSave, onClose, categories, brands, allProduct
             <>
               <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-2">
+                    <Tag className="w-4 h-4" />
                     Nombre del Producto *
                   </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    className={`input ${errors.name ? 'border-red-500' : ''}`}
-                    placeholder="Ej: Filtro de aceite"
-                  />
+                  <div className="relative">
+                    <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <input
+                      type="text"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      className={`input pl-10 ${errors.name ? 'border-red-500' : ''}`}
+                      placeholder="Ej: Filtro de aceite"
+                    />
+                  </div>
                   {errors.name && <p className="text-xs text-red-600 mt-1">{errors.name}</p>}
                 </div>
               </div>
@@ -956,79 +973,94 @@ const ProductModal = ({ product, onSave, onClose, categories, brands, allProduct
           {/* Category and Brand */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-2">
+                <Grid className="w-4 h-4" />
                 Categoría
               </label>
-              <input
-                type="text"
-                name="category"
-                value={formData.category}
-                onChange={handleChange}
-                list="categories"
-                className="input"
-                placeholder="Ej: Filtros"
-              />
-              <datalist id="categories">
-                {categories.map((cat) => (
-                  <option key={cat} value={cat} />
-                ))}
-              </datalist>
+              <div className="relative">
+                <Grid className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  className="input pl-10"
+                  type="text"
+                  name="category"
+                  value={formData.category}
+                  onChange={handleChange}
+                  list="categories"
+                  placeholder="Ej: Filtros"
+                />
+                <datalist id="categories">
+                  {categories.map((cat) => (
+                    <option key={cat} value={cat} />
+                  ))}
+                </datalist>
+              </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-2">
+                <Award className="w-4 h-4" />
                 Marca
               </label>
-              <input
-                type="text"
-                name="brand"
-                value={formData.brand}
-                onChange={handleChange}
-                list="brands"
-                className="input"
-                placeholder="Ej: Bosch"
-              />
-              <datalist id="brands">
-                {brands.map((brand) => (
-                  <option key={brand} value={brand} />
-                ))}
-              </datalist>
+              <div className="relative">
+                <Award className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  className="input pl-10"
+                  type="text"
+                  name="brand"
+                  value={formData.brand}
+                  onChange={handleChange}
+                  list="brands"
+                  placeholder="Ej: Bosch"
+                />
+                <datalist id="brands">
+                  {brands.map((brand) => (
+                    <option key={brand} value={brand} />
+                  ))}
+                </datalist>
+              </div>
             </div>
           </div>
 
           {/* Supplier */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-2">
+              <Truck className="w-4 h-4" />
               Proveedor
             </label>
-            <select
-              name="supplier"
-              value={formData.supplier}
-              onChange={handleChange}
-              className="input"
-            >
-              <option value="">Sin proveedor</option>
-              {suppliers.map((supplier) => (
-                <option key={supplier._id} value={supplier._id}>
-                  {supplier.name}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <Truck className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <select
+                className="input pl-10"
+                name="supplier"
+                value={formData.supplier}
+                onChange={handleChange}
+              >
+                <option value="">Sin proveedor</option>
+                {suppliers.map((supplier) => (
+                  <option key={supplier._id} value={supplier._id}>
+                    {supplier.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-2">
+              <FileText className="w-4 h-4" />
               Descripción
             </label>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              rows="3"
-              className="input"
-              placeholder="Descripción del producto..."
-            />
+            <div className="relative">
+              <FileText className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+              <textarea
+                className="input pl-10"
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                rows="3"
+                placeholder="Descripción del producto..."
+              />
           </div>
 
           {/* Prices */}
