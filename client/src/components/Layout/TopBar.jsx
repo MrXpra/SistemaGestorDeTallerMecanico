@@ -56,17 +56,17 @@ const TopBar = () => {
   };
 
   return (
-    <header className="glass-strong border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+    <header className="glass-strong border-b border-gray-200 dark:border-gray-700 px-3 lg:px-6 py-2 lg:py-4">
       <div className="flex items-center justify-between">
         {/* Business Name */}
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white whitespace-nowrap">
+          <h2 className="text-lg lg:text-2xl font-bold text-gray-900 dark:text-white whitespace-nowrap">
             {settings.businessName || 'AutoParts Manager'}
           </h2>
         </div>
 
         {/* Right Side */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 lg:gap-3">
           {/* Clock Widget */}
           <ClockWidget />
           
@@ -81,13 +81,13 @@ const TopBar = () => {
           {/* Dark Mode Toggle */}
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
+            className="p-1.5 lg:p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
             aria-label="Toggle theme"
           >
             {isDarkMode ? (
-              <Sun className="w-5 h-5 text-yellow-500" />
+              <Sun className="w-4 h-4 lg:w-5 lg:h-5 text-yellow-500" />
             ) : (
-              <Moon className="w-5 h-5 text-gray-700" />
+              <Moon className="w-4 h-4 lg:w-5 lg:h-5 text-gray-700" />
             )}
           </button>
 
@@ -96,17 +96,17 @@ const TopBar = () => {
             <button
               ref={buttonRef}
               onClick={handleToggleMenu}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
+              className="flex items-center gap-1.5 lg:gap-2 px-2 lg:px-3 py-1.5 lg:py-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
             >
-              <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center">
-                <span className="text-white font-semibold text-sm">
+              <div className="w-7 h-7 lg:w-8 lg:h-8 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center">
+                <span className="text-white font-semibold text-xs lg:text-sm">
                   {user?.name?.charAt(0).toUpperCase()}
                 </span>
               </div>
-              <span className="text-sm font-medium text-gray-900 dark:text-white">
+              <span className="text-xs lg:text-sm font-medium text-gray-900 dark:text-white hidden sm:inline">
                 {user?.name}
               </span>
-              <ChevronDown className="w-4 h-4 text-gray-500" />
+              <ChevronDown className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-gray-500" />
             </button>
 
             {/* Dropdown Portal */}
