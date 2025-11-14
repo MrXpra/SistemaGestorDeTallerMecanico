@@ -6,6 +6,26 @@
   body {
     @apply bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300;
     font-family: 'Inter', system-ui, sans-serif;
+    font-size: 14px; /* Reducir tamaño base para mejor densidad */
+  }
+
+  /* Ajustes para pantallas pequeñas (1366x768 y menores) */
+  @media (max-width: 1400px) {
+    body {
+      font-size: 13px;
+    }
+    
+    h1 {
+      @apply text-2xl;
+    }
+    
+    h2 {
+      @apply text-xl;
+    }
+    
+    h3 {
+      @apply text-lg;
+    }
   }
 }
 
@@ -21,7 +41,14 @@
 
   /* Buttons */
   .btn {
-    @apply px-4 py-2 rounded-lg font-medium transition-all duration-200 active:scale-95;
+    @apply px-3 py-1.5 rounded-lg font-medium transition-all duration-200 active:scale-95 text-sm;
+  }
+
+  /* Versión más grande para pantallas grandes */
+  @media (min-width: 1400px) {
+    .btn {
+      @apply px-4 py-2;
+    }
   }
 
   .btn-primary {
@@ -42,7 +69,14 @@
 
   /* Cards */
   .card {
-    @apply rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-transparent;
+    @apply rounded-xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-transparent;
+  }
+
+  /* Padding mayor para pantallas grandes */
+  @media (min-width: 1400px) {
+    .card {
+      @apply p-6;
+    }
   }
 
   .card-glass {
@@ -51,7 +85,14 @@
 
   /* Inputs */
   .input {
-    @apply w-full px-4 py-2 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:focus:border-transparent transition-all duration-200 shadow-sm;
+    @apply w-full px-3 py-1.5 text-sm rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:focus:border-transparent transition-all duration-200 shadow-sm;
+  }
+
+  /* Inputs más grandes en pantallas grandes */
+  @media (min-width: 1400px) {
+    .input {
+      @apply px-4 py-2 text-base;
+    }
   }
 
   /* Smooth hover transitions */
@@ -115,6 +156,28 @@
 @layer utilities {
   .active\:scale-98:active {
     transform: scale(0.98);
+  }
+
+  /* Contenedor de página responsivo */
+  .page-container {
+    @apply p-3;
+  }
+
+  @media (min-width: 1400px) {
+    .page-container {
+      @apply p-6;
+    }
+  }
+
+  /* Grid responsivo más compacto */
+  .stats-grid {
+    @apply grid gap-3;
+  }
+
+  @media (min-width: 1400px) {
+    .stats-grid {
+      @apply gap-4;
+    }
   }
 }
 
