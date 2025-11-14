@@ -511,26 +511,25 @@ const Billing = () => {
         <div className="card-glass p-3 xl:p-4">
           <div className="flex gap-2 xl:gap-3">
             {/* Search Input */}
-            <div className="flex-1 relative">
-              <Search className="absolute left-2.5 xl:left-3 top-1/2 -translate-y-1/2 w-4 h-4 xl:w-5 xl:h-5 text-gray-400" />
+            <div className="flex-1 relative min-w-0">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 ref={searchInputRef}
                 type="text"
-                placeholder="Buscar por SKU, nombre o marca..."
+                placeholder="Buscar producto..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyPress={handleSearchKeyPress}
-                className="input pl-8 xl:pl-10 pr-8 xl:pr-10 text-sm"
+                className="input pl-10 pr-4"
                 autoFocus
               />
-              <Barcode className="absolute right-2.5 xl:right-3 top-1/2 -translate-y-1/2 w-4 h-4 xl:w-5 xl:h-5 text-gray-400" />
             </div>
 
             {/* Category Filter */}
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="input w-36 xl:w-48 text-sm"
+              className="input w-32 flex-shrink-0"
             >
               <option value="">Todas</option>
               {categories.map((category) => (
@@ -545,35 +544,35 @@ const Billing = () => {
                 setSearchTerm('');
                 setSelectedCategory('');
               }}
-              className="btn-secondary px-2 xl:px-3"
+              className="btn-secondary px-3 flex-shrink-0"
               title="Limpiar filtros"
             >
-              <Filter className="w-4 h-4 xl:w-5 xl:h-5" />
+              <Filter className="w-5 h-5" />
             </button>
 
             {/* Toggle Vista */}
-            <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5 xl:p-1">
+            <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 flex-shrink-0">
               <button
                 onClick={() => setViewMode('list')}
-                className={`p-1.5 xl:p-2 rounded transition-colors ${
+                className={`p-2 rounded transition-colors ${
                   viewMode === 'list'
                     ? 'bg-white dark:bg-gray-700 text-primary-600 shadow-sm'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                 }`}
                 title="Vista de lista"
               >
-                <List className="w-4 h-4 xl:w-5 xl:h-5" />
+                <List className="w-5 h-5" />
               </button>
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-1.5 xl:p-2 rounded transition-colors ${
+                className={`p-2 rounded transition-colors ${
                   viewMode === 'grid'
                     ? 'bg-white dark:bg-gray-700 text-primary-600 shadow-sm'
                     : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                 }`}
                 title="Vista de tarjetas"
               >
-                <LayoutGrid className="w-4 h-4 xl:w-5 xl:h-5" />
+                <LayoutGrid className="w-5 h-5" />
               </button>
             </div>
           </div>
