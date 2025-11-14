@@ -126,6 +126,12 @@ const Reports = () => {
     endDate: getLocalDateString(0),
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState({
+    current: 0,
+    total: 0,
+    stage: '',
+    percentage: 0
+  });
   const [salesData, setSalesData] = useState([]);
   const [productsData, setProductsData] = useState([]);
   const [customersData, setCustomersData] = useState([]);
@@ -174,27 +180,61 @@ const Reports = () => {
   const fetchReportData = async () => {
     try {
       setIsLoading(true);
+      setLoadingProgress({ current: 0, total: 3, stage: 'Iniciando...', percentage: 0 });
       
       if (activeTab === 'sales') {
+        // Etapa 1: Cargar ventas
+        setLoadingProgress({ current: 1, total: 3, stage: 'Cargando ventas...', percentage: 33 });
         const response = await getSales({
           startDate: dateRange.startDate,
           endDate: dateRange.endDate,
-          limit: 10000 // Para reportes, obtener todos los registros
+          limit: 10000
         });
         const salesArray = response?.data?.sales || response?.data || [];
         setSalesData(Array.isArray(salesArray) ? salesArray : []);
+        
+        // Etapa 2: Procesar datos
+        setLoadingProgress({ current: 2, total: 3, stage: 'Procesando datos...', percentage: 66 });
+        await new Promise(resolve => setTimeout(resolve, 300));
         setFilteredData(Array.isArray(salesArray) ? salesArray : []);
+        
+        // Etapa 3: Completado
+        setLoadingProgress({ current: 3, total: 3, stage: 'Completado', percentage: 100 });
+        
       } else if (activeTab === 'products') {
+        // Etapa 1: Cargar productos
+        setLoadingProgress({ current: 1, total: 3, stage: 'Cargando productos...', percentage: 33 });
         const response = await getProducts({ limit: 10000 });
         const productsArray = response?.data?.products || response?.data || [];
         setProductsData(Array.isArray(productsArray) ? productsArray : []);
+        
+        // Etapa 2: Procesar datos
+        setLoadingProgress({ current: 2, total: 3, stage: 'Calculando inventario...', percentage: 66 });
+        await new Promise(resolve => setTimeout(resolve, 300));
         setFilteredData(Array.isArray(productsArray) ? productsArray : []);
+        
+        // Etapa 3: Completado
+        setLoadingProgress({ current: 3, total: 3, stage: 'Completado', percentage: 100 });
+        
       } else if (activeTab === 'customers') {
+        // Etapa 1: Cargar clientes
+        setLoadingProgress({ current: 1, total: 3, stage: 'Cargando clientes...', percentage: 33 });
         const response = await getCustomers({ limit: 10000 });
         const customersArray = response?.data?.customers || response?.data || [];
         setCustomersData(Array.isArray(customersArray) ? customersArray : []);
+        
+        // Etapa 2: Procesar datos
+        setLoadingProgress({ current: 2, total: 3, stage: 'Analizando historial...', percentage: 66 });
+        await new Promise(resolve => setTimeout(resolve, 300));
         setFilteredData(Array.isArray(customersArray) ? customersArray : []);
+        
+        // Etapa 3: Completado
+        setLoadingProgress({ current: 3, total: 3, stage: 'Completado', percentage: 100 });
       }
+      
+      // Pequeña pausa para mostrar el 100%
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
     } catch (error) {
       console.error('Error fetching report data:', error);
       toast.error('Error al cargar datos del reporte');
@@ -204,6 +244,7 @@ const Reports = () => {
       setFilteredData([]);
     } finally {
       setIsLoading(false);
+      setLoadingProgress({ current: 0, total: 0, stage: '', percentage: 0 });
     }
   };
 
@@ -547,9 +588,81 @@ const Reports = () => {
 
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
-  // Mostrar skeleton mientras carga datos iniciales
-  if (isLoading && salesData.length === 0 && productsData.length === 0) {
-    return <ReportsSkeleton />;
+  // Componente de progreso de carga
+  const LoadingProgress = () => (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="glass-strong rounded-2xl p-8 max-w-md w-full mx-4">
+        <div className="text-center mb-6">
+          <div className="w-16 h-16 mx-auto mb-4 relative">
+            <svg className="w-16 h-16 transform -rotate-90" viewBox="0 0 120 120">
+              {/* Círculo de fondo */}
+              <circle
+                cx="60"
+                cy="60"
+                r="54"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="8"
+                className="text-gray-300 dark:text-gray-700"
+              />
+              {/* Círculo de progreso */}
+              <circle
+                cx="60"
+                cy="60"
+                r="54"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="8"
+                strokeLinecap="round"
+                className="text-primary-600 transition-all duration-300"
+                strokeDasharray={`${2 * Math.PI * 54}`}
+                strokeDashoffset={`${2 * Math.PI * 54 * (1 - loadingProgress.percentage / 100)}`}
+              />
+            </svg>
+            {/* Porcentaje en el centro */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-2xl font-bold text-gray-900 dark:text-white">
+                {Math.round(loadingProgress.percentage)}%
+              </span>
+            </div>
+          </div>
+          
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            Generando Reporte
+          </h3>
+          
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            {loadingProgress.stage}
+          </p>
+          
+          {/* Barra de progreso lineal */}
+          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-primary-500 to-primary-600 transition-all duration-300 ease-out"
+              style={{ width: `${loadingProgress.percentage}%` }}
+            />
+          </div>
+          
+          {/* Indicador de etapas */}
+          <div className="mt-4 flex justify-between text-xs text-gray-500 dark:text-gray-400">
+            <span className={loadingProgress.current >= 1 ? 'text-primary-600 font-medium' : ''}>
+              1. Cargar
+            </span>
+            <span className={loadingProgress.current >= 2 ? 'text-primary-600 font-medium' : ''}>
+              2. Procesar
+            </span>
+            <span className={loadingProgress.current >= 3 ? 'text-primary-600 font-medium' : ''}>
+              3. Completar
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Mostrar progreso de carga
+  if (isLoading) {
+    return <LoadingProgress />;
   }
 
   return (
