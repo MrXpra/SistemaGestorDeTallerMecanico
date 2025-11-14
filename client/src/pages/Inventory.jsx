@@ -1167,7 +1167,7 @@ const ProductModal = ({ product, onSave, onClose, categories, brands, allProduct
               />
             </div>
           </div>
-          </>
+            </>
           )}
 
           {/* Actions */}
