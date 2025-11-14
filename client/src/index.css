@@ -12,11 +12,11 @@
 @layer components {
   /* Glassmorphism Effect */
   .glass {
-    @apply backdrop-blur-lg bg-white/90 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm;
+    @apply backdrop-blur-lg bg-white/90 dark:!bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm;
   }
 
   .glass-strong {
-    @apply backdrop-blur-xl bg-white/95 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 shadow-md;
+    @apply backdrop-blur-xl bg-white/95 dark:!bg-gray-900 border border-gray-300 dark:border-gray-700 shadow-md;
   }
 
   /* Buttons */

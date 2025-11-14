@@ -1459,7 +1459,7 @@ const CustomerModal = ({ onSelect, onClose }) => {
 
   return createPortal(
     <div className="fixed inset-0 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" style={{ zIndex: 100000 }}>
-      <div className="glass-strong rounded-2xl p-6 w-full max-w-2xl max-h-[80vh] flex flex-col animate-scale-in" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 shadow-xl rounded-2xl p-6 w-full max-w-2xl max-h-[80vh] flex flex-col animate-scale-in" onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-xl font-bold text-gray-900 dark:text-white">
             {showNewCustomer ? 'Nuevo Cliente' : 'Seleccionar Cliente'}
