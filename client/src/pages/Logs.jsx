@@ -153,10 +153,10 @@ const Logs = () => {
 
   const getSeverityBadge = (severity) => {
     const badges = {
-      low: "bg-green-100 text-green-800",
-      medium: "bg-yellow-100 text-yellow-800",
-      high: "bg-orange-100 text-orange-800",
-      critical: "bg-red-100 text-red-800"
+      low: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+      medium: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
+      high: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
+      critical: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
     };
 
     return (
@@ -289,7 +289,7 @@ const Logs = () => {
           <h2 className="font-semibold text-gray-900 dark:text-white">Filtros</h2>
           <button
             onClick={resetFilters}
-            className="ml-auto text-sm text-indigo-600 hover:text-indigo-800"
+            className="ml-auto text-sm text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300"
           >
             Limpiar filtros
           </button>
@@ -299,7 +299,7 @@ const Logs = () => {
           <select
             value={filters.type}
             onChange={(e) => setFilters({ ...filters, type: e.target.value, page: 1 })}
-            className="form-input"
+            className="form-input dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:focus:border-indigo-500"
           >
             <option value="">Todos los tipos</option>
             <option value="info">Info</option>
@@ -313,7 +313,7 @@ const Logs = () => {
           <select
             value={filters.module}
             onChange={(e) => setFilters({ ...filters, module: e.target.value, page: 1 })}
-            className="form-input"
+            className="form-input dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:focus:border-indigo-500"
           >
             <option value="">Todos los módulos</option>
             <option value="auth">Auth</option>
@@ -329,7 +329,7 @@ const Logs = () => {
           <select
             value={filters.severity}
             onChange={(e) => setFilters({ ...filters, severity: e.target.value, page: 1 })}
-            className="form-input"
+            className="form-input dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:focus:border-indigo-500"
           >
             <option value="">Todas las severidades</option>
             <option value="low">Low</option>
@@ -341,7 +341,7 @@ const Logs = () => {
           <select
             value={filters.isSystemAction}
             onChange={(e) => setFilters({ ...filters, isSystemAction: e.target.value, page: 1 })}
-            className="form-input"
+            className="form-input dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:focus:border-indigo-500"
           >
             <option value="">Todos los orígenes</option>
             <option value="false">👤 Acciones de Usuario</option>
@@ -352,20 +352,20 @@ const Logs = () => {
             type="date"
             value={filters.startDate}
             onChange={(e) => setFilters({ ...filters, startDate: e.target.value, page: 1 })}
-            className="form-input"
+            className="form-input dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:focus:border-indigo-500 dark:[color-scheme:dark]"
           />
 
           <input
             type="date"
             value={filters.endDate}
             onChange={(e) => setFilters({ ...filters, endDate: e.target.value, page: 1 })}
-            className="form-input"
+            className="form-input dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:focus:border-indigo-500 dark:[color-scheme:dark]"
           />
 
           <select
             value={filters.limit}
             onChange={(e) => setFilters({ ...filters, limit: e.target.value, page: 1 })}
-            className="form-input"
+            className="form-input dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:focus:border-indigo-500"
           >
             <option value="25">25 logs</option>
             <option value="50">50 logs</option>
@@ -389,21 +389,21 @@ const Logs = () => {
           <>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="bg-gray-50 border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha/Hora</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Módulo</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acción</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Usuario</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Mensaje</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Severidad</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acciones</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-300">Tipo</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-300">Fecha/Hora</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-300">Módulo</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-300">Acción</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-300">Usuario</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-300">Mensaje</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-300">Severidad</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase dark:text-gray-300">Acciones</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                   {logs.map((log) => (
-                    <tr key={log._id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={log._id} className="hover:bg-gray-50 transition-colors dark:hover:bg-gray-800">
                       <td className="px-4 py-3">
                         <div
                           className="relative inline-block cursor-help"
@@ -414,11 +414,11 @@ const Logs = () => {
                           {getTypeIcon(log.type)}
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-900">
+                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">
                         {new Date(log.timestamp).toLocaleString("es-DO")}
                       </td>
                       <td className="px-4 py-3">
-                        <span className="text-sm font-medium text-gray-900">{log.module}</span>
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">{log.module}</span>
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{log.action}</td>
                       <td className="px-4 py-3">
@@ -426,14 +426,14 @@ const Logs = () => {
                           <span
                             className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
                               log.isSystemAction
-                                ? "bg-gray-100 text-gray-700"
-                                : "bg-blue-100 text-blue-700"
+                                ? "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200"
+                                : "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200"
                             }`}
                             title={log.isSystemAction ? "Acción del Sistema" : "Acción de Usuario"}
                           >
                             {log.isSystemAction ? "⚙️" : "👤"}
                           </span>
-                          <span className="text-sm text-gray-900">
+                          <span className="text-sm text-gray-900 dark:text-white">
                             {log.userDetails?.name || log.userDetails?.username || "Sistema"}
                           </span>
                         </div>
@@ -447,7 +447,7 @@ const Logs = () => {
                       <td className="px-4 py-3">
                         <button
                           onClick={() => setSelectedLog(log)}
-                          className="text-indigo-600 hover:text-indigo-800"
+                          className="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300"
                           title="Ver detalles completos"
                         >
                           <Eye className="w-5 h-5" />
@@ -460,8 +460,8 @@ const Logs = () => {
             </div>
 
             {pagination && pagination.pages > 1 && (
-              <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 bg-gray-50">
-                <div className="text-sm text-gray-700">
+              <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800">
+                <div className="text-sm text-gray-700 dark:text-gray-300">
                   Página {pagination.page} de {pagination.pages} ({pagination.total} logs)
                 </div>
                 <div className="flex gap-2">
@@ -495,39 +495,39 @@ const Logs = () => {
             transform: "translateX(-50%)"
           }}
         >
-          <div className="bg-white rounded-lg shadow-2xl border-2 border-gray-300 p-4 max-w-md">
+          <div className="bg-white rounded-lg shadow-2xl border-2 border-gray-300 p-4 max-w-md dark:bg-gray-800 dark:border-gray-600">
             <div className="flex items-start gap-3">
               <div className="flex-shrink-0">
                 {getTypeIcon(hoveredLog.type)}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-2">
-                  <h3 className="text-sm font-bold text-gray-900">{getTypeLabel(hoveredLog.type)}</h3>
+                  <h3 className="text-sm font-bold text-gray-900 dark:text-white">{getTypeLabel(hoveredLog.type)}</h3>
                   {getSeverityBadge(hoveredLog.severity)}
                 </div>
                 <div className="space-y-1 text-xs">
-                  <p className="text-gray-600">
+                  <p className="text-gray-600 dark:text-gray-300">
                     <span className="font-medium">Módulo:</span> {hoveredLog.module}
                   </p>
-                  <p className="text-gray-600">
+                  <p className="text-gray-600 dark:text-gray-300">
                     <span className="font-medium">Acción:</span> {hoveredLog.action}
                   </p>
-                  <p className="text-gray-600">
+                  <p className="text-gray-600 dark:text-gray-300">
                     <span className="font-medium">Usuario:</span> {hoveredLog.userDetails?.name || hoveredLog.userDetails?.username || "Sistema"}
                   </p>
-                  <p className="text-gray-600">
+                  <p className="text-gray-600 dark:text-gray-300">
                     <span className="font-medium">Fecha:</span> {new Date(hoveredLog.timestamp).toLocaleString("es-DO")}
                   </p>
-                  <p className="text-gray-700 mt-2 break-words">
+                  <p className="text-gray-700 mt-2 break-words dark:text-gray-200">
                     <span className="font-medium">Mensaje:</span> {hoveredLog.message}
                   </p>
                   {hoveredLog.request?.ip && (
-                    <p className="text-gray-600 mt-2">
+                    <p className="text-gray-600 mt-2 dark:text-gray-300">
                       <span className="font-medium">IP:</span> {hoveredLog.request.ip}
                     </p>
                   )}
                 </div>
-                <p className="text-xs text-indigo-600 mt-2 italic font-medium">💡 Click en el ícono de ojo para ver todos los detalles</p>
+                <p className="text-xs text-indigo-600 mt-2 italic font-medium dark:text-indigo-400">💡 Click en el ícono de ojo para ver todos los detalles</p>
               </div>
             </div>
           </div>
@@ -537,12 +537,12 @@ const Logs = () => {
 
       {selectedLog && createPortal(
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[100000]">
-          <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6">
+          <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6 dark:bg-gray-900">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Detalles del Log</h2>
               <button
                 onClick={() => setSelectedLog(null)}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
               >
                 <XCircle className="w-6 h-6" />
               </button>
@@ -627,10 +627,10 @@ const Logs = () => {
               {selectedLog.error && (
                 <div>
                   <label className="text-sm font-medium text-red-600">Error</label>
-                  <div className="mt-1 bg-red-50 p-3 rounded">
-                    <p className="text-sm font-medium text-red-800">{selectedLog.error.message}</p>
+                  <div className="mt-1 bg-red-50 p-3 rounded dark:bg-red-900/20">
+                    <p className="text-sm font-medium text-red-800 dark:text-red-200">{selectedLog.error.message}</p>
                     {selectedLog.error.stack && (
-                      <pre className="mt-2 text-xs text-red-700 overflow-x-auto">
+                      <pre className="mt-2 text-xs text-red-700 overflow-x-auto dark:text-red-300">
                         {selectedLog.error.stack}
                       </pre>
                     )}
@@ -640,24 +640,24 @@ const Logs = () => {
 
               {selectedLog.metadata && Object.keys(selectedLog.metadata).length > 0 && (
                 <div>
-                  <label className="text-sm font-medium text-gray-600">Metadata</label>
+                  <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Metadata</label>
                   <div className="mt-1 grid grid-cols-3 gap-4">
                     {selectedLog.metadata.duration && (
-                      <div className="bg-gray-50 p-3 rounded">
-                        <p className="text-xs text-gray-600">Duración</p>
-                        <p className="font-medium">{selectedLog.metadata.duration}ms</p>
+                      <div className="bg-gray-50 p-3 rounded dark:bg-gray-800">
+                        <p className="text-xs text-gray-600 dark:text-gray-400">Duración</p>
+                        <p className="font-medium dark:text-white">{selectedLog.metadata.duration}ms</p>
                       </div>
                     )}
                     {selectedLog.metadata.statusCode && (
-                      <div className="bg-gray-50 p-3 rounded">
-                        <p className="text-xs text-gray-600">Código HTTP</p>
-                        <p className="font-medium">{selectedLog.metadata.statusCode}</p>
+                      <div className="bg-gray-50 p-3 rounded dark:bg-gray-800">
+                        <p className="text-xs text-gray-600 dark:text-gray-400">Código HTTP</p>
+                        <p className="font-medium dark:text-white">{selectedLog.metadata.statusCode}</p>
                       </div>
                     )}
                     {selectedLog.metadata.success !== undefined && (
-                      <div className="bg-gray-50 p-3 rounded">
-                        <p className="text-xs text-gray-600">Estado</p>
-                        <p className="font-medium">
+                      <div className="bg-gray-50 p-3 rounded dark:bg-gray-800">
+                        <p className="text-xs text-gray-600 dark:text-gray-400">Estado</p>
+                        <p className="font-medium dark:text-white">
                           {selectedLog.metadata.success ? "✅ Exitoso" : "❌ Fallido"}
                         </p>
                       </div>
