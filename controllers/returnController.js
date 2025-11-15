@@ -24,9 +24,26 @@ export const getReturns = async (req, res) => {
       query.status = status;
     }
 
-    // Búsqueda por número de devolución
+    // Búsqueda por número de devolución o por código de factura
     if (search) {
-      query.returnNumber = { $regex: search, $options: 'i' };
+      const cleanSearch = search.trim().replace(/[\s-]/g, '');
+      
+      // Buscar ventas que coincidan con el invoiceNumber
+      const Sale = mongoose.model('Sale');
+      const matchingSales = await Sale.find({
+        $or: [
+          { invoiceNumber: { $regex: cleanSearch, $options: 'i' } },
+          { invoiceNumber: cleanSearch.toUpperCase() }
+        ]
+      }).select('_id').lean();
+      
+      const saleIds = matchingSales.map(s => s._id);
+      
+      // Buscar por returnNumber o por sale ID
+      query.$or = [
+        { returnNumber: { $regex: search, $options: 'i' } },
+        { sale: { $in: saleIds } }
+      ];
     }
 
     // Paginación
