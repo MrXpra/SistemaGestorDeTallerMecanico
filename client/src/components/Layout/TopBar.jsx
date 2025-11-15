@@ -71,11 +71,8 @@ const TopBar = () => {
           <ClockWidget />
           
           {/* Weather Widget */}
-          {settings.showWeather && settings.weatherApiKey && (
-            <WeatherWidget 
-              location={settings.weatherLocation || 'Santo Domingo,DO'}
-              apiKey={settings.weatherApiKey}
-            />
+          {settings.showWeather && (
+            <WeatherWidget />
           )}
           
           {/* Dark Mode Toggle */}

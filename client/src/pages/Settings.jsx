@@ -1304,8 +1304,6 @@ const Settings = ({ section = 'all' }) => {
                 </div>
                 <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-lg">
                   <WeatherWidget 
-                    location={formData.weatherLocation} 
-                    apiKey={formData.weatherApiKey}
                     detailed={true}
                   />
                 </div>
