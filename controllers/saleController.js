@@ -170,7 +170,13 @@ export const getSales = async (req, res) => {
 
     // Filtro por búsqueda de número de factura
     if (search) {
-      query.invoiceNumber = { $regex: search, $options: 'i' };
+      // Limpiar espacios y caracteres especiales del search
+      const cleanSearch = search.trim().replace(/[\s-]/g, '');
+      // Buscar exactamente o que contenga el término (más flexible)
+      query.$or = [
+        { invoiceNumber: { $regex: cleanSearch, $options: 'i' } },
+        { invoiceNumber: cleanSearch.toUpperCase() }
+      ];
     }
 
     // Filtro por rango de fechas
