@@ -1444,6 +1444,7 @@ const CustomerModal = ({ onSelect, onClose }) => {
       onSelect(response.data);
     } catch (error) {
       console.error('Error creating customer:', error);
+      console.error('Error response:', error.response?.data);
       toast.error(error.response?.data?.message || 'Error al crear cliente');
     } finally {
       setIsLoading(false);
