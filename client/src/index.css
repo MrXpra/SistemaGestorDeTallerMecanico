@@ -88,6 +88,24 @@
     @apply w-full px-3 py-1.5 text-sm rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:focus:border-transparent transition-all duration-200 shadow-sm;
   }
 
+  /* Prevenir fondo blanco en autocompletado modo oscuro */
+  .input:-webkit-autofill,
+  .input:-webkit-autofill:hover,
+  .input:-webkit-autofill:focus,
+  .input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px rgb(31 41 55) inset !important;
+    -webkit-text-fill-color: rgb(243 244 246) !important;
+    transition: background-color 5000s ease-in-out 0s;
+  }
+
+  /* Autocompletado en modo claro */
+  :root:not(.dark) .input:-webkit-autofill,
+  :root:not(.dark) .input:-webkit-autofill:hover,
+  :root:not(.dark) .input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 30px white inset !important;
+    -webkit-text-fill-color: rgb(17 24 39) !important;
+  }
+
   /* Inputs más grandes en pantallas grandes */
   @media (min-width: 1400px) {
     .input {
