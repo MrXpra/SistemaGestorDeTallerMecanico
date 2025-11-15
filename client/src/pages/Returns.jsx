@@ -865,14 +865,11 @@ const CreateReturnModal = ({ onClose, onSubmit, formatCurrency }) => {
       const cleanSearch = searchTerm.trim().replace(/\s+/g, '');
       const response = await getSales({ search: cleanSearch });
       
-      // Asegurar que response es un array
-      const salesData = Array.isArray(response?.data) 
-        ? response.data 
-        : Array.isArray(response) 
-          ? response 
-          : [];
+      // El backend devuelve { sales: [...], pagination: {...} }
+      const salesData = response?.data?.sales || response?.sales || [];
       
-      console.log('🔍 Sales search results:', salesData);
+      console.log('🔍 Sales search response:', response?.data);
+      console.log('🔍 Sales found:', salesData);
       
       // Filtrar ventas válidas para devolución
       const validSales = salesData.filter(sale => 
