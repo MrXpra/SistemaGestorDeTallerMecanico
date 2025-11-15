@@ -148,7 +148,7 @@ const Sidebar = () => {
             <img 
               src={settings.businessLogoUrl} 
               alt={settings.businessName || 'Logo'}
-              className="w-12 h-12 xl:w-14 xl:h-14 rounded-xl object-cover"
+              className="w-14 h-14 xl:w-16 xl:h-16 rounded-xl object-cover"
               onError={(e) => {
                 e.target.style.display = 'none';
                 e.target.nextSibling.style.display = 'flex';
@@ -156,10 +156,10 @@ const Sidebar = () => {
             />
           ) : null}
           <div 
-            className="w-12 h-12 xl:w-14 xl:h-14 bg-gradient-to-br from-primary-600 to-primary-700 rounded-xl flex items-center justify-center"
+            className="w-14 h-14 xl:w-16 xl:h-16 bg-gradient-to-br from-primary-600 to-primary-700 rounded-xl flex items-center justify-center"
             style={{ display: (settings.businessLogoUrl && settings.businessLogoUrl !== '/logo.png' && settings.businessLogoUrl !== '/default-logo.png') ? 'none' : 'flex' }}
           >
-            <FileText className="w-7 h-7 xl:w-8 xl:h-8 text-white" />
+            <FileText className="w-8 h-8 xl:w-9 xl:h-9 text-white" />
           </div>
           <p className="text-xs xl:text-sm text-gray-500 dark:text-gray-400 font-medium">POS System</p>
         </div>
