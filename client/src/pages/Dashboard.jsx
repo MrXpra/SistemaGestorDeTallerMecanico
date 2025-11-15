@@ -87,12 +87,24 @@ const Dashboard = () => {
       setStats(data.stats);
       setSalesByDay(data.salesByDay);
       setTopProducts(data.topProducts);
-      setSalesByPayment(
-        (data.salesByPayment || []).map((entry) => ({
-          ...entry,
-          name: entry.name || entry._id || 'Desconocido'
-        }))
-      );
+      const preferredOrder = ['Efectivo', 'Tarjeta', 'Transferencia'];
+      const normalizedPayments = (data.salesByPayment || []).map((entry) => ({
+        ...entry,
+        name: entry.name || entry._id || 'Desconocido'
+      }));
+
+      normalizedPayments.sort((a, b) => {
+        const aIndex = preferredOrder.indexOf(a.name);
+        const bIndex = preferredOrder.indexOf(b.name);
+        if (aIndex === -1 && bIndex === -1) {
+          return a.name.localeCompare(b.name);
+        }
+        if (aIndex === -1) return 1;
+        if (bIndex === -1) return -1;
+        return aIndex - bIndex;
+      });
+
+      setSalesByPayment(normalizedPayments);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
       toast.error('Error al cargar datos del dashboard');
