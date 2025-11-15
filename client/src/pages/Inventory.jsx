@@ -1064,15 +1064,18 @@ const ProductModal = ({ product, onSave, onClose, categories, brands, allProduct
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Precio de Compra *
               </label>
-              <input
-                type="number"
-                name="purchasePrice"
-                value={formData.purchasePrice}
-                onChange={handleChange}
-                step="0.01"
-                className={`input ${errors.purchasePrice ? 'border-red-500' : ''}`}
-                placeholder="0.00"
-              />
+              <div className="relative">
+                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-emerald-500" />
+                <input
+                  type="number"
+                  name="purchasePrice"
+                  value={formData.purchasePrice}
+                  onChange={handleChange}
+                  step="0.01"
+                  className={`input pl-10 ${errors.purchasePrice ? 'border-red-500' : ''}`}
+                  placeholder="0.00"
+                />
+              </div>
               {errors.purchasePrice && (
                 <p className="text-xs text-red-600 mt-1">{errors.purchasePrice}</p>
               )}
@@ -1082,15 +1085,18 @@ const ProductModal = ({ product, onSave, onClose, categories, brands, allProduct
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Precio de Venta *
               </label>
-              <input
-                type="number"
-                name="sellingPrice"
-                value={formData.sellingPrice}
-                onChange={handleChange}
-                step="0.01"
-                className={`input ${errors.sellingPrice ? 'border-red-500' : ''}`}
-                placeholder="0.00"
-              />
+              <div className="relative">
+                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-green-500" />
+                <input
+                  type="number"
+                  name="sellingPrice"
+                  value={formData.sellingPrice}
+                  onChange={handleChange}
+                  step="0.01"
+                  className={`input pl-10 ${errors.sellingPrice ? 'border-red-500' : ''}`}
+                  placeholder="0.00"
+                />
+              </div>
               {errors.sellingPrice && (
                 <p className="text-xs text-red-600 mt-1">{errors.sellingPrice}</p>
               )}
@@ -1100,17 +1106,20 @@ const ProductModal = ({ product, onSave, onClose, categories, brands, allProduct
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Descuento (%)
               </label>
-              <input
-                type="number"
-                name="discountPercentage"
-                value={formData.discountPercentage}
-                onChange={handleChange}
-                min="0"
-                max="100"
-                step="0.1"
-                className={`input ${errors.discountPercentage ? 'border-red-500' : ''}`}
-                placeholder="0"
-              />
+              <div className="relative">
+                <Percent className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-red-500" />
+                <input
+                  type="number"
+                  name="discountPercentage"
+                  value={formData.discountPercentage}
+                  onChange={handleChange}
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  className={`input pl-10 ${errors.discountPercentage ? 'border-red-500' : ''}`}
+                  placeholder="0"
+                />
+              </div>
               {errors.discountPercentage && (
                 <p className="text-xs text-red-600 mt-1">{errors.discountPercentage}</p>
               )}
@@ -1135,15 +1144,18 @@ const ProductModal = ({ product, onSave, onClose, categories, brands, allProduct
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Stock Inicial *
               </label>
-              <input
-                type="number"
-                name="stock"
-                value={formData.stock}
-                onChange={handleChange}
-                min="0"
-                className={`input ${errors.stock ? 'border-red-500' : ''}`}
-                placeholder="0"
-              />
+              <div className="relative">
+                <Package className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-500" />
+                <input
+                  type="number"
+                  name="stock"
+                  value={formData.stock}
+                  onChange={handleChange}
+                  min="0"
+                  className={`input pl-10 ${errors.stock ? 'border-red-500' : ''}`}
+                  placeholder="0"
+                />
+              </div>
               {errors.stock && <p className="text-xs text-red-600 mt-1">{errors.stock}</p>}
             </div>
 
@@ -1151,15 +1163,18 @@ const ProductModal = ({ product, onSave, onClose, categories, brands, allProduct
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Umbral de Bajo Stock
               </label>
-              <input
-                type="number"
-                name="lowStockThreshold"
-                value={formData.lowStockThreshold}
-                onChange={handleChange}
-                min="0"
-                className="input"
-                placeholder="5"
-              />
+              <div className="relative">
+                <AlertTriangle className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-amber-500" />
+                <input
+                  type="number"
+                  name="lowStockThreshold"
+                  value={formData.lowStockThreshold}
+                  onChange={handleChange}
+                  min="0"
+                  className="input pl-10"
+                  placeholder="5"
+                />
+              </div>
             </div>
           </div>
             </div>
