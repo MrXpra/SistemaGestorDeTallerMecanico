@@ -248,7 +248,7 @@ export const getAllDashboardData = async (req, res) => {
     days7Ago.setDate(days7Ago.getDate() - 7);
 
     // Ejecutar TODAS las queries en paralelo
-    const [salesStats, salesByDay, topProducts, salesByPayment, counts] = await Promise.all([
+    const [salesStats, salesByDay, topProducts, salesByPayment, counts, lowStockItems] = await Promise.all([
       // Stats
       Sale.aggregate([
         { $match: { status: 'Completada', total: { $ne: null, $exists: true } } },
@@ -334,12 +334,36 @@ export const getAllDashboardData = async (req, res) => {
         Product.countDocuments(),
         Customer.countDocuments(),
         User.countDocuments({ isActive: true })
-      ])
+      ]),
+      
+      // Low stock items
+      Product.find({ $expr: { $lte: ['$stock', '$lowStockThreshold'] } })
+        .select('name sku stock lowStockThreshold')
+        .sort({ stock: 1 })
+        .limit(10)
+        .lean()
     ]);
 
     const todayData = salesStats[0].today[0] || { total: 0, count: 0 };
     const weekData = salesStats[0].week[0] || { total: 0, count: 0 };
     const monthData = salesStats[0].month[0] || { total: 0, count: 0 };
+
+    // Normalizar métodos de pago (manejar variaciones como "transferencia" vs "Transferencia")
+    const normalizedPaymentData = salesByPayment.reduce((acc, item) => {
+      const method = item._id ? item._id.toLowerCase() : 'desconocido';
+      const existing = acc.find(x => x.name.toLowerCase() === method);
+      if (existing) {
+        existing.total += item.total;
+        existing.count += item.count;
+      } else {
+        acc.push({
+          name: item._id || 'Desconocido',
+          total: item.total,
+          count: item.count
+        });
+      }
+      return acc;
+    }, []);
 
     res.json({
       stats: {
@@ -358,7 +382,8 @@ export const getAllDashboardData = async (req, res) => {
         },
         inventory: {
           totalProducts: counts[1],
-          lowStockProducts: counts[0]
+          lowStockProducts: counts[0],
+          lowStockItems: lowStockItems
         },
         customers: counts[2],
         users: counts[3]
@@ -369,7 +394,7 @@ export const getAllDashboardData = async (req, res) => {
         transactions: item.count
       })),
       topProducts,
-      salesByPayment
+      salesByPayment: normalizedPaymentData
     });
   } catch (error) {
     console.error('Error al obtener datos del dashboard:', error);
