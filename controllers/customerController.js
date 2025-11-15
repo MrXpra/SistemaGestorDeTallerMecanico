@@ -88,40 +88,45 @@ export const createCustomer = async (req, res) => {
   try {
     const { fullName, cedula, phone, email, address } = req.body;
 
-    // Verificar si ya existe un cliente con esa cédula (solo si se proporciona y no está vacía)
-    if (cedula && cedula.trim() !== '') {
-      const existingCedula = await Customer.findOne({ cedula: cedula.trim() });
+    // Limpiar y normalizar campos (convertir strings vacíos a undefined)
+    const cleanCedula = cedula && cedula.trim() !== '' ? cedula.trim() : undefined;
+    const cleanPhone = phone && phone.trim() !== '' ? phone.trim() : undefined;
+    const cleanEmail = email && email.trim() !== '' ? email.trim().toLowerCase() : undefined;
+    const cleanAddress = address && address.trim() !== '' ? address.trim() : undefined;
+
+    // Verificar si ya existe un cliente con esa cédula
+    if (cleanCedula) {
+      const existingCedula = await Customer.findOne({ cedula: cleanCedula });
       if (existingCedula) {
         return res.status(400).json({ message: 'Ya existe un cliente con esa cédula' });
       }
     }
 
-    // Verificar si ya existe un cliente con ese teléfono (solo si se proporciona y no está vacío)
-    if (phone && phone.trim() !== '') {
-      const existingPhone = await Customer.findOne({ phone: phone.trim() });
+    // Verificar si ya existe un cliente con ese teléfono
+    if (cleanPhone) {
+      const existingPhone = await Customer.findOne({ phone: cleanPhone });
       if (existingPhone) {
         return res.status(400).json({ message: 'Ya existe un cliente con ese número de teléfono' });
       }
     }
 
-    // Verificar si ya existe un cliente con ese email (solo si se proporciona y no está vacío)
-    if (email && email.trim() !== '') {
-      const existingEmail = await Customer.findOne({ email: email.trim().toLowerCase() });
+    // Verificar si ya existe un cliente con ese email
+    if (cleanEmail) {
+      const existingEmail = await Customer.findOne({ email: cleanEmail });
       if (existingEmail) {
         return res.status(400).json({ message: 'Ya existe un cliente con ese email' });
       }
     }
 
-    // Preparar datos del cliente
+    // Preparar datos del cliente (solo incluir campos con valores)
     const customerData = {
       fullName: fullName.trim()
     };
 
-    // Solo agregar campos opcionales si no están vacíos
-    if (cedula && cedula.trim() !== '') customerData.cedula = cedula.trim();
-    if (phone && phone.trim() !== '') customerData.phone = phone.trim();
-    if (email && email.trim() !== '') customerData.email = email.trim().toLowerCase();
-    if (address && address.trim() !== '') customerData.address = address.trim();
+    if (cleanCedula) customerData.cedula = cleanCedula;
+    if (cleanPhone) customerData.phone = cleanPhone;
+    if (cleanEmail) customerData.email = cleanEmail;
+    if (cleanAddress) customerData.address = cleanAddress;
 
     const customer = await Customer.create(customerData);
 
