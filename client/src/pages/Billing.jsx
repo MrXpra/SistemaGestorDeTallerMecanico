@@ -1235,7 +1235,7 @@ const PaymentModal = ({
                   min="0"
                   max="100"
                   step="0.01"
-                  value={globalDiscount}
+                  value={globalDiscount === 0 ? '' : globalDiscount}
                   onChange={(e) => {
                     const val = e.target.value;
                     if (val === '' || val === null) {
@@ -1709,14 +1709,14 @@ const PrintConfirmationModal = ({ sale, onPrint, onClose }) => {
         <div className="flex gap-3">
           <button
             onClick={onClose}
-            className="btn-secondary flex-1"
+            className="btn-secondary flex-1 flex items-center justify-center gap-2"
           >
             <X className="w-5 h-5" />
             No Imprimir
           </button>
           <button
             onClick={onPrint}
-            className="btn-primary flex-1"
+            className="btn-primary flex-1 flex items-center justify-center gap-2"
           >
             <Printer className="w-5 h-5" />
             Imprimir
