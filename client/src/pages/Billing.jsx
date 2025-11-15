@@ -1404,14 +1404,16 @@ const CustomerModal = ({ onSelect, onClose }) => {
       errors.fullName = 'El nombre es requerido';
     }
 
-    // Validar cédula (opcional, pero si se proporciona debe ser válida)
-    if (newCustomer.cedula.trim() && newCustomer.cedula.replace(/\D/g, '').length !== 11) {
-      errors.cedula = 'La cédula debe tener 11 dígitos';
+    // Validar cédula (opcional, pero si se proporciona debe tener formato válido)
+    const cedulaDigits = newCustomer.cedula.replace(/\D/g, '');
+    if (newCustomer.cedula.trim() && cedulaDigits.length > 0 && cedulaDigits.length !== 11) {
+      errors.cedula = 'La cédula debe tener 11 dígitos o dejarla vacía';
     }
 
-    // Validar teléfono (opcional, pero si se proporciona debe ser válido)
-    if (newCustomer.phone.trim() && newCustomer.phone.replace(/\D/g, '').length !== 10) {
-      errors.phone = 'El teléfono debe tener 10 dígitos';
+    // Validar teléfono (opcional, pero si se proporciona debe tener formato válido)
+    const phoneDigits = newCustomer.phone.replace(/\D/g, '');
+    if (newCustomer.phone.trim() && phoneDigits.length > 0 && phoneDigits.length !== 10) {
+      errors.phone = 'El teléfono debe tener 10 dígitos o dejarlo vacío';
     }
 
     // Validar email (opcional, pero si se proporciona debe ser válido)
