@@ -348,26 +348,36 @@ export const getAllDashboardData = async (req, res) => {
     const weekData = salesStats[0].week[0] || { total: 0, count: 0 };
     const monthData = salesStats[0].month[0] || { total: 0, count: 0 };
 
-    // Normalizar métodos de pago respetando capitalización correcta
+    // Normalizar métodos de pago respetando capitalización correcta y mantener orden
     const paymentMethodMap = {
       'efectivo': 'Efectivo',
       'tarjeta': 'Tarjeta',
       'transferencia': 'Transferencia'
     };
 
-    const normalizedPaymentData = salesByPayment.map(item => {
+    const aggregatedPaymentData = salesByPayment.reduce((acc, item) => {
       const methodLower = item._id ? item._id.toLowerCase() : 'desconocido';
       const normalizedName = paymentMethodMap[methodLower] || item._id || 'Desconocido';
-      
-      return {
-        name: normalizedName,
-        total: item.total,
-        count: item.count
-      };
-    });
 
-    console.log('📊 Sales by payment (raw):', salesByPayment);
-    console.log('📊 Sales by payment (normalized):', normalizedPaymentData);
+      if (!acc[normalizedName]) {
+        acc[normalizedName] = { name: normalizedName, total: 0, count: 0 };
+      }
+
+      acc[normalizedName].total += item.total || 0;
+      acc[normalizedName].count += item.count || 0;
+      return acc;
+    }, {});
+
+    const preferredOrder = ['Efectivo', 'Tarjeta', 'Transferencia'];
+
+    const normalizedPaymentData = [
+      ...preferredOrder
+        .filter(method => aggregatedPaymentData[method])
+        .map(method => aggregatedPaymentData[method]),
+      ...Object.keys(aggregatedPaymentData)
+        .filter(method => !preferredOrder.includes(method))
+        .map(method => aggregatedPaymentData[method])
+    ];
 
     res.json({
       stats: {

@@ -87,7 +87,12 @@ const Dashboard = () => {
       setStats(data.stats);
       setSalesByDay(data.salesByDay);
       setTopProducts(data.topProducts);
-      setSalesByPayment(data.salesByPayment);
+      setSalesByPayment(
+        (data.salesByPayment || []).map((entry) => ({
+          ...entry,
+          name: entry.name || entry._id || 'Desconocido'
+        }))
+      );
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
       toast.error('Error al cargar datos del dashboard');
@@ -359,9 +364,11 @@ const Dashboard = () => {
           
           {/* Estadísticas adicionales debajo de la gráfica */}
           <div className="mt-4 grid grid-cols-3 gap-3">
-            {salesByPayment.map((payment, index) => (
+            {salesByPayment.map((payment, index) => {
+              const methodName = payment.name || payment._id || 'Desconocido';
+              return (
               <div 
-                key={payment._id}
+                key={`${methodName}-${index}`}
                 className="text-center p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600"
               >
                 <div 
@@ -371,13 +378,14 @@ const Dashboard = () => {
                   }}
                 />
                 <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
-                  {payment._id}
+                  {methodName}
                 </p>
                 <p className="text-sm font-bold text-gray-900 dark:text-white">
                   {formatCurrency(payment.total)}
                 </p>
               </div>
-            ))}
+            );
+            })}
           </div>
         </div>
       </div>
