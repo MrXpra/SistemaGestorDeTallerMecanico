@@ -757,7 +757,7 @@ const Billing = () => {
 
             <button
               onClick={handleProceedToPayment}
-              className="btn-primary w-full text-sm xl:text-base"
+              className="btn-primary w-full text-sm xl:text-base flex items-center justify-center gap-2"
             >
               <Check className="w-4 h-4 xl:w-5 xl:h-5" />
               Proceder al Pago
@@ -1513,6 +1513,11 @@ const CustomerModal = ({ onSelect, onClose }) => {
                     >
                       <p className="font-medium text-gray-900 dark:text-white">
                         {customer.fullName}
+                        {customer.cedula && (
+                          <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
+                            Céd: {customer.cedula}
+                          </span>
+                        )}
                       </p>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
                         {customer.phone} {customer.email && `• ${customer.email}`}
