@@ -45,6 +45,7 @@ import {
   Package,
   DollarSign,
   AlertCircle,
+  Printer,
 } from 'lucide-react';
 
 const addBusinessDaysClient = (startDate, days) => {
@@ -76,8 +77,10 @@ const Quotations = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showPrintModal, setShowPrintModal] = useState(false);
   const [editingQuotation, setEditingQuotation] = useState(null);
   const [selectedQuotation, setSelectedQuotation] = useState(null);
+  const [completedQuotation, setCompletedQuotation] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -144,13 +147,21 @@ const Quotations = () => {
       if (editingQuotation) {
         await updateQuotation(editingQuotation._id, data);
         toast.success('Cotización actualizada');
+        setShowCreateModal(false);
+        setEditingQuotation(null);
+        fetchData();
       } else {
-        await createQuotation(data);
+        const response = await createQuotation(data);
         toast.success('Cotización creada');
+        
+        // Guardar la cotización para el modal de impresión
+        setCompletedQuotation(response.data);
+        setShowCreateModal(false);
+        setShowPrintModal(true);
+        
+        // Recargar datos
+        fetchData();
       }
-      setShowCreateModal(false);
-      setEditingQuotation(null);
-      fetchData();
     } catch (error) {
       console.error('Error:', error);
       toast.error(error.response?.data?.message || 'Error al guardar cotización');
@@ -213,6 +224,165 @@ const Quotations = () => {
       month: 'short',
       day: 'numeric',
     });
+  };
+
+  const printQuotation = (quotation) => {
+    const printWindow = window.open('', '_blank');
+    const customerName = quotation.customer?.fullName || quotation.genericCustomerName || 'Cliente Genérico';
+    const customerContact = quotation.customer?.phone || quotation.genericCustomerContact || '';
+    const customerEmail = quotation.customer?.email || '';
+    
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Cotización ${quotation.quotationNumber}</title>
+          <style>
+            @media print {
+              @page { size: 80mm auto; margin: 0; }
+              body { margin: 10mm; }
+            }
+            body { 
+              font-family: 'Courier New', monospace; 
+              width: 80mm;
+              margin: 0 auto;
+              padding: 5mm;
+              font-size: 11px;
+            }
+            h1 { 
+              text-align: center; 
+              font-size: 16px; 
+              margin: 5px 0;
+              font-weight: bold;
+            }
+            .line { 
+              border-top: 1px dashed #000; 
+              margin: 8px 0; 
+            }
+            table { 
+              width: 100%; 
+              border-collapse: collapse;
+            }
+            td { 
+              padding: 2px 0; 
+            }
+            .right { 
+              text-align: right; 
+            }
+            .bold { 
+              font-weight: bold; 
+            }
+            .center { 
+              text-align: center; 
+            }
+            .small { 
+              font-size: 9px; 
+            }
+            .info-section {
+              margin: 8px 0;
+              font-size: 12px;
+              font-weight: bold;
+            }
+            .item-row {
+              margin-bottom: 4px;
+            }
+            .total-row {
+              font-size: 13px;
+              font-weight: bold;
+              padding-top: 4px;
+            }
+            .header-badge {
+              background: #fef3c7;
+              color: #92400e;
+              padding: 4px 8px;
+              border-radius: 4px;
+              font-size: 10px;
+              display: inline-block;
+              margin: 4px 0;
+            }
+          </style>
+        </head>
+        <body>
+          <h1>AutoParts Manager</h1>
+          <div class="center header-badge">COTIZACIÓN</div>
+          <div class="line"></div>
+          
+          <div class="info-section">
+            <div><strong>Cotización:</strong> ${quotation.quotationNumber}</div>
+            <div><strong>Fecha:</strong> ${new Date(quotation.createdAt).toLocaleString('es-DO', { 
+              day: '2-digit', 
+              month: '2-digit', 
+              year: 'numeric', 
+              hour: '2-digit', 
+              minute: '2-digit' 
+            })}</div>
+            <div><strong>Válida hasta:</strong> ${formatDate(quotation.validUntil)}</div>
+            <div><strong>Cliente:</strong> ${customerName}</div>
+            ${customerContact ? `<div><strong>Contacto:</strong> ${customerContact}</div>` : ''}
+            ${customerEmail ? `<div><strong>Email:</strong> ${customerEmail}</div>` : ''}
+            ${quotation.createdBy ? `<div><strong>Atendido por:</strong> ${quotation.createdBy.name || quotation.createdBy.username || 'N/A'}</div>` : ''}
+          </div>
+          
+          <div class="line"></div>
+          
+          <table>
+            <thead>
+              <tr class="bold small">
+                <td style="width: 10%;">#</td>
+                <td style="width: 50%;">PRODUCTO</td>
+                <td style="width: 20%;" class="center">CANT</td>
+                <td style="width: 20%;" class="right">TOTAL</td>
+              </tr>
+            </thead>
+            <tbody>
+              ${quotation.items.map((item, index) => `
+                <tr class="item-row">
+                  <td>${index + 1}</td>
+                  <td>${item.product?.name || 'Producto'}</td>
+                  <td class="center">${item.quantity}</td>
+                  <td class="right">${formatCurrency(item.subtotal)}</td>
+                </tr>
+                <tr class="small">
+                  <td></td>
+                  <td colspan="3">${formatCurrency(item.unitPrice)} c/u${item.discount > 0 ? ` (-${item.discount}%)` : ''}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          
+          <div class="line"></div>
+          
+          <table>
+            <tr>
+              <td>Subtotal:</td>
+              <td class="right">${formatCurrency(quotation.subtotal)}</td>
+            </tr>
+            <tr>
+              <td>ITBIS (18%):</td>
+              <td class="right">${formatCurrency(quotation.tax)}</td>
+            </tr>
+            <tr class="total-row">
+              <td>TOTAL:</td>
+              <td class="right">${formatCurrency(quotation.total)}</td>
+            </tr>
+          </table>
+          
+          ${quotation.notes ? `
+            <div class="line"></div>
+            <div class="small">
+              <strong>Notas:</strong><br/>
+              ${quotation.notes}
+            </div>
+          ` : ''}
+          
+          <div class="line"></div>
+          <p class="center bold">¡Gracias por su preferencia!</p>
+          <p class="center small">Esta cotización es válida hasta ${formatDate(quotation.validUntil)}</p>
+          <p class="center small">Este documento no tiene validez fiscal</p>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
   };
 
   if (isLoading && quotations.length === 0) {
@@ -465,6 +635,22 @@ const Quotations = () => {
           onClose={() => {
             setShowDetailModal(false);
             setSelectedQuotation(null);
+          }}
+        />
+      )}
+
+      {/* Print Confirmation Modal */}
+      {showPrintModal && completedQuotation && (
+        <PrintQuotationModal
+          quotation={completedQuotation}
+          onPrint={() => {
+            printQuotation(completedQuotation);
+            setShowPrintModal(false);
+            setCompletedQuotation(null);
+          }}
+          onClose={() => {
+            setShowPrintModal(false);
+            setCompletedQuotation(null);
           }}
         />
       )}
@@ -871,6 +1057,78 @@ const DetailModal = ({ quotation, onClose }) => {
               <span>{formatCurrency(quotation.total)}</span>
             </div>
           </div>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+};
+
+// Print Confirmation Modal Component
+const PrintQuotationModal = ({ quotation, onPrint, onClose }) => {
+  const formatCurrency = (value) => {
+    return new Intl.NumberFormat('es-DO', {
+      style: 'currency',
+      currency: 'DOP',
+    }).format(value);
+  };
+
+  const customerName = quotation.customer?.fullName || quotation.genericCustomerName || 'Cliente Genérico';
+
+  return createPortal(
+    <div className="fixed inset-0 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" style={{ zIndex: 100000 }}>
+      <div className="glass-strong rounded-2xl p-6 w-full max-w-md animate-scale-in" onClick={(e) => e.stopPropagation()}>
+        <div className="text-center mb-6">
+          <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Check className="w-8 h-8 text-green-600 dark:text-green-400" />
+          </div>
+          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            ¡Cotización Creada!
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400">
+            Cotización: <span className="font-semibold">{quotation.quotationNumber}</span>
+          </p>
+          <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">
+            Cliente: <span className="font-medium">{customerName}</span>
+          </p>
+          <p className="text-3xl font-bold text-primary-600 dark:text-primary-400 mt-3">
+            {formatCurrency(quotation.total)}
+          </p>
+        </div>
+
+        <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+          <p className="text-center text-sm text-gray-600 dark:text-gray-400 mb-3">
+            ¿Desea imprimir la cotización?
+          </p>
+          <div className="space-y-2 text-xs text-gray-500 dark:text-gray-400">
+            <div className="flex items-center justify-between">
+              <span>Productos:</span>
+              <span className="font-medium text-gray-900 dark:text-white">{quotation.items?.length || 0} ítem(s)</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span>Válida hasta:</span>
+              <span className="font-medium text-gray-900 dark:text-white">
+                {new Date(quotation.validUntil).toLocaleDateString('es-DO')}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            className="btn-secondary flex-1 flex items-center justify-center gap-2"
+          >
+            <X className="w-5 h-5" />
+            No Imprimir
+          </button>
+          <button
+            onClick={onPrint}
+            className="btn-primary flex-1 flex items-center justify-center gap-2"
+          >
+            <Printer className="w-5 h-5" />
+            Imprimir
+          </button>
         </div>
       </div>
     </div>,
