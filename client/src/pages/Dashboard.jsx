@@ -314,6 +314,7 @@ const Dashboard = () => {
                 innerRadius={60}
                 fill="#8884d8"
                 dataKey="total"
+                nameKey="name"
                 paddingAngle={3}
                 animationBegin={0}
                 animationDuration={800}
