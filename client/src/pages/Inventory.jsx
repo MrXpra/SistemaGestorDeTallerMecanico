@@ -866,8 +866,7 @@ const ProductModal = ({ product, onSave, onClose, categories, brands, allProduct
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* SKU Field - Always first */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-2">
-              <Barcode className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               SKU * {!product && <span className="text-xs text-gray-500">(Escanee el código de barras)</span>}
             </label>
             <div className="relative">
@@ -951,8 +950,7 @@ const ProductModal = ({ product, onSave, onClose, categories, brands, allProduct
             <div>
               <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-2">
-                    <Tag className="w-4 h-4 text-green-600 dark:text-green-400" />
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Nombre del Producto *
                   </label>
                   <div className="relative">
@@ -973,8 +971,7 @@ const ProductModal = ({ product, onSave, onClose, categories, brands, allProduct
           {/* Category and Brand */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-2">
-                <Grid className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Categoría
               </label>
               <div className="relative">
@@ -997,8 +994,7 @@ const ProductModal = ({ product, onSave, onClose, categories, brands, allProduct
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-2">
-                <Award className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Marca
               </label>
               <div className="relative">
@@ -1023,8 +1019,7 @@ const ProductModal = ({ product, onSave, onClose, categories, brands, allProduct
 
           {/* Supplier */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-2">
-              <Truck className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Proveedor
             </label>
             <div className="relative">
@@ -1047,8 +1042,7 @@ const ProductModal = ({ product, onSave, onClose, categories, brands, allProduct
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-2">
-              <FileText className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Descripción
             </label>
             <div className="relative">
