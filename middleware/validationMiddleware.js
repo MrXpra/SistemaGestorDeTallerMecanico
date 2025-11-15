@@ -55,7 +55,7 @@ export const userValidation = [
 // Validaciones para clientes
 export const customerValidation = [
   body('fullName').trim().notEmpty().withMessage('El nombre completo es requerido'),
-  body('cedula').optional({ checkFalsy: true }).trim(),
+  body('cedula').trim().notEmpty().withMessage('La cédula es requerida'),
   body('phone').optional({ checkFalsy: true }).trim(),
   body('email').optional({ checkFalsy: true }).trim().isEmail().withMessage('Email inválido'),
   body('address').optional({ checkFalsy: true }).trim()
