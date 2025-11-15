@@ -356,8 +356,9 @@ export const getAllDashboardData = async (req, res) => {
     };
 
     const aggregatedPaymentData = salesByPayment.reduce((acc, item) => {
-      const methodLower = item._id ? item._id.toLowerCase() : 'desconocido';
-      const normalizedName = paymentMethodMap[methodLower] || item._id || 'Desconocido';
+      const rawMethod = item._id ? item._id.toString().trim() : 'Desconocido';
+      const methodLower = rawMethod.toLowerCase();
+      const normalizedName = paymentMethodMap[methodLower] || rawMethod || 'Desconocido';
 
       if (!acc[normalizedName]) {
         acc[normalizedName] = { name: normalizedName, total: 0, count: 0 };
