@@ -1,13 +1,12 @@
 /**
  * @file WeatherWidget.jsx
- * @description Widget de clima actual usando OpenWeatherMap API
+ * @description Widget de clima actual usando backend proxy
  * 
  * Props:
- * - location: String (ej: "Santo Domingo,DO") - ubicación para consultar clima
- * - apiKey: String - API key de OpenWeatherMap
+ * - detailed: Boolean (opcional) - muestra vista detallada o compacta
  * 
  * Responsabilidades:
- * - Obtener clima actual de OpenWeatherMap API
+ * - Obtener clima actual desde backend proxy (/api/proxy/weather)
  * - Mostrar temperatura, descripción, humedad, sensación térmica
  * - Icono dinámico según condición climática (Cloud, Sun, Rain, etc.)
  * - Botón de refresh manual
@@ -20,13 +19,14 @@
  * - refreshKey: Contador para forzar re-fetch manual
  * 
  * API:
- * - Endpoint: api.openweathermap.org/data/2.5/weather
- * - Parámetros: q (location), units=metric, lang=es, appid
- * - Añade timestamp para evitar caché del navegador
+ * - Endpoint: /api/proxy/weather (backend proxy)
+ * - El backend maneja la configuración (location, apiKey) desde Settings
+ * - Backend retorna datos formateados y protege la API key
  * 
  * Nota:
- * - No usa fetch con headers personalizados (evita CORS)
- * - Se oculta si !location || !apiKey
+ * - La configuración (location, apiKey) se maneja en el backend
+ * - API key nunca se expone al cliente
+ * - Se oculta si no hay configuración disponible en backend
  */
 
 import { useState, useEffect } from 'react';
@@ -46,53 +46,34 @@ import {
   Eye
 } from 'lucide-react';
 
-const WeatherWidget = ({ location, apiKey, detailed = false }) => {
+const WeatherWidget = ({ detailed = false }) => {
   const [weather, setWeather] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
-    if (!location || !apiKey) {
-      setLoading(false);
-      return;
-    }
-
     const fetchWeather = async () => {
       try {
         setLoading(true);
         setError(null);
         
-        // Agregar timestamp para evitar caché del navegador
-        const timestamp = new Date().getTime();
-        const url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(location)}&units=metric&lang=es&appid=${apiKey}&_t=${timestamp}`;
-        
-        // Llamar a OpenWeatherMap API (sin headers personalizados para evitar CORS)
-        const response = await fetch(url);
+        // Llamar al backend proxy (que maneja location y apiKey desde Settings)
+        const response = await fetch('/api/proxy/weather');
         
         if (!response.ok) {
-          const errorData = await response.json();
+          const errorData = await response.json().catch(() => ({}));
           throw new Error(errorData.message || 'Error al obtener clima');
         }
         
         const data = await response.json();
         
+        // El backend ya formatea los datos, pero ajustamos las fechas para formato local
         setWeather({
-          temp: Math.round(data.main.temp),
-          tempMin: Math.round(data.main.temp_min),
-          tempMax: Math.round(data.main.temp_max),
-          description: data.weather[0].description,
-          icon: data.weather[0].main.toLowerCase(),
-          humidity: data.main.humidity,
-          feelsLike: Math.round(data.main.feels_like),
-          pressure: data.main.pressure,
-          windSpeed: Math.round(data.wind?.speed || 0),
-          cloudiness: data.clouds?.all || 0,
-          visibility: Math.round((data.visibility || 0) / 1000), // convertir a km
-          sunrise: new Date(data.sys.sunrise * 1000).toLocaleTimeString('es-DO', { hour: '2-digit', minute: '2-digit' }),
-          sunset: new Date(data.sys.sunset * 1000).toLocaleTimeString('es-DO', { hour: '2-digit', minute: '2-digit' }),
-          lastUpdate: new Date().toLocaleTimeString('es-DO', { hour: '2-digit', minute: '2-digit' }),
-          cityName: data.name,
+          ...data,
+          sunrise: new Date(data.sunrise).toLocaleTimeString('es-DO', { hour: '2-digit', minute: '2-digit' }),
+          sunset: new Date(data.sunset).toLocaleTimeString('es-DO', { hour: '2-digit', minute: '2-digit' }),
+          lastUpdate: new Date(data.lastUpdate).toLocaleTimeString('es-DO', { hour: '2-digit', minute: '2-digit' })
         });
       } catch (err) {
         setError(err.message);
@@ -103,11 +84,11 @@ const WeatherWidget = ({ location, apiKey, detailed = false }) => {
 
     fetchWeather();
     
-    // Actualizar cada 10 minutos (cambiado de 30 a 10 para testing)
+    // Actualizar cada 10 minutos
     const interval = setInterval(fetchWeather, 10 * 60 * 1000);
     
     return () => clearInterval(interval);
-  }, [location, apiKey, refreshKey]);
+  }, [refreshKey]);
 
   const handleRefresh = () => {
     setRefreshKey(prev => prev + 1);
@@ -219,7 +200,7 @@ const WeatherWidget = ({ location, apiKey, detailed = false }) => {
                   </p>
                   <p className="text-sm mt-2 opacity-80 flex items-center gap-2">
                     <MapPin className="w-4 h-4" />
-                    {weather.cityName || location}
+                    {weather.cityName || weather.location || 'Ubicación no disponible'}
                   </p>
                 </div>
               </div>
