@@ -348,22 +348,26 @@ export const getAllDashboardData = async (req, res) => {
     const weekData = salesStats[0].week[0] || { total: 0, count: 0 };
     const monthData = salesStats[0].month[0] || { total: 0, count: 0 };
 
-    // Normalizar métodos de pago (manejar variaciones como "transferencia" vs "Transferencia")
-    const normalizedPaymentData = salesByPayment.reduce((acc, item) => {
-      const method = item._id ? item._id.toLowerCase() : 'desconocido';
-      const existing = acc.find(x => x.name.toLowerCase() === method);
-      if (existing) {
-        existing.total += item.total;
-        existing.count += item.count;
-      } else {
-        acc.push({
-          name: item._id || 'Desconocido',
-          total: item.total,
-          count: item.count
-        });
-      }
-      return acc;
-    }, []);
+    // Normalizar métodos de pago respetando capitalización correcta
+    const paymentMethodMap = {
+      'efectivo': 'Efectivo',
+      'tarjeta': 'Tarjeta',
+      'transferencia': 'Transferencia'
+    };
+
+    const normalizedPaymentData = salesByPayment.map(item => {
+      const methodLower = item._id ? item._id.toLowerCase() : 'desconocido';
+      const normalizedName = paymentMethodMap[methodLower] || item._id || 'Desconocido';
+      
+      return {
+        name: normalizedName,
+        total: item.total,
+        count: item.count
+      };
+    });
+
+    console.log('📊 Sales by payment (raw):', salesByPayment);
+    console.log('📊 Sales by payment (normalized):', normalizedPaymentData);
 
     res.json({
       stats: {
