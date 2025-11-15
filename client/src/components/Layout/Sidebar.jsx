@@ -142,13 +142,13 @@ const Sidebar = () => {
   return (
     <aside className="w-56 xl:w-64 glass-strong border-r border-gray-200 dark:border-gray-700 flex flex-col">
       {/* Logo */}
-      <div className="p-3 xl:p-6 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex items-center gap-2 xl:gap-3">
+      <div className="p-4 xl:p-6 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex flex-col items-center gap-2">
           {settings.businessLogoUrl && settings.businessLogoUrl !== '/logo.png' && settings.businessLogoUrl !== '/default-logo.png' ? (
             <img 
               src={settings.businessLogoUrl} 
               alt={settings.businessName || 'Logo'}
-              className="w-8 h-8 xl:w-10 xl:h-10 rounded-xl object-cover"
+              className="w-12 h-12 xl:w-14 xl:h-14 rounded-xl object-cover"
               onError={(e) => {
                 e.target.style.display = 'none';
                 e.target.nextSibling.style.display = 'flex';
@@ -156,17 +156,12 @@ const Sidebar = () => {
             />
           ) : null}
           <div 
-            className="w-8 h-8 xl:w-10 xl:h-10 bg-gradient-to-br from-primary-600 to-primary-700 rounded-xl flex items-center justify-center"
+            className="w-12 h-12 xl:w-14 xl:h-14 bg-gradient-to-br from-primary-600 to-primary-700 rounded-xl flex items-center justify-center"
             style={{ display: (settings.businessLogoUrl && settings.businessLogoUrl !== '/logo.png' && settings.businessLogoUrl !== '/default-logo.png') ? 'none' : 'flex' }}
           >
-            <FileText className="w-5 h-5 xl:w-6 xl:h-6 text-white" />
+            <FileText className="w-7 h-7 xl:w-8 xl:h-8 text-white" />
           </div>
-          <div className="flex-1 min-w-0">
-            <h1 className="text-base xl:text-lg font-bold text-gray-900 dark:text-white truncate">
-              {settings.businessName || 'AutoParts Manager'}
-            </h1>
-            <p className="text-[10px] xl:text-xs text-gray-500 dark:text-gray-400">POS System</p>
-          </div>
+          <p className="text-xs xl:text-sm text-gray-500 dark:text-gray-400 font-medium">POS System</p>
         </div>
       </div>
 
