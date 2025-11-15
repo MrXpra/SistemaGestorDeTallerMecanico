@@ -1025,7 +1025,7 @@ const ProductModal = ({ product, onSave, onClose, categories, brands, allProduct
             <div className="relative">
               <Truck className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-indigo-500" />
               <select
-                className="input pl-10"
+                className="input pl-10 pr-10"
                 name="supplier"
                 value={formData.supplier}
                 onChange={handleChange}
@@ -1192,10 +1192,10 @@ const ProductModal = ({ product, onSave, onClose, categories, brands, allProduct
                   {isRestockMode ? 'Actualizando Stock...' : 'Guardando...'}
                 </>
               ) : (
-                <>
+                <div className="flex items-center justify-center gap-2">
                   <Check className="w-5 h-5" />
-                  {isRestockMode ? 'Agregar al Stock' : product ? 'Actualizar Producto' : 'Crear Producto'}
-                </>
+                  <span>{isRestockMode ? 'Agregar al Stock' : product ? 'Actualizar Producto' : 'Crear Producto'}</span>
+                </div>
               )}
             </button>
           </div>
