@@ -605,12 +605,12 @@ const PurchaseOrders = () => {
               : 'Comienza creando tu primera orden o genera una automática'}
           </p>
           <div className="flex gap-3 justify-center">
-            <button onClick={() => setShowAutoModal(true)} className="btn btn-secondary">
-              <Zap className="w-5 h-5 mr-2" />
+            <button onClick={() => setShowAutoModal(true)} className="btn btn-secondary flex items-center justify-center gap-2">
+              <Zap className="w-5 h-5" />
               Generar Automática
             </button>
-            <button onClick={() => setShowCreateModal(true)} className="btn btn-primary">
-              <Plus className="w-5 h-5 mr-2" />
+            <button onClick={() => setShowCreateModal(true)} className="btn btn-primary flex items-center justify-center gap-2">
+              <Plus className="w-5 h-5" />
               Nueva Orden
             </button>
           </div>
@@ -1086,27 +1086,24 @@ const AutoOrderModal = ({ suppliers, products, onClose, onGenerate }) => {
     productIds: [],
   });
 
-  // Filtrar productos con stock bajo Y que tengan proveedor asignado
+  // Filtrar productos con stock bajo (incluir los que NO tienen proveedor)
   const lowStockProducts = products.filter(p => {
     const isLowStock = p.stock <= p.lowStockThreshold;
-    const hasSupplier = p.supplier && (p.supplier._id || p.supplier);
     
-    if (!hasSupplier) return false; // Excluir productos sin proveedor
+    if (!config.supplierId) return isLowStock; // Mostrar todos los productos con stock bajo
     
-    if (!config.supplierId) return isLowStock;
-    
-    // Filtrar por proveedor seleccionado
+    // Si hay proveedor seleccionado, filtrar por ese proveedor
     const productSupplierId = p.supplier?._id || p.supplier;
     return isLowStock && productSupplierId === config.supplierId;
   });
 
-  const productsWithoutSupplier = products.filter(p => 
-    p.stock <= p.lowStockThreshold && (!p.supplier || (!p.supplier._id && !p.supplier))
+  const productsWithoutSupplier = lowStockProducts.filter(p => 
+    !p.supplier || (!p.supplier._id && !p.supplier)
   );
 
   const handleGenerate = () => {
     if (lowStockProducts.length === 0) {
-      toast.error('No hay productos con stock bajo que tengan proveedor asignado');
+      toast.error('No hay productos con stock bajo');
       return;
     }
     onGenerate(config);
@@ -1128,20 +1125,25 @@ const AutoOrderModal = ({ suppliers, products, onClose, onGenerate }) => {
         <div className="p-6 space-y-6">
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
             <p className="text-sm text-blue-800 dark:text-blue-300">
-              <strong>Productos con stock bajo y proveedor asignado: {lowStockProducts.length}</strong>
+              <strong>Productos con stock bajo: {lowStockProducts.length}</strong>
+              {productsWithoutSupplier.length > 0 && (
+                <span className="text-yellow-600 dark:text-yellow-400 ml-2">
+                  ({productsWithoutSupplier.length} sin proveedor)
+                </span>
+              )}
             </p>
             <p className="text-sm text-blue-700 dark:text-blue-400 mt-1">
-              Se generarán órdenes automáticas agrupadas por proveedor para reabastecer el inventario.
+              Se generarán órdenes automáticas agrupadas por proveedor. Los productos sin proveedor se agruparán en una orden genérica.
             </p>
           </div>
 
           {productsWithoutSupplier.length > 0 && (
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-              <p className="text-sm text-yellow-800 dark:text-yellow-300">
-                <strong>⚠️ Atención: {productsWithoutSupplier.length} producto(s) con stock bajo NO tienen proveedor asignado</strong>
+            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+              <p className="text-sm text-amber-800 dark:text-amber-300">
+                <strong>ℹ️ Nota: {productsWithoutSupplier.length} producto(s) sin proveedor asignado</strong>
               </p>
-              <p className="text-sm text-yellow-700 dark:text-yellow-400 mt-1">
-                Asigna proveedores en el inventario para incluirlos en las órdenes automáticas.
+              <p className="text-sm text-amber-700 dark:text-amber-400 mt-1">
+                Estos productos se incluirán en una orden con proveedor "Genérico". Puedes asignar proveedores específicos en el inventario.
               </p>
             </div>
           )}
