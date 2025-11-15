@@ -861,7 +861,9 @@ const CreateReturnModal = ({ onClose, onSubmit, formatCurrency }) => {
     
     try {
       setIsSearching(true);
-      const response = await getSales({ search: searchTerm });
+      // Limpiar el término de búsqueda (remover espacios y hacer trim)
+      const cleanSearch = searchTerm.trim().replace(/\s+/g, '');
+      const response = await getSales({ search: cleanSearch });
       
       // Asegurar que response es un array
       const salesData = Array.isArray(response?.data) 
@@ -869,6 +871,8 @@ const CreateReturnModal = ({ onClose, onSubmit, formatCurrency }) => {
         : Array.isArray(response) 
           ? response 
           : [];
+      
+      console.log('🔍 Sales search results:', salesData);
       
       // Filtrar ventas válidas para devolución
       const validSales = salesData.filter(sale => 
@@ -878,7 +882,11 @@ const CreateReturnModal = ({ onClose, onSubmit, formatCurrency }) => {
       setSales(validSales);
       
       if (validSales.length === 0) {
-        toast.error('No se encontraron ventas con ese número de factura');
+        if (salesData.length > 0) {
+          toast.error('La venta encontrada ya fue cancelada o devuelta');
+        } else {
+          toast.error(`No se encontraron ventas con el código: ${cleanSearch}`);
+        }
       }
     } catch (error) {
       console.error('Error al buscar ventas:', error);
