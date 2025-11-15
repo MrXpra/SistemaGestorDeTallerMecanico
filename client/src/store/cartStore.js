@@ -62,14 +62,27 @@ export const useCartStore = create((set, get) => ({
   },
 
   updateQuantity: (productId, quantity) => {
-    if (quantity <= 0) {
+    // Permitir strings vacíos temporalmente durante la edición
+    if (quantity === '' || quantity === null || quantity === undefined) {
+      set({
+        items: get().items.map((item) =>
+          item.product._id === productId ? { ...item, quantity: '' } : item
+        ),
+      });
+      return;
+    }
+
+    const qty = typeof quantity === 'string' ? parseInt(quantity) : quantity;
+    
+    // Solo eliminar si es explícitamente 0 o menor
+    if (qty <= 0) {
       get().removeItem(productId);
       return;
     }
 
     set({
       items: get().items.map((item) =>
-        item.product._id === productId ? { ...item, quantity } : item
+        item.product._id === productId ? { ...item, quantity: qty } : item
       ),
     });
   },
