@@ -355,10 +355,19 @@ export const getAllDashboardData = async (req, res) => {
       'transferencia': 'Transferencia'
     };
 
+    const normalizeMethodName = (value) => {
+      const base = value ? value.toString().trim() : '';
+      const lower = base.toLowerCase();
+      if (!base) return 'Desconocido';
+      if (paymentMethodMap[lower]) return paymentMethodMap[lower];
+      if (lower.includes('efect')) return 'Efectivo';
+      if (lower.includes('tarj')) return 'Tarjeta';
+      if (lower.includes('trans')) return 'Transferencia';
+      return base;
+    };
+
     const aggregatedPaymentData = salesByPayment.reduce((acc, item) => {
-      const rawMethod = item._id ? item._id.toString().trim() : 'Desconocido';
-      const methodLower = rawMethod.toLowerCase();
-      const normalizedName = paymentMethodMap[methodLower] || rawMethod || 'Desconocido';
+      const normalizedName = normalizeMethodName(item._id);
 
       if (!acc[normalizedName]) {
         acc[normalizedName] = { name: normalizedName, total: 0, count: 0 };
