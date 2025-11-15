@@ -112,8 +112,7 @@ export const createCustomer = async (req, res) => {
     // Verificar si ya existe un cliente con esa cédula
     const existingCedula = await Customer.findOne({ cedula: cleanCedula });
     if (existingCedula) {
-        return res.status(400).json({ message: 'Ya existe un cliente con esa cédula' });
-      }
+      return res.status(400).json({ message: 'Ya existe un cliente con esa cédula' });
     }
 
     // Verificar si ya existe un cliente con ese teléfono
