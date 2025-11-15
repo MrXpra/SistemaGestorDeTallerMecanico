@@ -86,13 +86,23 @@ export const getCustomerById = async (req, res) => {
 // @access  Private
 export const createCustomer = async (req, res) => {
   try {
+    console.log('📝 Datos recibidos para crear cliente:', req.body);
+    
     const { fullName, cedula, phone, email, address } = req.body;
+
+    // Validar que fullName existe
+    if (!fullName || fullName.trim() === '') {
+      console.error('❌ Error: fullName vacío o no proporcionado');
+      return res.status(400).json({ message: 'El nombre completo es requerido' });
+    }
 
     // Limpiar y normalizar campos (convertir strings vacíos a undefined)
     const cleanCedula = cedula && cedula.trim() !== '' ? cedula.trim() : undefined;
     const cleanPhone = phone && phone.trim() !== '' ? phone.trim() : undefined;
     const cleanEmail = email && email.trim() !== '' ? email.trim().toLowerCase() : undefined;
     const cleanAddress = address && address.trim() !== '' ? address.trim() : undefined;
+
+    console.log('🧹 Datos limpios:', { fullName: fullName.trim(), cleanCedula, cleanPhone, cleanEmail, cleanAddress });
 
     // Verificar si ya existe un cliente con esa cédula
     if (cleanCedula) {
@@ -128,11 +138,19 @@ export const createCustomer = async (req, res) => {
     if (cleanEmail) customerData.email = cleanEmail;
     if (cleanAddress) customerData.address = cleanAddress;
 
+    console.log('💾 Datos a crear en DB:', customerData);
     const customer = await Customer.create(customerData);
+    console.log('✅ Cliente creado exitosamente:', customer._id);
 
     res.status(201).json(customer);
   } catch (error) {
-    console.error('Error al crear cliente:', error);
+    console.error('❌ Error al crear cliente:', error);
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
+    if (error.code === 11000) {
+      console.error('Error de duplicado en:', error.keyPattern);
+      return res.status(400).json({ message: 'Ya existe un cliente con esos datos' });
+    }
     res.status(500).json({ message: 'Error al crear cliente', error: error.message });
   }
 };
