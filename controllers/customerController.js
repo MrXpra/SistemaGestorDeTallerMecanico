@@ -90,14 +90,19 @@ export const createCustomer = async (req, res) => {
     
     const { fullName, cedula, phone, email, address } = req.body;
 
-    // Validar que fullName existe
+    // Validar que fullName y cedula existen
     if (!fullName || fullName.trim() === '') {
       console.error('❌ Error: fullName vacío o no proporcionado');
       return res.status(400).json({ message: 'El nombre completo es requerido' });
     }
 
-    // Limpiar y normalizar campos (convertir strings vacíos a undefined)
-    const cleanCedula = cedula && cedula.trim() !== '' ? cedula.trim() : undefined;
+    if (!cedula || cedula.trim() === '') {
+      console.error('❌ Error: cedula vacía o no proporcionada');
+      return res.status(400).json({ message: 'La cédula es requerida' });
+    }
+
+    // Limpiar y normalizar campos
+    const cleanCedula = cedula.trim();
     const cleanPhone = phone && phone.trim() !== '' ? phone.trim() : undefined;
     const cleanEmail = email && email.trim() !== '' ? email.trim().toLowerCase() : undefined;
     const cleanAddress = address && address.trim() !== '' ? address.trim() : undefined;
@@ -105,9 +110,8 @@ export const createCustomer = async (req, res) => {
     console.log('🧹 Datos limpios:', { fullName: fullName.trim(), cleanCedula, cleanPhone, cleanEmail, cleanAddress });
 
     // Verificar si ya existe un cliente con esa cédula
-    if (cleanCedula) {
-      const existingCedula = await Customer.findOne({ cedula: cleanCedula });
-      if (existingCedula) {
+    const existingCedula = await Customer.findOne({ cedula: cleanCedula });
+    if (existingCedula) {
         return res.status(400).json({ message: 'Ya existe un cliente con esa cédula' });
       }
     }
@@ -128,12 +132,12 @@ export const createCustomer = async (req, res) => {
       }
     }
 
-    // Preparar datos del cliente (solo incluir campos con valores)
+    // Preparar datos del cliente
     const customerData = {
-      fullName: fullName.trim()
+      fullName: fullName.trim(),
+      cedula: cleanCedula
     };
 
-    if (cleanCedula) customerData.cedula = cleanCedula;
     if (cleanPhone) customerData.phone = cleanPhone;
     if (cleanEmail) customerData.email = cleanEmail;
     if (cleanAddress) customerData.address = cleanAddress;

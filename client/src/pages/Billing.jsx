@@ -1404,10 +1404,12 @@ const CustomerModal = ({ onSelect, onClose }) => {
       errors.fullName = 'El nombre es requerido';
     }
 
-    // Validar cédula (opcional, pero si se proporciona debe tener formato válido)
+    // Validar cédula (obligatorio y debe tener 11 dígitos)
     const cedulaDigits = newCustomer.cedula.replace(/\D/g, '');
-    if (newCustomer.cedula.trim() && cedulaDigits.length > 0 && cedulaDigits.length !== 11) {
-      errors.cedula = 'La cédula debe tener 11 dígitos o dejarla vacía';
+    if (!newCustomer.cedula.trim()) {
+      errors.cedula = 'La cédula es requerida';
+    } else if (cedulaDigits.length !== 11) {
+      errors.cedula = 'La cédula debe tener 11 dígitos';
     }
 
     // Validar teléfono (opcional, pero si se proporciona debe tener formato válido)
