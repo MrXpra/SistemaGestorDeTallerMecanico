@@ -1053,10 +1053,16 @@ const CartItem = ({
             </button>
             <input
               type="number"
-              value={item.quantity}
+              value={item.quantity === '' ? '' : item.quantity}
               onChange={(e) =>
                 onQuantityChange(item.product._id, e.target.value)
               }
+              onBlur={(e) => {
+                // Si está vacío al perder foco, establecer a 1
+                if (e.target.value === '' || parseInt(e.target.value) < 1) {
+                  onQuantityChange(item.product._id, 1);
+                }
+              }}
               className="w-16 text-center input py-1 text-sm"
               min="1"
               max={item.product.stock}
