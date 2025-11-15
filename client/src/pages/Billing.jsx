@@ -897,7 +897,9 @@ const ProductCard = ({ product, onAdd }) => {
 // Product List Item Component (Vista de Lista)
 const ProductListItem = ({ product, onAdd }) => {
   const hasDiscount = product.discountPercentage > 0;
-  const isLowStock = product.stock <= product.minStock;
+  const isOutOfStock = (product.stock ?? 0) <= 0;
+  const lowStockThreshold = product.lowStockThreshold ?? 5;
+  const isLowStock = !isOutOfStock && product.stock <= lowStockThreshold;
 
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('es-DO', {
@@ -908,8 +910,12 @@ const ProductListItem = ({ product, onAdd }) => {
 
   return (
     <div
-      className="card-glass p-4 hover-lift cursor-pointer flex items-center justify-between gap-4 transition-all"
-      onClick={() => onAdd(product)}
+      className={`card-glass p-4 ${isOutOfStock ? 'opacity-80 cursor-not-allowed' : 'hover-lift cursor-pointer'} flex items-center justify-between gap-4 transition-all`}
+      onClick={() => {
+        if (isOutOfStock) return;
+        onAdd(product);
+      }}
+      aria-disabled={isOutOfStock}
     >
       {/* Información del producto */}
       <div className="flex items-center gap-4 flex-1 min-w-0">
@@ -977,10 +983,16 @@ const ProductListItem = ({ product, onAdd }) => {
 
         {/* Stock */}
         <div className="w-20 text-right">
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Stock</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+            Stock
+          </p>
           <p
             className={`text-base font-bold ${
-              isLowStock ? 'text-red-600' : 'text-gray-900 dark:text-white'
+              isOutOfStock
+                ? 'text-red-600 dark:text-red-400'
+                : isLowStock
+                  ? 'text-amber-600 dark:text-amber-400'
+                  : 'text-gray-900 dark:text-white'
             }`}
           >
             {product.stock}
@@ -990,9 +1002,13 @@ const ProductListItem = ({ product, onAdd }) => {
 
       {/* Botón de agregar */}
       <button
-        className="btn-primary px-4 py-2 flex items-center gap-2 shrink-0"
+        className={`btn-primary px-4 py-2 flex items-center gap-2 shrink-0 ${
+          isOutOfStock ? 'opacity-60 cursor-not-allowed' : ''
+        }`}
+        disabled={isOutOfStock}
         onClick={(e) => {
           e.stopPropagation();
+          if (isOutOfStock) return;
           onAdd(product);
         }}
       >
